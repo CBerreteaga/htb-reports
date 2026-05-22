@@ -55,6 +55,27 @@ pre {
   overflow-x: auto;
 }
 
-a {
+.two-column-list {
+  display: grid;
+  grid-template-columns: 1fr, 1fr;
+  gap: 30px;
+  margin: 28px 0;
+}
+
+.two-column-list section {
+  background: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 8px;
+  padding: 20px;
+}
+ 
+.two-column-list h3 {
+  color: #58a6ff;
+  margin-top: 0;
+}
+
+.two-column-list ul {
+  margin-bottom: 0;
+}
   color: #58a6ff;
 }
