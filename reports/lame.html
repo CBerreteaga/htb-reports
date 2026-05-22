@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <title>Lame - HTB Report</title>
+    <link rel="stylesheet" href="../style.css">
+  </head>
+  <body>
+    <header>
+      <h1>Lame</h1>
+      <p>Hack The Box Retired Machine Report</p>
+    </header>
+    <main class="report">
+      <h2>Machine Info</h2>
+      <p><strong>Difficulty: </strong> Easy</p>
+      <p><strong>Operating System: </strong>Linux</p>
+      <p><strong>Status:</strong> Retired</p>
+      <p><strong>Date Completed: </strong>TBD</p>
+
+      <h2>Summary</h2>
+      <p>
+        This machine focused on basic enumeration, identifying exposed services, researching vulnerable versions, and understanding common Linux attack paths.
+      </p>
+
+      <h2>Recon / Enumeration</h2>
+      <pre><code>nmap -sC -sV -oN nmap/lame.txt 10.10.10.X</code></pre>
+
+      <h2>Initial Foothold</h2>
+      <p>
+        Explain how initial access was dicovered. Keep the explanation professional and focused on methodology
+      </p>
+
+      <h2>Priviledge Escalation</h2>
+      <p> 
+        Explain how higher priveledges were obtained and what misconfiguration or vulnerability made it possible
+      </p>
+
+      <h2>Tools Used</h2>
+      <uL>
+        <li>Nmap</li>
+        <li>Searchsploit</li>
+        <li>SMBClient</li>
+        <li>Metasploit</li>
+      </uL>
+
+      <h2>Important Commands</h2>
+      <pre><code>nmap -sC -sV 10.10.10.X
+      smbclient -L //10.10.10.X
+      searchsploit service-name</code></pre>
+
+      <h2>Vulnerabilities / Misconfiguration</h2>
+      <p>
+        Describe the main weakness found on the machine
+      </p>
+
+      <h2>Defensive Takeaways</h2>
+      <p>
+        Explain how an organization could have prevented this issue
+      </p>
+
+      <h2>Lessons Learned</h2>
+      <p>
+        Explain what you personally learned from the machine
+      </p>
+
+      <p><a hreg="../index.htnk">Back to all reports</a></p>
+    </main>
+  </body>
+</html>
