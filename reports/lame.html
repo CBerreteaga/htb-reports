@@ -32,12 +32,14 @@
             <th>Service</th>
             <th>Version</th>
             <th>Notes</th>
+            <th>Vulnerabilities</th>
           </tr>
           <tr>
             <th>21</th>
             <th>ftp</th>
             <th>vsftpd 2.3.4</th>
             <th>Anonymous FTP login allowed</th>
+            <th>CVE-2011-2523 Backdoor Vulnerability</th>
           </tr>
           <tr>
             <th>22</th>
@@ -63,44 +65,61 @@
 
       <h2>Initial Foothold</h2>
       <p>
-        Explain how initial access was dicovered. Keep the explanation professional and focused on methodology
+        Attempted to utilize CVE-2011-2523 vulnerability to gain initial access to target system. Exploit was unsuccessful. Able to login 
+        Anonymously, but no files in directory. Enumerating the SMB shares revealed a shared named "tmp" with READ/WRITE permissions. 
+        Able to login using smbdclient anonmyously and found nothing of interest. 
       </p>
 
       <h2>Priviledge Escalation</h2>
       <p> 
-        Explain how higher priveledges were obtained and what misconfiguration or vulnerability made it possible
+        Attempted to gain escalate priviledges using CVE-2007-2447 
+        through metasploit. Successfully gained a shell as root. 
       </p>
 
       <h2>Tools Used</h2>
       <uL>
         <li>Nmap</li>
-        <li>Searchsploit</li>
-        <li>SMBClient</li>
         <li>Metasploit</li>
+        <li>smbdmap</li>
+        <li>smbdclient</li>
       </uL>
 
       <h2>Important Commands</h2>
       <pre>
         <code>
           nmap -sC -sV 10.10.10.X
-          smbclient -L //10.10.10.X
-          searchsploit service-name
+          msfconsole
+          smbdmap -H 10.129.3.150
+          smbdclient //10.129.3.150/tmp
         </code>
       </pre>
 
       <h2>Vulnerabilities / Misconfiguration</h2>
       <p>
-        Describe the main weakness found on the machine
+        Older Samba configurations allowed a system admin to define a script such 
+        as <code>username map script</code>. A script like this would normally be used
+        to help Samba translate usernames. The specific problem with older versions
+        of Samba was that it allowed user-controlled input into scripts in an unsafe way. 
+        An attacker could craft a username that included shell metacharacters, which
+        would then be executed by the system when the script was run. 
       </p>
 
       <h2>Defensive Takeaways</h2>
       <p>
-        Explain how an organization could have prevented this issue
+        Exploit can be prevented by updating Samba to a version that has patched 
+        the CVE-2007-2447 vulnerability. Additionally, ensuring that only necessary 
+        services are exposed and properly configured can reduce the attack surface 
+        and mitigate potential vulnerabilities. Another option is to disable the 
+        <code>username map script</code> if not required for business operations. Organizations
+        could also restrict access to portrs 139/445 via firewall rules. 
       </p>
 
       <h2>Lessons Learned</h2>
       <p>
-        Explain what you personally learned from the machine
+        Overall, this was a pretty basic machine. It introduced me to searching online 
+        for vulnerabilities based on service versions and using metasploit to exploit
+        a known vulnerability. I also learned about the importance of properly configuring
+        services and keeping them updated to prevent exploitation.
       </p>
 
       <p><a href="../index.html">Back to all reports</a></p>
