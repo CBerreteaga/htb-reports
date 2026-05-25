@@ -26,9 +26,11 @@
       </p>
 
       <h2>Recon / Enumeration</h2>
-      <pre><code>nmap -sC -sV -oN legacy 10.129.3.XX</code>></pre>
+      <pre><code>nmap -sC -sV -oN legacy 10.129.227.181</code>></pre>
 
-      <p>This scan found a total of XX TCP ports open on the remote host.</p>
+      <p>This scan found a total of 3 TCP ports open on the remote host.System is running on Windows XP (Windows 2000 LAN
+      Manager)
+      </p>
 
       <table class="report-table">
         <thead>
@@ -43,76 +45,49 @@
 
         <tbody>
           <tr>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-          </tr>
-
-          <tr>
-            <td></td>
-            <td></td>
-            <td></td>
+            <td>135</td>
+            <td>msrpc</td>
+            <td>Microsoft Windows RPC</td>
             <td></td>
             <td></td>
           </tr>
 
           <tr>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td>e</td>
-          </tr>
-
-          <tr>
-            <td></td>
-            <td></td>
-            <td></td>
+            <td>139</td>
+            <td>netbios-ssn</td>
+            <td>Microsoft Windows netbios-ssn</td>
             <td></td>
             <td></td>
           </tr>
 
           <tr>
+            <td>445</td>
+            <td>microsoft-ds</td>
+            <td>Windows XP microsoft-ds</td>
             <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-          </tr> 
-          
-          <tr>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-          </tr> 
-          
-          <tr>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-          </tr> 
+            <td>CVE-2008-4250</td>
+          </tr>
 
         </tbody>
       </table>
 
       <h2>Initial Foothold</h2>
       <p>
-     
+        After conducting initial recon, identified system had open 445 port (SMB) and running on Windows XP. Searched google for CVEs applicable to 
+        Windows XP and received a list back. Utilized Metasploit to search for applicable CVE modules and found CVE-2008-4250 listed.
+        Ran exploit and was able to get shell access as NT AUTHORITY\SYSTEM. With this level of privelege I was able to freely navigate
+        the machine and gather the relevant flags.
       </p>
 
       <h2>Privilege Escalation</h2>
       <p>
+        No priviledge escalation required
       </p>
 
       <h2>Tools Used</h2>
       <ul>
         <li>Nmap</li>
+        <li>google.com</li>
         <li>Metasploit</li>
       </ul>
 
@@ -124,6 +99,7 @@
 
       <h2>Vulnerabilities / Misconfiguration</h2>
       <p>
+        This machine was vulnerable to CVE-2008-4250.
       </p>
 
       <h2>Defensive Takeaways</h2>
