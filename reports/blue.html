@@ -17,7 +17,7 @@
       <p><strong>Difficulty:</strong> Easy</p>
       <p><strong>Operating System:</strong> Windows</p>
       <p><strong>Status:</strong> Retired</p>
-      <p><strong>Date Completed:</strong>TBD </p>
+      <p><strong>Date Completed:</strong>25 May 2026</p>
 
       <h2>Summary</h2>
       <p>
@@ -63,7 +63,7 @@
             <td>microsoft-ds</td>
             <td>Windows 7 Professional 7601 Service Pack 1</td>
             <td></td>
-            <td></td>
+            <td>CVE-2017-0144-EternalBlue</td>
           </tr>
 
           <tr>
@@ -118,31 +118,48 @@
 
       <h2>Initial Foothold</h2>
       <p>
+        Initial scans show that the machine is running Windows 7 SP1. A quick google search shows that this version is vulnerable to the WannaCry (MS17-010) vulnerability, or EternalBlue. Used Metasploit 
+        and searched MS17-010. Different exploits listed, but went with the EternalBlue exploit. Was able to achieve initial foothold as NT AUTHORITY\SYSTEM
       </p>
 
       <h2>Privilege Escalation</h2>
       <p>
+        Privilege Escalation was not required because I was able to get full access as NT AUTHORITY \ SYSTEM to flags. 
       </p>
 
       <h2>Tools Used</h2>
       <ul>
         <li>Nmap</li>
+        <li>Metasploit</li>
       </ul>
 
       <h2>Important Commands</h2>
-      <pre><code></code></pre>
+      <pre>
+        <code>nmap -sC -sV -oA blue 10.129.3.240</code>
+        <code>msfconsole</code>
+      </pre>
 
       <h2>Vulnerabilities / Misconfiguration</h2>
       <p>
+        Primary vulnerability for this system was the EternalBlue vulnerability applicable to Microsoft Windows 7 SP 1. 
+        EternalBlue is tracked as CVE-2017-0144 and targets a flaw in Microsofts SMBv1 protocol. It sends maliciously crafted
+        data packets to a vulnerable system, triggering a severe memory error. The flaw lies in the fact that when processing
+        certain SMB requests, Windows will try to convert FEA list structures into newer Windows NT formats. A miscalculation
+        occurs during the conversion, causing the system to allocate lkess memory than the data requires. This leads to an
+        overflow, which corrupts specific memory structures, granting attacker SYSTEM-level priveleges. 
       </p>
 
       <h2>Defensive Takeaways</h2>
       <p>
+        Organizations vulnerable to this exploit will need to ensure all endpoints and servers have Microsoft Security Bulletin MS17-010
+        installed.  They should also disable SMBv1, block all inbound SMB traffic at the perimeter firewall to precent external exploitation
+        and utilize internal firewalls and routing rules to segment critical infrastructure. 
       </p>
 
       <h2>Lessons Learned</h2>
       <p>
-
+        When running exploits, they may not work on the first attempt. Because EternalBlue is a kernnel heavy exploit, if it fails it could cause the SMB service to crash on the target machine, requiring a 
+        reset of target HTB machine. Exploit initially was not working because the LHOST was set to eth01 instead of tun0. 
       </p>
 
       <p><a href="../index.html">Back to all reports</a></p>
