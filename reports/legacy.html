@@ -17,7 +17,7 @@
       <p><strong>Difficulty:</strong> Easy</p>
       <p><strong>Operating System:</strong> Windows</p>
       <p><strong>Status:</strong> Retired</p>
-      <p><strong>Date Completed:</strong>TBD</p>
+      <p><strong>Date Completed:</strong>27 May 2026</p>
 
       <h2>Summary</h2>
       <p>
@@ -99,15 +99,27 @@
 
       <h2>Vulnerabilities / Misconfiguration</h2>
       <p>
-        This machine was vulnerable to CVE-2008-4250.
+        This machine was vulnerable to CVE-2008-4250. CVE-2008-4250 is also known as MS08-067. This is an RCE vulnerability in the Windows Server service. 
+        It is triggered by a crafted RPC request. On machines running Windows 2000, Windows XP, and Windows Server 2003 the explot could be
+        triggered without authentication. The vulnerability occured in the path canonicalization, which is when the service converts 
+        a messy path into a clean standard path. The Windows service did not safely handle crated paths, thus it could cause a buffer overflow, causing
+        an attacker's input to spill into memory where it was not supposed to go. If done successfully, Windows would execute the attacker's
+        code instead of just crashing. 
       </p>
 
       <h2>Defensive Takeaways</h2>
       <p>
+        Organizations should ensure that their patch management processess are solidified and that the service is maintained up to date. 
+        This vulnerability was patched by Microsoft in security update MS08-067. Organizations should also limit SMB and RPC exposure. Services
+        like SMB should noe be open to external users, and internal access should be restricted via firewalls, VLANs, and access control
+        rules. SOC should monitor for unsual SMB/RPC traffic, especially unexepcted connections to port 139 and 445. High volumes of
+        scanning or repeated connection attempts may indicate worm-like behavior or exploitation attempts. Older versions of Windows like Windows XP,
+        Windows Server 2003, and Windows 2000 should be removed, isolated, or heavily restricted because they no longer receive normal security support. 
       </p>
 
       <h2>Lessons Learned</h2>
       <p> 
+        Network segmentation is a key aspect of ensuring a compromise does not lead to a full network comprise. 
       </p>
 
       <p><a href="../index.html">Back to all reports</a></p>
