@@ -40,7 +40,19 @@
 nmap -sC -sV 10.129.95.225 -oA recon/full_nmap
       </code></pre>
 
-      <p>Initial scan revealed only HTTP (80) open on Apache 2.4.41 running on Ubuntu.</p>
+      <p>
+        Initial scan revealed only HTTP (80) open on Apache 2.4.41 running on Ubuntu.
+      </p>
+
+      <p>
+        FTP (port 21) was also tested for anonymous access, however the service was not reachable and connections were refused.
+        This indicated that FTP was either disabled or filtered, reducing the attack surface to HTTP only.
+      </p>
+
+      <pre><code>
+ftp 10.129.95.225
+ftp: Can't connect to '10.129.95.225:21': Connection refused
+      </code></pre>
 
       <table class="report-table">
         <thead>
@@ -54,6 +66,14 @@ nmap -sC -sV 10.129.95.225 -oA recon/full_nmap
         </thead>
 
         <tbody>
+          <tr>
+            <td>21</td>
+            <td>ftp</td>
+            <td>Unknown</td>
+            <td>Connection refused during enumeration</td>
+            <td>Not accessible</td>
+          </tr>
+
           <tr>
             <td>80</td>
             <td>http</td>
@@ -91,11 +111,13 @@ nmap -sC -sV 10.129.95.225 -oA recon/full_nmap
         <li>Metasploit</li>
         <li>Hashcat</li>
         <li>CeWL</li>
+        <li>FTP Client</li>
       </ul>
 
       <h2>Important Commands</h2>
       <pre><code>
 nmap -sC -sV 10.129.95.225 -oA recon/full_nmap
+ftp 10.129.95.225
 gobuster dir -u http://blunder.htb -w wordlist.txt -t 100
 hashcat -m 100 hugo_hash.txt rockyou.txt
 sudo -u#-1 /bin/bash
