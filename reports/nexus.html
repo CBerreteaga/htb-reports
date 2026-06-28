@@ -206,19 +206,7 @@
         </div>
       </section>
 
-<h2>Machine Summary</h2>
-<table class="report-table">
-<thead><tr>
-<th>Field</th>
-<th>Value</th>
-</tr></thead><tbody>
-<tr><td>Machine</td><td>Nexus</td></tr>
-<tr><td>Difficulty</td><td>Easy</td></tr>
-<tr><td>Operating System</td><td>Linux</td></tr>
-<tr><td>Start Date</td><td>27 June 2026</td></tr>
-<tr><td>End Date</td><td>28 June 2026</td></tr>
-<tr><td>Primary Attack Path</td><td>Web enumeration → credential disclosure in Gitea → authenticated Krayin CRM RCE → credential reuse → systemd timer path traversal → root SSH access</td></tr>
-</tbody></table>
+
 <h2>Executive Summary</h2>
 <p>Nexus was a Linux-based Hack The Box machine exposing SSH and HTTP. Initial enumeration identified a public-facing Nexus Energy Authority website, a billing application, and a self-hosted Gitea instance. The main attack chain began with virtual host discovery, followed by enumeration of the Gitea web application. A public repository contained a Krayin CRM Docker setup with an exposed <code>.env</code> file. Although the current <code>.env</code> no longer contained a database password, review of a previous commit revealed a reused password.</p>
 <p>The recovered password allowed authenticated access to the Krayin CRM billing portal as <code>j.matthew@nexus.htb</code>. After logging in, the application was identified as Krayin CRM 2.2.0, which was vulnerable to an authenticated unrestricted file upload leading to remote code execution. Exploitation provided a reverse shell as <code>www-data</code>.</p>
@@ -367,9 +355,9 @@ git:x:111:112:Git Version Control,,,:/home/git:/bin/bash</code></pre>
 <pre><code>ssh jones@10.129.234.54</code></pre>
 <p>Authentication succeeded, providing a stable user shell:</p>
 <pre><code>jones@nexus:~$</code></pre>
-<p>The user flag was then retrieved:</p>
-<pre><code>cat user.txt</code></pre>
-<pre><code>4f63f2e4f2f89db6022bb5fe05b7243a</code></pre>
+<p>User-level access was confirmed by reading <code>user.txt</code>. The flag value is redacted in this public report.</p>
+<pre><code>cat user.txt
+[REDACTED]</code></pre>
 <h2>Phase 7: Privilege Escalation</h2>
 <h3>Sudo Enumeration</h3>
 <p>The <code>jones</code> user did not have sudo privileges:</p>
@@ -469,9 +457,9 @@ git push -f origin main</code></pre>
 <pre><code>ssh -i /tmp/.nexus_root root@nexus.htb</code></pre>
 <p>Successful authentication resulted in a root shell:</p>
 <pre><code>root@nexus:~#</code></pre>
-<p>The root flag was retrieved:</p>
-<pre><code>cat /root/root.txt</code></pre>
-<pre><code>9cf1938941c01b11852dd4246d5a333a</code></pre>
+<p>Root-level access was confirmed by reading <code>/root/root.txt</code>. The flag value is redacted in this public report.</p>
+<pre><code>cat /root/root.txt
+[REDACTED]</code></pre>
 <h2>Phase 8: Lessons Learned</h2>
 <h3>1. Source Control History Matters</h3>
 <p>The current <code>.env</code> file did not contain a database password, but repository history did. Sensitive data committed to Git remains recoverable unless it is properly purged from history. Simply deleting a secret in a later commit is not sufficient.</p>
@@ -530,7 +518,7 @@ SSH access obtained as root</code></pre>
 <p>Nexus demonstrated a realistic multi-stage compromise involving web enumeration, source control leakage, credential reuse, authenticated remote code execution, local enumeration, and unsafe privileged automation. The most important lesson from this machine is that low-effort configuration mistakes, such as exposed repository history and reused passwords, can combine with application vulnerabilities and unsafe automation to produce full system compromise.</p>
       <footer>
         <p><a href="../index.html">Back to all reports</a></p>
-        <p>Report prepared as a professional HTB-style writeup. Report includes completed user and root flags for lab submission.</p>
+        <p>Report prepared as a professional HTB-style writeup. Flag values are redacted for public sharing.</p>
       </footer>
     </main>
   </body>
