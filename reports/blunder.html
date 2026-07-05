@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <title>Blunder - HTB Report</title>
+    <link rel="stylesheet" href="../style.css">
+  </head>
+
+  <body>
+    <header>
+      <h1>Blunder</h1>
+      <p>Hack The Box Retired Machine Report</p>
+    </header>
+
+    <main class="report">
+
+      <h2>Machine Info</h2>
+      <p><strong>Difficulty:</strong> Easy</p>
+      <p><strong>Operating System:</strong> Linux</p>
+      <p><strong>Status:</strong> Retired</p>
+      <p><strong>Date Started:</strong> 23 June 2026</p>
+      <p><strong>Date Completed:</strong> 23 June 2026</p>
+
+      <h2>Summary</h2>
+      <p>
+        Blunder is an Easy difficulty Linux machine featuring a Bludit CMS instance running on port 80. 
+        Initial enumeration revealed a web application built on Bludit, with an exposed admin panel and several
+        interesting files including robots.txt and todo.txt. Using directory brute forcing, we discovered user
+        references and the admin login page. The system was vulnerable to a brute-force protection bypass 
+        affecting Bludit 3.9.2, which allowed credential discovery for user fergus. After gaining access to the 
+        admin panel, we identified a known file upload and directory traversal vulnerability leading to remote code execution.
+        This resulted in a www-data shell. Further enumeration revealed password hashes in the Bludit database,
+        which were cracked to obtain credentials for user hugo. Finally, privilege escalation was achieved via a 
+        vulnerable sudo version (CVE-2019-14287), resulting in root access.
+      </p>
+
+      <h2>Recon / Enumeration</h2>
+
+      <pre><code>
+nmap -sC -sV 10.129.95.225 -oA recon/full_nmap
+      </code></pre>
+
+      <p>
+        Initial scan revealed only HTTP (80) open on Apache 2.4.41 running on Ubuntu.
+      </p>
+
+      <p>
+        FTP (port 21) was also tested for anonymous access, however the service was not reachable and connections were refused.
+        This indicated that FTP was either disabled or filtered, reducing the attack surface to HTTP only.
+      </p>
+
+      <pre><code>
+ftp 10.129.95.225
+ftp: Can't connect to '10.129.95.225:21': Connection refused
+      </code></pre>
+
+      <table class="report-table">
+        <thead>
+          <tr>
+            <th>Port</th>
+            <th>Service</th>
+            <th>Version</th>
+            <th>Notes</th>
+            <th>Vulnerabilities</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr>
+            <td>21</td>
+            <td>ftp</td>
+            <td>Unknown</td>
+            <td>Connection refused during enumeration</td>
+            <td>Not accessible</td>
+          </tr>
+
+          <tr>
+            <td>80</td>
+            <td>http</td>
+            <td>Apache 2.4.41 (Ubuntu)</td>
+            <td>Bludit CMS hosted web application</td>
+            <td>Bludit 3.9.2 brute-force bypass (CVE-2019-17240)</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2>Initial Foothold</h2>
+      <p>
+        Directory brute forcing with Gobuster revealed /admin, /todo.txt, and several hidden resources. 
+        The /todo.txt file hinted at a user named fergus. The login page was protected by brute-force mitigation,
+        but this was bypassed using a known Bludit vulnerability (CVE-2019-17240) involving forged X-Forwarded-For headers.
+        A CeWL-generated wordlist was used to successfully brute-force credentials, granting access to the admin panel.
+        A known Bludit file upload and directory traversal vulnerability was then exploited to achieve remote code execution,
+        resulting in a www-data shell.
+      </p>
+
+      <h2>Privilege Escalation</h2>
+      <p>
+        Local enumeration revealed a password hash for user hugo in the Bludit database. The hash was initially not crackable
+        with rockyou.txt, but was successfully recovered using external hash lookup services, revealing the password.
+        After switching to user hugo, sudo privileges were inspected and revealed an outdated sudo version (1.8.25p1).
+        This version was vulnerable to CVE-2019-14287, allowing privilege escalation via sudo -u#-1, which bypasses restrictions
+        and spawns a root shell.
+      </p>
+
+      <h2>Tools Used</h2>
+      <ul>
+        <li>Nmap</li>
+        <li>Gobuster</li>
+        <li>WhatWeb</li>
+        <li>Metasploit</li>
+        <li>Hashcat</li>
+        <li>CeWL</li>
+        <li>FTP Client</li>
+      </ul>
+
+      <h2>Important Commands</h2>
+      <pre><code>
+nmap -sC -sV 10.129.95.225 -oA recon/full_nmap
+ftp 10.129.95.225
+gobuster dir -u http://blunder.htb -w wordlist.txt -t 100
+hashcat -m 100 hugo_hash.txt rockyou.txt
+sudo -u#-1 /bin/bash
+      </code></pre>
+
+      <h2>Vulnerabilities / Misconfigurations</h2>
+      <p>
+        The primary vulnerabilities included Bludit CMS version 3.9.2 running with known authentication bypass issues,
+        insecure file upload functionality, and outdated sudo (1.8.25p1) vulnerable to CVE-2019-14287. Combined, these
+        allowed a full chain from unauthenticated access to root compromise.
+      </p>
+
+      <h2>Defensive Takeaways</h2>
+      <p>
+        Organizations should ensure CMS platforms are regularly updated, disable or restrict file upload functionality,
+        implement proper brute-force protections that cannot be bypassed via header spoofing, and keep sudo updated to
+        patched versions. Proper logging and intrusion detection would also help detect exploitation attempts.
+      </p>
+
+      <h2>Lessons Learned</h2>
+      <p>
+        This machine demonstrates the importance of full attack surface enumeration. Small findings such as robots.txt,
+        todo files, and CMS version leaks can chain into full system compromise. It also highlights how multiple small
+        vulnerabilities (information disclosure, weak auth protection, and outdated binaries) combine into a full exploit chain.
+      </p>
+
+      <p><a href="../index.html">Back to all reports</a></p>
+    </main>
+  </body>
+</html>

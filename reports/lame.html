@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <title>Lame - HTB Report</title>
+    <link rel="stylesheet" href="../style.css">
+  </head>
+
+  <body>
+    <header>
+      <h1>Lame</h1>
+      <p>Hack The Box Retired Machine Report</p>
+    </header>
+
+    <main class="report">
+      <h2>Machine Info</h2>
+      <p><strong>Difficulty:</strong> Easy</p>
+      <p><strong>Operating System:</strong> Linux</p>
+      <p><strong>Status:</strong> Retired</p>
+      <p><strong>Date Completed:</strong>24 May 2026</p>
+
+      <h2>Summary</h2>
+      <p>
+        This machine focused on basic enumeration, identifying exposed services,
+        researching vulnerable versions, and understanding common Linux attack paths.
+      </p>
+
+      <h2>Recon / Enumeration</h2>
+      <pre><code>nmap -sC -sV -oN lame.txt 10.129.2.139</code></pre>
+
+      <p>This scan found a total of 4 TCP ports open on the remote host.</p>
+
+      <table class="report-table">
+        <thead>
+          <tr>
+            <th>Port</th>
+            <th>Service</th>
+            <th>Version</th>
+            <th>Notes</th>
+            <th>Vulnerabilities</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr>
+            <td>21</td>
+            <td>FTP</td>
+            <td>vsftpd 2.3.4</td>
+            <td>Anonymous FTP login allowed</td>
+            <td>CVE-2011-2523 Backdoor Vulnerability</td>
+          </tr>
+
+          <tr>
+            <td>22</td>
+            <td>SSH</td>
+            <td>OpenSSH 4.7p1</td>
+            <td>Remote login service</td>
+            <td>N/A</td>
+          </tr>
+
+          <tr>
+            <td>139</td>
+            <td>SMB</td>
+            <td>Samba 3.X - 4.X</td>
+            <td>NetBIOS/SMB service</td>
+            <td>CVE-2007-2447 Command Injection</td>
+          </tr>
+
+          <tr>
+            <td>445</td>
+            <td>SMB</td>
+            <td>Samba 3.0.20-Debian</td>
+            <td>SMB file sharing service</td>
+            <td>CVE-2007-2447 Command Injection</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2>Initial Foothold</h2>
+      <p>
+        I first attempted to use CVE-2011-2523 against the vsftpd service, but
+        the exploit was unsuccessful. Anonymous FTP login was allowed, but there
+        were no useful files in the directory.
+      </p>
+
+      <p>
+        After enumerating SMB, I found a share named <code>tmp</code> with
+        read/write access. I was able to connect anonymously using
+        <code>smbclient</code>, but did not find anything useful inside the share.
+      </p>
+
+      <h2>Privilege Escalation</h2>
+      <p>
+        I used Metasploit to exploit CVE-2007-2447 against the vulnerable Samba
+        service. The exploit successfully provided a shell with root privileges.
+      </p>
+
+      <h2>Tools Used</h2>
+      <ul>
+        <li>Nmap</li>
+        <li>Metasploit</li>
+        <li>smbmap</li>
+        <li>smbclient</li>
+      </ul>
+
+      <h2>Important Commands</h2>
+      <pre><code>nmap -sC -sV -oN lame.txt 10.129.2.139
+smbmap -H 10.129.2.139
+smbclient //10.129.2.139/tmp
+msfconsole</code></pre>
+
+      <h2>Vulnerabilities / Misconfiguration</h2>
+      <p>
+        Older Samba configurations allowed a system admin to define a script such
+        as <code>username map script</code>. A script like this would normally be
+        used to help Samba translate usernames. The specific problem with older
+        versions of Samba was that user-controlled input could be passed into the
+        script in an unsafe way.
+      </p>
+
+      <p>
+        An attacker could craft a username that included shell metacharacters.
+        When Samba passed that username to the script, the system could interpret
+        part of the username as a command. This made it possible to execute
+        commands on the target system through the vulnerable Samba service.
+      </p>
+
+      <h2>Defensive Takeaways</h2>
+      <p>
+        This issue can be prevented by updating Samba to a version that has
+        patched the CVE-2007-2447 vulnerability. Additionally, only necessary
+        services should be exposed, and SMB should not be accessible from
+        untrusted networks.
+      </p>
+
+      <p>
+        Another mitigation is to disable the <code>username map script</code>
+        option if it is not required for business operations. Organizations
+        should also restrict access to ports 139 and 445 using firewall rules.
+      </p>
+
+      <h2>Lessons Learned</h2>
+      <p>
+        Overall, this was a pretty basic machine. It introduced me to searching
+        online for vulnerabilities based on service versions and using Metasploit
+        to exploit a known vulnerability. I also learned about the importance of
+        properly configuring services and keeping them updated to prevent
+        exploitation.
+      </p>
+
+      <p><a href="../index.html">Back to all reports</a></p>
+    </main>
+  </body>
+</html>

