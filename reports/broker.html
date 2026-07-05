@@ -1,20 +1,38 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Broker - Hack The Box Report</title>
-  <link rel="stylesheet" href="../style.css" />
-</head>
-<body>
-  <header>
-    <h1>Broker</h1>
-    <p>Hack The Box machine report covering enumeration, Apache ActiveMQ exploitation, and privilege escalation through sudo nginx.</p>
-  </header>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Broker - HTB Report</title>
+    <link rel="stylesheet" href="../style.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <nav class="nav">
+        <a class="brand" href="../index.html">HTB Reports</a>
+        <a class="nav-pill" href="../index.html">All reports</a>
+      </nav>
+    </header>
 
-  <main>
+    <section class="hero">
+      <div class="hero-card">
+        <p class="eyebrow">Hack The Box Walkthrough</p>
+        <h1 class="main-title">Broker</h1>
+        <p class="subtitle">Hack The Box retired machine report</p>
+      </div>
+    </section>
+
+    <div class="layout">
+      <aside>
+        <h2>Contents</h2>
+        <div class="toc"><a href="#machine-information">Machine Information</a><a href="#summary">Summary</a><a href="#reconnaissance">Reconnaissance</a><a href="#initial-access">Initial Access</a><a href="#user-flag">User Flag</a><a href="#privilege-escalation-enumeration">Privilege Escalation Enumeration</a><a href="#privilege-escalation-with-nginx">Privilege Escalation with nginx</a><a href="#cleanup">Cleanup</a><a href="#attack-path">Attack Path</a><a href="#lessons-learned">Lessons Learned</a><a href="#remediation">Remediation</a><a href="#conclusion">Conclusion</a></div>
+      </aside>
+
+      <main class="report-shell">
+        <div id="overview"></div>
+        
     <section>
-      <h2>Machine Information</h2>
+      <h2 id="machine-information">Machine Information</h2>
       <table>
         <tr><th>Machine</th><td>Broker</td></tr>
         <tr><th>Platform</th><td>Hack The Box</td></tr>
@@ -27,7 +45,7 @@
     </section>
 
     <section>
-      <h2>Summary</h2>
+      <h2 id="summary">Summary</h2>
       <p>
         Broker exposed several messaging-related services, including Apache ActiveMQ on port 61616.
         Nmap identified the OpenWire transport as ActiveMQ 5.15.15, which is vulnerable to
@@ -43,7 +61,7 @@
     </section>
 
     <section>
-      <h2>Reconnaissance</h2>
+      <h2 id="reconnaissance">Reconnaissance</h2>
       <p>I started with a full TCP port scan to identify all open services.</p>
 
       <pre><code>nmap -p- -oN Files/nmap_all_simple 10.129.230.87</code></pre>
@@ -81,7 +99,7 @@
     </section>
 
     <section>
-      <h2>Initial Access</h2>
+      <h2 id="initial-access">Initial Access</h2>
       <p>
         Apache ActiveMQ 5.15.15 is vulnerable to CVE-2023-46604, a remote code execution
         vulnerability affecting the OpenWire protocol. Since the target exposed ActiveMQ on
@@ -109,7 +127,7 @@ activemq</code></pre>
     </section>
 
     <section>
-      <h2>User Flag</h2>
+      <h2 id="user-flag">User Flag</h2>
       <p>
         The user flag was located in the <code>activemq</code> home directory.
       </p>
@@ -121,7 +139,7 @@ cat user.txt</code></pre>
     </section>
 
     <section>
-      <h2>Privilege Escalation Enumeration</h2>
+      <h2 id="privilege-escalation-enumeration">Privilege Escalation Enumeration</h2>
       <p>
         After obtaining a shell, I checked sudo permissions for the <code>activemq</code> user.
       </p>
@@ -146,7 +164,7 @@ User activemq may run the following commands on broker:
     </section>
 
     <section>
-      <h2>Privilege Escalation with nginx</h2>
+      <h2 id="privilege-escalation-with-nginx">Privilege Escalation with nginx</h2>
       <p>
         I created a custom nginx configuration in <code>/tmp</code>. The important part is
         <code>root /;</code>, which tells nginx to serve files starting from the top of the filesystem.
@@ -191,7 +209,7 @@ EOF</code></pre>
     </section>
 
     <section>
-      <h2>Cleanup</h2>
+      <h2 id="cleanup">Cleanup</h2>
       <p>After collecting the flag, I stopped the temporary nginx instance and removed the custom config file.</p>
 
       <pre><code>sudo /usr/sbin/nginx -s stop -c /tmp/nginx-root.conf
@@ -199,7 +217,7 @@ rm /tmp/nginx-root.conf</code></pre>
     </section>
 
     <section>
-      <h2>Attack Path</h2>
+      <h2 id="attack-path">Attack Path</h2>
       <pre><code>1. Enumerated open ports with Nmap.
 2. Identified Apache ActiveMQ 5.15.15 on port 61616.
 3. Exploited CVE-2023-46604 using Metasploit.
@@ -210,7 +228,7 @@ rm /tmp/nginx-root.conf</code></pre>
     </section>
 
     <section>
-      <h2>Lessons Learned</h2>
+      <h2 id="lessons-learned">Lessons Learned</h2>
       <ul>
         <li>Version detection is critical because the ActiveMQ version directly pointed to a known RCE vulnerability.</li>
         <li>Messaging services such as ActiveMQ, STOMP, MQTT, and AMQP should not be unnecessarily exposed.</li>
@@ -221,7 +239,7 @@ rm /tmp/nginx-root.conf</code></pre>
     </section>
 
     <section>
-      <h2>Remediation</h2>
+      <h2 id="remediation">Remediation</h2>
       <ul>
         <li>Upgrade Apache ActiveMQ to a patched version that is not vulnerable to CVE-2023-46604.</li>
         <li>Restrict access to ActiveMQ management and transport ports using firewall rules or VPN-only access.</li>
@@ -232,13 +250,19 @@ rm /tmp/nginx-root.conf</code></pre>
     </section>
 
     <section>
-      <h2>Conclusion</h2>
+      <h2 id="conclusion">Conclusion</h2>
       <p>
         Broker demonstrated how an exposed vulnerable service can lead to initial access and how a simple
         sudo misconfiguration can allow privilege escalation. The ActiveMQ service provided the foothold,
         while the ability to run nginx as root allowed privileged file reads and access to the root flag.
       </p>
     </section>
-  </main>
-</body>
+  
+        <footer class="report-footer">
+          <a class="back-link" href="../index.html">Back to all reports</a>
+          <p class="footer-note">HTB report • aligned with the Blocky layout</p>
+        </footer>
+      </main>
+    </div>
+  </body>
 </html>

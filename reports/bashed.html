@@ -1,26 +1,44 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <meta charset="UTF-8">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Bashed - HTB Report</title>
-    <link rel="stylesheet" href="../style.css">
+    <link rel="stylesheet" href="../style.css" />
   </head>
-
   <body>
-    <header>
-      <h1>Bashed</h1>
-      <p>Hack The Box Retired Machine Report</p>
+    <header class="site-header">
+      <nav class="nav">
+        <a class="brand" href="../index.html">HTB Reports</a>
+        <a class="nav-pill" href="../index.html">All reports</a>
+      </nav>
     </header>
 
-    <main class="report">
-      <h2>Machine Info</h2>
+    <section class="hero">
+      <div class="hero-card">
+        <p class="eyebrow">Hack The Box Walkthrough</p>
+        <h1 class="main-title">Bashed</h1>
+        <p class="subtitle">Hack The Box retired machine report</p>
+      </div>
+    </section>
+
+    <div class="layout">
+      <aside>
+        <h2>Contents</h2>
+        <div class="toc"><a href="#machine-info">Machine Info</a><a href="#summary">Summary</a><a href="#recon-enumeration">Recon / Enumeration</a><a class="toc-sub" href="#nmap-scan">Nmap Scan</a><a class="toc-sub" href="#full-port-scan">Full Port Scan</a><a class="toc-sub" href="#open-ports">Open Ports</a><a href="#web-enumeration">Web Enumeration</a><a href="#initial-foothold">Initial Foothold</a><a href="#privilege-escalation">Privilege Escalation</a><a class="toc-sub" href="#local-enumeration">Local Enumeration</a><a class="toc-sub" href="#root-shell">Root Shell</a><a href="#flags">Flags</a><a href="#tools-used">Tools Used</a><a href="#important-commands">Important Commands</a><a href="#vulnerabilities-misconfigurations">Vulnerabilities / Misconfigurations</a><a href="#defensive-takeaways">Defensive Takeaways</a><a href="#lessons-learned">Lessons Learned</a></div>
+      </aside>
+
+      <main class="report-shell">
+        <div id="overview"></div>
+        
+      <h2 id="machine-info">Machine Info</h2>
       <p><strong>Difficulty:</strong> Easy</p>
       <p><strong>Operating System:</strong> Linux</p>
       <p><strong>Status:</strong> Retired</p>
       <p><strong>Date Started:</strong> 20 June 2026</p>
       <p><strong>Date Completed:</strong> 21 June 2026</p>
 
-      <h2>Summary</h2>
+      <h2 id="summary">Summary</h2>
       <p>
         Bashed is an easy Linux machine that focuses on web enumeration, locating exposed development files,
         gaining initial access through a web shell, and escalating privileges by abusing sudo permissions and
@@ -34,15 +52,15 @@
         enumeration showed a writable script in <code>/scripts</code>, which was used to obtain root access.
       </p>
 
-      <h2>Recon / Enumeration</h2>
+      <h2 id="recon-enumeration">Recon / Enumeration</h2>
 
-      <h3>Nmap Scan</h3>
+      <h3 id="nmap-scan">Nmap Scan</h3>
       <pre><code>nmap -sC -sV -oN nmap/initial.txt 10.129.18.117</code></pre>
 
-      <h3>Full Port Scan</h3>
+      <h3 id="full-port-scan">Full Port Scan</h3>
       <pre><code>nmap -p- --min-rate 5000 -oN nmap/full.txt 10.129.18.117</code></pre>
 
-      <h3>Open Ports</h3>
+      <h3 id="open-ports">Open Ports</h3>
       <table class="report-table">
         <thead>
           <tr>
@@ -63,7 +81,7 @@
         </tbody>
       </table>
 
-      <h2>Web Enumeration</h2>
+      <h2 id="web-enumeration">Web Enumeration</h2>
       <p>
         Since only port 80 was open, I focused my enumeration on the web server. Visiting the site showed
         a development-themed page titled <strong>Arrexel's Development Site</strong>. I then used web
@@ -91,7 +109,7 @@ gobuster dir -u http://10.129.18.117 -w /usr/share/seclists/Discovery/Web-Conten
         which allowed command execution on the target as the <code>www-data</code> user.
       </p>
 
-      <h2>Initial Foothold</h2>
+      <h2 id="initial-foothold">Initial Foothold</h2>
       <p>
         Initial access was gained through the exposed PHP shell located in the <code>/dev</code> directory.
         The shell executed commands as the Apache web server user, <code>www-data</code>.
@@ -111,9 +129,9 @@ gobuster dir -u http://10.129.18.117 -w /usr/share/seclists/Discovery/Web-Conten
       <pre><code>python3 -c 'import pty; pty.spawn("/bin/bash")'
 export TERM=xterm</code></pre>
 
-      <h2>Privilege Escalation</h2>
+      <h2 id="privilege-escalation">Privilege Escalation</h2>
 
-      <h3>Local Enumeration</h3>
+      <h3 id="local-enumeration">Local Enumeration</h3>
       <p>
         I started privilege escalation by checking the current user, group membership, hostname,
         kernel version, sudo permissions, and SUID binaries.
@@ -145,7 +163,7 @@ find / -perm -4000 -type f 2&gt;/dev/null</code></pre>
         escalation to root.
       </p>
 
-      <h3>Root Shell</h3>
+      <h3 id="root-shell">Root Shell</h3>
       <p>
         I modified the writable Python script to connect back to my attacking machine. Before editing the
         script, I started a Netcat listener on my Parrot machine.
@@ -167,11 +185,11 @@ find / -perm -4000 -type f 2&gt;/dev/null</code></pre>
       <pre><code>whoami
 id</code></pre>
 
-      <h2>Flags</h2>
+      <h2 id="flags">Flags</h2>
       <pre><code>user.txt: REDACTED
 root.txt: REDACTED</code></pre>
 
-      <h2>Tools Used</h2>
+      <h2 id="tools-used">Tools Used</h2>
       <ul>
         <li>Nmap</li>
         <li>WhatWeb</li>
@@ -181,7 +199,7 @@ root.txt: REDACTED</code></pre>
         <li>Linux privilege escalation enumeration commands</li>
       </ul>
 
-      <h2>Important Commands</h2>
+      <h2 id="important-commands">Important Commands</h2>
       <pre><code>nmap -sC -sV -oN nmap/initial.txt 10.129.18.117
 nmap -p- --min-rate 5000 -oN nmap/full.txt 10.129.18.117
 whatweb http://10.129.18.117
@@ -191,7 +209,7 @@ sudo -u scriptmanager /bin/bash
 ls -la /scripts
 nc -lvnp 4445</code></pre>
 
-      <h2>Vulnerabilities / Misconfigurations</h2>
+      <h2 id="vulnerabilities-misconfigurations">Vulnerabilities / Misconfigurations</h2>
       <p>
         The primary issue on this machine was not a traditional CVE, but a combination of poor security
         practices and misconfigurations. The web server exposed a development directory containing a PHP
@@ -201,7 +219,7 @@ nc -lvnp 4445</code></pre>
         privileged process, allowing root compromise.
       </p>
 
-      <h2>Defensive Takeaways</h2>
+      <h2 id="defensive-takeaways">Defensive Takeaways</h2>
       <p>
         Development tools, web shells, and test scripts should never be left exposed on a production web
         server. Web directories should be reviewed regularly to ensure sensitive files are not publicly
@@ -210,7 +228,7 @@ nc -lvnp 4445</code></pre>
         as root should never execute files that lower-privileged users can modify.
       </p>
 
-      <h2>Lessons Learned</h2>
+      <h2 id="lessons-learned">Lessons Learned</h2>
       <p>
         Bashed reinforced the importance of thorough web enumeration. A single exposed development directory
         led directly to initial access. This machine also showed why checking <code>sudo -l</code> is one of
@@ -220,6 +238,12 @@ nc -lvnp 4445</code></pre>
       </p>
 
       <p><a href="../index.html">Back to all reports</a></p>
-    </main>
+    
+        <footer class="report-footer">
+          <a class="back-link" href="../index.html">Back to all reports</a>
+          <p class="footer-note">HTB report • aligned with the Blocky layout</p>
+        </footer>
+      </main>
+    </div>
   </body>
 </html>

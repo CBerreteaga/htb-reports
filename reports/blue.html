@@ -1,31 +1,49 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <meta charset="UTF-8">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Blue - HTB Report</title>
-    <link rel="stylesheet" href="../style.css">
+    <link rel="stylesheet" href="../style.css" />
   </head>
-
   <body>
-    <header>
-      <h1>Blue</h1></h1>
-      <p>Hack The Box Retired Machine Report</p>
+    <header class="site-header">
+      <nav class="nav">
+        <a class="brand" href="../index.html">HTB Reports</a>
+        <a class="nav-pill" href="../index.html">All reports</a>
+      </nav>
     </header>
 
-    <main class="report">
-      <h2>Machine Info</h2>
+    <section class="hero">
+      <div class="hero-card">
+        <p class="eyebrow">Hack The Box Walkthrough</p>
+        <h1 class="main-title">Blue</h1>
+        <p class="subtitle">Hack The Box retired machine report</p>
+      </div>
+    </section>
+
+    <div class="layout">
+      <aside>
+        <h2>Contents</h2>
+        <div class="toc"><a href="#machine-info">Machine Info</a><a href="#summary">Summary</a><a href="#recon-enumeration">Recon / Enumeration</a><a href="#initial-foothold">Initial Foothold</a><a href="#privilege-escalation">Privilege Escalation</a><a href="#tools-used">Tools Used</a><a href="#important-commands">Important Commands</a><a href="#vulnerabilities-misconfiguration">Vulnerabilities / Misconfiguration</a><a href="#defensive-takeaways">Defensive Takeaways</a><a href="#lessons-learned">Lessons Learned</a></div>
+      </aside>
+
+      <main class="report-shell">
+        <div id="overview"></div>
+        
+      <h2 id="machine-info">Machine Info</h2>
       <p><strong>Difficulty:</strong> Easy</p>
       <p><strong>Operating System:</strong> Windows</p>
       <p><strong>Status:</strong> Retired</p>
       <p><strong>Date Completed:</strong>25 May 2026</p>
 
-      <h2>Summary</h2>
+      <h2 id="summary">Summary</h2>
       <p>
         Blue, while possibly the most simple machine on Hack The Box, demonstrates the severity of the EternalBlue exploit, 
         which has been used in multiple large-scale ransomware and crypto-mining attacks since it was leaked publicly.
       </p>
 
-      <h2>Recon / Enumeration</h2>
+      <h2 id="recon-enumeration">Recon / Enumeration</h2>
       <pre><code>nmap -sC -sV -oN blue 10.129.3.217</code></pre>
 
       <p>This scan found a total of 9 TCP ports open on the remote host.</p>
@@ -116,30 +134,30 @@
         </tbody>
       </table>
 
-      <h2>Initial Foothold</h2>
+      <h2 id="initial-foothold">Initial Foothold</h2>
       <p>
         Initial scans show that the machine is running Windows 7 SP1. A quick google search shows that this version is vulnerable to the WannaCry (MS17-010) vulnerability, or EternalBlue. Used Metasploit 
         and searched MS17-010. Different exploits listed, but went with the EternalBlue exploit. Was able to achieve initial foothold as NT AUTHORITY\SYSTEM
       </p>
 
-      <h2>Privilege Escalation</h2>
+      <h2 id="privilege-escalation">Privilege Escalation</h2>
       <p>
         Privilege Escalation was not required because I was able to get full access as NT AUTHORITY \ SYSTEM to flags. 
       </p>
 
-      <h2>Tools Used</h2>
+      <h2 id="tools-used">Tools Used</h2>
       <ul>
         <li>Nmap</li>
         <li>Metasploit</li>
       </ul>
 
-      <h2>Important Commands</h2>
+      <h2 id="important-commands">Important Commands</h2>
       <pre>
         <code>nmap -sC -sV -oA blue 10.129.3.240</code>
         <code>msfconsole</code>
       </pre>
 
-      <h2>Vulnerabilities / Misconfiguration</h2>
+      <h2 id="vulnerabilities-misconfiguration">Vulnerabilities / Misconfiguration</h2>
       <p>
         Primary vulnerability for this system was the EternalBlue vulnerability applicable to Microsoft Windows 7 SP 1. 
         EternalBlue is tracked as CVE-2017-0144 and targets a flaw in Microsofts SMBv1 protocol. It sends maliciously crafted
@@ -149,20 +167,26 @@
         overflow, which corrupts specific memory structures, granting attacker SYSTEM-level priveleges. 
       </p>
 
-      <h2>Defensive Takeaways</h2>
+      <h2 id="defensive-takeaways">Defensive Takeaways</h2>
       <p>
         Organizations vulnerable to this exploit will need to ensure all endpoints and servers have Microsoft Security Bulletin MS17-010
         installed.  They should also disable SMBv1, block all inbound SMB traffic at the perimeter firewall to precent external exploitation
         and utilize internal firewalls and routing rules to segment critical infrastructure. 
       </p>
 
-      <h2>Lessons Learned</h2>
+      <h2 id="lessons-learned">Lessons Learned</h2>
       <p>
         When running exploits, they may not work on the first attempt. Because EternalBlue is a kernnel heavy exploit, if it fails it could cause the SMB service to crash on the target machine, requiring a 
         reset of target HTB machine. Exploit initially was not working because the LHOST was set to eth01 instead of tun0. 
       </p>
 
       <p><a href="../index.html">Back to all reports</a></p>
-    </main>
+    
+        <footer class="report-footer">
+          <a class="back-link" href="../index.html">Back to all reports</a>
+          <p class="footer-note">HTB report • aligned with the Blocky layout</p>
+        </footer>
+      </main>
+    </div>
   </body>
 </html>

@@ -1,25 +1,43 @@
 <!DOCTYPE html>
-
 <html lang="en">
   <head>
-    <meta charset="UTF-8">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Connected - HTB Report</title>
-    <link rel="stylesheet" href="../style.css">
+    <link rel="stylesheet" href="../style.css" />
   </head>
-
   <body>
-    <header>
-      <h1>Connected</h1>
-      <p>Hack The Box Machine Report</p>
+    <header class="site-header">
+      <nav class="nav">
+        <a class="brand" href="../index.html">HTB Reports</a>
+        <a class="nav-pill" href="../index.html">All reports</a>
+      </nav>
     </header>
-<main class="report">
-  <h2>Machine Info</h2>
+
+    <section class="hero">
+      <div class="hero-card">
+        <p class="eyebrow">Hack The Box Walkthrough</p>
+        <h1 class="main-title">Connected</h1>
+        <p class="subtitle">Hack The Box retired machine report</p>
+      </div>
+    </section>
+
+    <div class="layout">
+      <aside>
+        <h2>Contents</h2>
+        <div class="toc"><a href="#machine-info">Machine Info</a><a href="#summary">Summary</a><a href="#recon-enumeration">Recon / Enumeration</a><a href="#http-enumeration">HTTP Enumeration</a><a href="#directory-enumeration">Directory Enumeration</a><a href="#vulnerability-identification">Vulnerability Identification</a><a href="#initial-foothold">Initial Foothold</a><a href="#local-enumeration">Local Enumeration</a><a href="#asterisk-manager-interface">Asterisk Manager Interface</a><a href="#privilege-escalation">Privilege Escalation</a><a class="toc-sub" href="#root-exploitation-steps">Root Exploitation Steps</a><a href="#tools-used">Tools Used</a><a href="#important-commands">Important Commands</a><a href="#vulnerabilities-misconfiguration">Vulnerabilities / Misconfiguration</a><a href="#defensive-takeaways">Defensive Takeaways</a><a href="#lessons-learned">Lessons Learned</a></div>
+      </aside>
+
+      <main class="report-shell">
+        <div id="overview"></div>
+        
+  <h2 id="machine-info">Machine Info</h2>
   <p><strong>Difficulty:</strong> Easy to Medium</p>
   <p><strong>Operating System:</strong> Linux</p>
   <p><strong>Status:</strong> Active / HTB Machine</p>
   <p><strong>Date Completed:</strong> 15 June 2026</p>
 
-  <h2>Summary</h2>
+  <h2 id="summary">Summary</h2>
   <p>
     Connected is a Linux machine that focuses on web enumeration, identifying a vulnerable FreePBX instance,
     gaining an initial foothold through a public FreePBX vulnerability, and escalating privileges by abusing
@@ -35,7 +53,7 @@
     escalate to root.
   </p>
 
-  <h2>Recon / Enumeration</h2>
+  <h2 id="recon-enumeration">Recon / Enumeration</h2>
   <pre><code>nmap 10.129.15.209</code></pre>
 
   <p>The initial scan found three open TCP ports.</p>
@@ -78,7 +96,7 @@
     </tbody>
   </table>
 
-  <h2>HTTP Enumeration</h2>
+  <h2 id="http-enumeration">HTTP Enumeration</h2>
   <p>
     Port 80 redirected to the FreePBX web interface. After adding the hostname to <code>/etc/hosts</code>,
     the web page loaded correctly.
@@ -103,7 +121,7 @@ X-Powered-By: PHP/7.4.16
 Location: /admin</code></pre>
 
 
-  <h2>Directory Enumeration</h2>
+  <h2 id="directory-enumeration">Directory Enumeration</h2>
   <p>
     I used Gobuster to identify useful paths on the web server.
   </p>
@@ -130,7 +148,7 @@ Location: /admin</code></pre>
 
   <pre><code>FreePBX 16.0.40.7</code></pre>
 
-  <h2>Vulnerability Identification</h2>
+  <h2 id="vulnerability-identification">Vulnerability Identification</h2>
   <p>
     FreePBX 16.0.40.7 was below the patched FreePBX 16 endpoint version and matched the affected range for
     CVE-2025-57819. This vulnerability involved unauthenticated SQL injection leading to administrator access
@@ -143,7 +161,7 @@ Location: /admin</code></pre>
     proof of concept for CVE-2025-57819.
   </p>
 
-  <h2>Initial Foothold</h2>
+  <h2 id="initial-foothold">Initial Foothold</h2>
   <p>
     The exploit created an admin user through SQL injection, authenticated to the FreePBX admin panel, uploaded
     or created a webshell, and then triggered a reverse shell.
@@ -176,7 +194,7 @@ hostname: connected</code></pre>
 
   <pre><code>cat /home/asterisk/user.txt</code></pre>
 
-  <h2>Local Enumeration</h2>
+  <h2 id="local-enumeration">Local Enumeration</h2>
   <p>
     After gaining access as <code>asterisk</code>, I transferred and ran LinPEAS to identify privilege escalation
     paths.
@@ -203,7 +221,7 @@ bash linpeas.sh | tee linpeas.out</code></pre>
     <li>FreePBX module hooks were processed by <code>/usr/bin/sysadmin_manager</code>.</li>
   </ul>
 
-  <h2>Asterisk Manager Interface</h2>
+  <h2 id="asterisk-manager-interface">Asterisk Manager Interface</h2>
   <p>
     The file <code>/etc/asterisk/manager.conf</code> contained AMI credentials. AMI was bound to localhost on
     port 5038, so it was accessible from the target after gaining a shell.
@@ -231,7 +249,7 @@ Action: Command
 Command: core show version</code></pre>
 
 
-  <h2>Privilege Escalation</h2>
+  <h2 id="privilege-escalation">Privilege Escalation</h2>
   <p>
     The main privilege escalation path came from abusing FreePBX's sysadmin hook mechanism. LinPEAS showed that
     incron was watching <code>/var/spool/asterisk/incron</code> and running <code>/usr/bin/sysadmin_manager</code>
@@ -272,7 +290,7 @@ grep -nEi "argv|system|exec|shell_exec|passthru|incron|spool|asterisk" /usr/bin/
 ls -la /var/www/html/admin/modules/ucp/module.sig</code></pre>
 
 
-  <h3>Root Exploitation Steps</h3>
+  <h3 id="root-exploitation-steps">Root Exploitation Steps</h3>
 
   <p>First, I backed up the original hook.</p>
 
@@ -329,7 +347,7 @@ whoami
 cat /root/root.txt</code></pre>
 
 
-  <h2>Tools Used</h2>
+  <h2 id="tools-used">Tools Used</h2>
   <ul>
     <li>Nmap</li>
     <li>Curl</li>
@@ -342,7 +360,7 @@ cat /root/root.txt</code></pre>
     <li>sha256sum</li>
   </ul>
 
-  <h2>Important Commands</h2>
+  <h2 id="important-commands">Important Commands</h2>
   <pre><code>nmap 10.129.15.209
 
 
@@ -391,7 +409,7 @@ nc -lvnp 4445
 touch /var/spool/asterisk/incron/ucp.logrotate</code></pre>
 
 
-  <h2>Vulnerabilities / Misconfiguration</h2>
+  <h2 id="vulnerabilities-misconfiguration">Vulnerabilities / Misconfiguration</h2>
   <p>
     The initial foothold was possible because the target was running FreePBX 16.0.40.7, which was vulnerable
     to CVE-2025-57819. This allowed unauthenticated SQL injection and led to remote code execution.
@@ -404,7 +422,7 @@ touch /var/spool/asterisk/incron/ucp.logrotate</code></pre>
     was executed as root.
   </p>
 
-  <h2>Defensive Takeaways</h2>
+  <h2 id="defensive-takeaways">Defensive Takeaways</h2>
   <p>
     FreePBX should be kept fully patched, especially when administrator or endpoint-related components are
     exposed to a network. Administrative interfaces should be restricted to trusted networks or VPN-only access.
@@ -421,7 +439,7 @@ touch /var/spool/asterisk/incron/ucp.logrotate</code></pre>
     or directory writable by a lower-privileged user can become a privilege escalation path.
   </p>
 
-  <h2>Lessons Learned</h2>
+  <h2 id="lessons-learned">Lessons Learned</h2>
   <p>
     This machine reinforced the importance of version enumeration. Identifying FreePBX 16.0.40.7 was the key
     to finding the correct CVE and avoiding older FreePBX exploits that did not apply.
@@ -440,6 +458,12 @@ touch /var/spool/asterisk/incron/ucp.logrotate</code></pre>
   </p>
 
   <p><a href="../index.html">Back to all reports</a></p>
-</main>
+
+        <footer class="report-footer">
+          <a class="back-link" href="../index.html">Back to all reports</a>
+          <p class="footer-note">HTB report • aligned with the Blocky layout</p>
+        </footer>
+      </main>
+    </div>
   </body>
 </html>

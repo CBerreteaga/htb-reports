@@ -1,31 +1,49 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <meta charset="UTF-8">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Lame - HTB Report</title>
-    <link rel="stylesheet" href="../style.css">
+    <link rel="stylesheet" href="../style.css" />
   </head>
-
   <body>
-    <header>
-      <h1>Lame</h1>
-      <p>Hack The Box Retired Machine Report</p>
+    <header class="site-header">
+      <nav class="nav">
+        <a class="brand" href="../index.html">HTB Reports</a>
+        <a class="nav-pill" href="../index.html">All reports</a>
+      </nav>
     </header>
 
-    <main class="report">
-      <h2>Machine Info</h2>
+    <section class="hero">
+      <div class="hero-card">
+        <p class="eyebrow">Hack The Box Walkthrough</p>
+        <h1 class="main-title">Lame</h1>
+        <p class="subtitle">Hack The Box retired machine report</p>
+      </div>
+    </section>
+
+    <div class="layout">
+      <aside>
+        <h2>Contents</h2>
+        <div class="toc"><a href="#machine-info">Machine Info</a><a href="#summary">Summary</a><a href="#recon-enumeration">Recon / Enumeration</a><a href="#initial-foothold">Initial Foothold</a><a href="#privilege-escalation">Privilege Escalation</a><a href="#tools-used">Tools Used</a><a href="#important-commands">Important Commands</a><a href="#vulnerabilities-misconfiguration">Vulnerabilities / Misconfiguration</a><a href="#defensive-takeaways">Defensive Takeaways</a><a href="#lessons-learned">Lessons Learned</a></div>
+      </aside>
+
+      <main class="report-shell">
+        <div id="overview"></div>
+        
+      <h2 id="machine-info">Machine Info</h2>
       <p><strong>Difficulty:</strong> Easy</p>
       <p><strong>Operating System:</strong> Linux</p>
       <p><strong>Status:</strong> Retired</p>
       <p><strong>Date Completed:</strong>24 May 2026</p>
 
-      <h2>Summary</h2>
+      <h2 id="summary">Summary</h2>
       <p>
         This machine focused on basic enumeration, identifying exposed services,
         researching vulnerable versions, and understanding common Linux attack paths.
       </p>
 
-      <h2>Recon / Enumeration</h2>
+      <h2 id="recon-enumeration">Recon / Enumeration</h2>
       <pre><code>nmap -sC -sV -oN lame.txt 10.129.2.139</code></pre>
 
       <p>This scan found a total of 4 TCP ports open on the remote host.</p>
@@ -76,7 +94,7 @@
         </tbody>
       </table>
 
-      <h2>Initial Foothold</h2>
+      <h2 id="initial-foothold">Initial Foothold</h2>
       <p>
         I first attempted to use CVE-2011-2523 against the vsftpd service, but
         the exploit was unsuccessful. Anonymous FTP login was allowed, but there
@@ -89,13 +107,13 @@
         <code>smbclient</code>, but did not find anything useful inside the share.
       </p>
 
-      <h2>Privilege Escalation</h2>
+      <h2 id="privilege-escalation">Privilege Escalation</h2>
       <p>
         I used Metasploit to exploit CVE-2007-2447 against the vulnerable Samba
         service. The exploit successfully provided a shell with root privileges.
       </p>
 
-      <h2>Tools Used</h2>
+      <h2 id="tools-used">Tools Used</h2>
       <ul>
         <li>Nmap</li>
         <li>Metasploit</li>
@@ -103,13 +121,13 @@
         <li>smbclient</li>
       </ul>
 
-      <h2>Important Commands</h2>
+      <h2 id="important-commands">Important Commands</h2>
       <pre><code>nmap -sC -sV -oN lame.txt 10.129.2.139
 smbmap -H 10.129.2.139
 smbclient //10.129.2.139/tmp
 msfconsole</code></pre>
 
-      <h2>Vulnerabilities / Misconfiguration</h2>
+      <h2 id="vulnerabilities-misconfiguration">Vulnerabilities / Misconfiguration</h2>
       <p>
         Older Samba configurations allowed a system admin to define a script such
         as <code>username map script</code>. A script like this would normally be
@@ -125,7 +143,7 @@ msfconsole</code></pre>
         commands on the target system through the vulnerable Samba service.
       </p>
 
-      <h2>Defensive Takeaways</h2>
+      <h2 id="defensive-takeaways">Defensive Takeaways</h2>
       <p>
         This issue can be prevented by updating Samba to a version that has
         patched the CVE-2007-2447 vulnerability. Additionally, only necessary
@@ -139,7 +157,7 @@ msfconsole</code></pre>
         should also restrict access to ports 139 and 445 using firewall rules.
       </p>
 
-      <h2>Lessons Learned</h2>
+      <h2 id="lessons-learned">Lessons Learned</h2>
       <p>
         Overall, this was a pretty basic machine. It introduced me to searching
         online for vulnerabilities based on service versions and using Metasploit
@@ -149,6 +167,12 @@ msfconsole</code></pre>
       </p>
 
       <p><a href="../index.html">Back to all reports</a></p>
-    </main>
+    
+        <footer class="report-footer">
+          <a class="back-link" href="../index.html">Back to all reports</a>
+          <p class="footer-note">HTB report • aligned with the Blocky layout</p>
+        </footer>
+      </main>
+    </div>
   </body>
 </html>

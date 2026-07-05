@@ -1,25 +1,43 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <meta charset="UTF-8">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Silentium - HTB Report</title>
-    <link rel="stylesheet" href="../style.css">
+    <link rel="stylesheet" href="../style.css" />
   </head>
-
   <body>
-    <header>
-      <h1>Silentium</h1>
-      <p>Hack The Box Machine Report</p>
+    <header class="site-header">
+      <nav class="nav">
+        <a class="brand" href="../index.html">HTB Reports</a>
+        <a class="nav-pill" href="../index.html">All reports</a>
+      </nav>
     </header>
 
-    <main class="report">
-      <h2>Machine Info</h2>
+    <section class="hero">
+      <div class="hero-card">
+        <p class="eyebrow">Hack The Box Walkthrough</p>
+        <h1 class="main-title">Silentium</h1>
+        <p class="subtitle">Hack The Box retired machine report</p>
+      </div>
+    </section>
+
+    <div class="layout">
+      <aside>
+        <h2>Contents</h2>
+        <div class="toc"><a href="#machine-info">Machine Info</a><a href="#summary">Summary</a><a href="#recon-enumeration">Recon / Enumeration</a><a href="#virtual-host-discovery">Virtual Host Discovery</a><a href="#flowise-enumeration">Flowise Enumeration</a><a href="#initial-foothold-account-takeover">Initial Foothold - Account Takeover</a><a href="#remote-code-execution">Remote Code Execution</a><a href="#docker-container-enumeration">Docker / Container Enumeration</a><a href="#privilege-escalation-enumeration">Privilege Escalation Enumeration</a><a href="#accessing-internal-gogs">Accessing Internal Gogs</a><a href="#root-gogs-symlink-exploit">Root - Gogs Symlink Exploit</a><a href="#tools-used">Tools Used</a><a href="#important-commands">Important Commands</a><a href="#vulnerabilities-misconfiguration">Vulnerabilities / Misconfiguration</a><a href="#defensive-takeaways">Defensive Takeaways</a><a href="#lessons-learned">Lessons Learned</a></div>
+      </aside>
+
+      <main class="report-shell">
+        <div id="overview"></div>
+        
+      <h2 id="machine-info">Machine Info</h2>
       <p><strong>Difficulty:</strong> Easy/Medium</p>
       <p><strong>Operating System:</strong> Linux</p>
       <p><strong>Status:</strong> Active</p>
       <p><strong>Date Completed:</strong>16 June 2026</p>
 
-      <h2>Summary</h2>
+      <h2 id="summary">Summary</h2>
       <p>
         Silentium was a Linux machine that focused on web enumeration, virtual host discovery, 
         vulnerable Flowise functionality, Docker/container enumeration, credential reuse, and 
@@ -32,7 +50,7 @@
         sudoers and gain root.
       </p>
 
-      <h2>Recon / Enumeration</h2>
+      <h2 id="recon-enumeration">Recon / Enumeration</h2>
       <pre><code>nmap -sV -T4 10.129.16.77 -oN nmap-silentium.txt</code></pre>
 
       <p>The initial scan showed two externally exposed TCP ports:</p>
@@ -84,7 +102,7 @@ gobuster dir -u http://silentium.htb \
         directory existed but directory listing was blocked.
       </p>
 
-      <h2>Virtual Host Discovery</h2>
+      <h2 id="virtual-host-discovery">Virtual Host Discovery</h2>
       <p>
         Since the main website did not immediately expose a clear attack path, virtual host fuzzing 
         was performed. This revealed the <code>staging.silentium.htb</code> virtual host.
@@ -100,7 +118,7 @@ gobuster dir -u http://silentium.htb \
 
       <pre><code>echo "10.129.16.77 silentium.htb staging.silentium.htb" | sudo tee -a /etc/hosts</code></pre>
 
-      <h2>Flowise Enumeration</h2>
+      <h2 id="flowise-enumeration">Flowise Enumeration</h2>
       <p>
         Visiting <code>staging.silentium.htb</code> showed a Flowise login page. Flowise is a 
         drag-and-drop platform for building AI workflows. Since the application exposed API endpoints, 
@@ -119,7 +137,7 @@ gobuster dir -u http://silentium.htb \
         custom MCP configuration.
       </p>
 
-      <h2>Initial Foothold - Account Takeover</h2>
+      <h2 id="initial-foothold-account-takeover">Initial Foothold - Account Takeover</h2>
       <p>
         The main Silentium website listed several employees, including Marcus, Ben, and Elena. 
         Based on the naming pattern, the email <code>ben@silentium.htb</code> was tested against 
@@ -154,7 +172,7 @@ gobuster dir -u http://silentium.htb \
         <code>ben@silentium.htb</code> using the new password.
       </p>
 
-      <h2>Remote Code Execution</h2>
+      <h2 id="remote-code-execution">Remote Code Execution</h2>
       <p>
         After logging into Flowise, an API key was generated from the application. The Flowise 
         custom MCP endpoint was then used to execute a reverse shell payload.
@@ -187,7 +205,7 @@ gobuster dir -u http://silentium.htb \
         the Flowise application.
       </p>
 
-      <h2>Docker / Container Enumeration</h2>
+      <h2 id="docker-container-enumeration">Docker / Container Enumeration</h2>
       <p>
         The shell appeared to be inside a container because of the minimal environment, container-like 
         hostname, and application-specific environment variables. The environment variables for 
@@ -223,7 +241,7 @@ PORT=3000</code></pre>
       <pre><code>ben@silentium:~$ ls
 user.txt</code></pre>
 
-      <h2>Privilege Escalation Enumeration</h2>
+      <h2 id="privilege-escalation-enumeration">Privilege Escalation Enumeration</h2>
       <p>
         After gaining SSH access as <code>ben</code>, local enumeration was performed. Active listening 
         ports revealed several services bound to localhost only.
@@ -281,7 +299,7 @@ user.txt</code></pre>
 
       <pre><code>curl -I http://127.0.0.1:3001</code></pre>
 
-      <h2>Accessing Internal Gogs</h2>
+      <h2 id="accessing-internal-gogs">Accessing Internal Gogs</h2>
       <p>
         Since Gogs was only listening on localhost, SSH port forwarding was used to access it from 
         the attacker machine.
@@ -300,7 +318,7 @@ user.txt</code></pre>
         was generated from <strong>User Settings &gt; Applications</strong>.
       </p>
 
-      <h2>Root - Gogs Symlink Exploit</h2>
+      <h2 id="root-gogs-symlink-exploit">Root - Gogs Symlink Exploit</h2>
       <p>
         Gogs was vulnerable to a symlink file overwrite issue. The attack involved creating a 
         repository containing a symbolic link to <code>/etc/sudoers.d/ben</code>, then using the 
@@ -350,7 +368,7 @@ curl -i -X PUT "http://127.0.0.1:8001/api/v1/repos/$GOGS_USER/$GOGS_REPO/content
       <pre><code>root@silentium:/home/ben# id
 uid=0(root) gid=0(root) groups=0(root)</code></pre>
 
-      <h2>Tools Used</h2>
+      <h2 id="tools-used">Tools Used</h2>
       <ul>
         <li>Nmap</li>
         <li>Curl</li>
@@ -362,7 +380,7 @@ uid=0(root) gid=0(root) groups=0(root)</code></pre>
         <li>Gogs API</li>
       </ul>
 
-      <h2>Important Commands</h2>
+      <h2 id="important-commands">Important Commands</h2>
       <pre><code>nmap -sV -T4 10.129.16.77 -oN nmap-silentium.txt
 
 gobuster vhost -u http://silentium.htb \
@@ -408,7 +426,7 @@ curl -i -X PUT "http://127.0.0.1:8001/api/v1/repos/$GOGS_USER/$GOGS_REPO/content
 
 sudo su</code></pre>
 
-      <h2>Vulnerabilities / Misconfiguration</h2>
+      <h2 id="vulnerabilities-misconfiguration">Vulnerabilities / Misconfiguration</h2>
       <p>
         The first major issue was a vulnerable Flowise password reset workflow. The application 
         returned a temporary reset token in the API response, allowing an attacker to reset another 
@@ -434,7 +452,7 @@ sudo su</code></pre>
         passwordless sudo access.
       </p>
 
-      <h2>Defensive Takeaways</h2>
+      <h2 id="defensive-takeaways">Defensive Takeaways</h2>
       <p>
         Password reset tokens should never be returned directly in API responses. Reset links or 
         tokens should only be delivered through a trusted channel, such as the registered email 
@@ -454,7 +472,7 @@ sudo su</code></pre>
         handling behavior such as symlink overwrites.
       </p>
 
-      <h2>Lessons Learned</h2>
+      <h2 id="lessons-learned">Lessons Learned</h2>
       <p>
         This machine reinforced the importance of thorough web enumeration and virtual host fuzzing. 
         The main website did not immediately expose the attack path, but discovering 
@@ -475,6 +493,12 @@ sudo su</code></pre>
       </p>
 
       <p><a href="../index.html">Back to all reports</a></p>
-    </main>
+    
+        <footer class="report-footer">
+          <a class="back-link" href="../index.html">Back to all reports</a>
+          <p class="footer-note">HTB report • aligned with the Blocky layout</p>
+        </footer>
+      </main>
+    </div>
   </body>
 </html>

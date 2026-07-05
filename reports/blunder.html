@@ -1,27 +1,45 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <meta charset="UTF-8">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Blunder - HTB Report</title>
-    <link rel="stylesheet" href="../style.css">
+    <link rel="stylesheet" href="../style.css" />
   </head>
-
   <body>
-    <header>
-      <h1>Blunder</h1>
-      <p>Hack The Box Retired Machine Report</p>
+    <header class="site-header">
+      <nav class="nav">
+        <a class="brand" href="../index.html">HTB Reports</a>
+        <a class="nav-pill" href="../index.html">All reports</a>
+      </nav>
     </header>
 
-    <main class="report">
+    <section class="hero">
+      <div class="hero-card">
+        <p class="eyebrow">Hack The Box Walkthrough</p>
+        <h1 class="main-title">Blunder</h1>
+        <p class="subtitle">Hack The Box retired machine report</p>
+      </div>
+    </section>
 
-      <h2>Machine Info</h2>
+    <div class="layout">
+      <aside>
+        <h2>Contents</h2>
+        <div class="toc"><a href="#machine-info">Machine Info</a><a href="#summary">Summary</a><a href="#recon-enumeration">Recon / Enumeration</a><a href="#initial-foothold">Initial Foothold</a><a href="#privilege-escalation">Privilege Escalation</a><a href="#tools-used">Tools Used</a><a href="#important-commands">Important Commands</a><a href="#vulnerabilities-misconfigurations">Vulnerabilities / Misconfigurations</a><a href="#defensive-takeaways">Defensive Takeaways</a><a href="#lessons-learned">Lessons Learned</a></div>
+      </aside>
+
+      <main class="report-shell">
+        <div id="overview"></div>
+        
+
+      <h2 id="machine-info">Machine Info</h2>
       <p><strong>Difficulty:</strong> Easy</p>
       <p><strong>Operating System:</strong> Linux</p>
       <p><strong>Status:</strong> Retired</p>
       <p><strong>Date Started:</strong> 23 June 2026</p>
       <p><strong>Date Completed:</strong> 23 June 2026</p>
 
-      <h2>Summary</h2>
+      <h2 id="summary">Summary</h2>
       <p>
         Blunder is an Easy difficulty Linux machine featuring a Bludit CMS instance running on port 80. 
         Initial enumeration revealed a web application built on Bludit, with an exposed admin panel and several
@@ -34,7 +52,7 @@
         vulnerable sudo version (CVE-2019-14287), resulting in root access.
       </p>
 
-      <h2>Recon / Enumeration</h2>
+      <h2 id="recon-enumeration">Recon / Enumeration</h2>
 
       <pre><code>
 nmap -sC -sV 10.129.95.225 -oA recon/full_nmap
@@ -84,7 +102,7 @@ ftp: Can't connect to '10.129.95.225:21': Connection refused
         </tbody>
       </table>
 
-      <h2>Initial Foothold</h2>
+      <h2 id="initial-foothold">Initial Foothold</h2>
       <p>
         Directory brute forcing with Gobuster revealed /admin, /todo.txt, and several hidden resources. 
         The /todo.txt file hinted at a user named fergus. The login page was protected by brute-force mitigation,
@@ -94,7 +112,7 @@ ftp: Can't connect to '10.129.95.225:21': Connection refused
         resulting in a www-data shell.
       </p>
 
-      <h2>Privilege Escalation</h2>
+      <h2 id="privilege-escalation">Privilege Escalation</h2>
       <p>
         Local enumeration revealed a password hash for user hugo in the Bludit database. The hash was initially not crackable
         with rockyou.txt, but was successfully recovered using external hash lookup services, revealing the password.
@@ -103,7 +121,7 @@ ftp: Can't connect to '10.129.95.225:21': Connection refused
         and spawns a root shell.
       </p>
 
-      <h2>Tools Used</h2>
+      <h2 id="tools-used">Tools Used</h2>
       <ul>
         <li>Nmap</li>
         <li>Gobuster</li>
@@ -114,7 +132,7 @@ ftp: Can't connect to '10.129.95.225:21': Connection refused
         <li>FTP Client</li>
       </ul>
 
-      <h2>Important Commands</h2>
+      <h2 id="important-commands">Important Commands</h2>
       <pre><code>
 nmap -sC -sV 10.129.95.225 -oA recon/full_nmap
 ftp 10.129.95.225
@@ -123,21 +141,21 @@ hashcat -m 100 hugo_hash.txt rockyou.txt
 sudo -u#-1 /bin/bash
       </code></pre>
 
-      <h2>Vulnerabilities / Misconfigurations</h2>
+      <h2 id="vulnerabilities-misconfigurations">Vulnerabilities / Misconfigurations</h2>
       <p>
         The primary vulnerabilities included Bludit CMS version 3.9.2 running with known authentication bypass issues,
         insecure file upload functionality, and outdated sudo (1.8.25p1) vulnerable to CVE-2019-14287. Combined, these
         allowed a full chain from unauthenticated access to root compromise.
       </p>
 
-      <h2>Defensive Takeaways</h2>
+      <h2 id="defensive-takeaways">Defensive Takeaways</h2>
       <p>
         Organizations should ensure CMS platforms are regularly updated, disable or restrict file upload functionality,
         implement proper brute-force protections that cannot be bypassed via header spoofing, and keep sudo updated to
         patched versions. Proper logging and intrusion detection would also help detect exploitation attempts.
       </p>
 
-      <h2>Lessons Learned</h2>
+      <h2 id="lessons-learned">Lessons Learned</h2>
       <p>
         This machine demonstrates the importance of full attack surface enumeration. Small findings such as robots.txt,
         todo files, and CMS version leaks can chain into full system compromise. It also highlights how multiple small
@@ -145,6 +163,12 @@ sudo -u#-1 /bin/bash
       </p>
 
       <p><a href="../index.html">Back to all reports</a></p>
-    </main>
+    
+        <footer class="report-footer">
+          <a class="back-link" href="../index.html">Back to all reports</a>
+          <p class="footer-note">HTB report • aligned with the Blocky layout</p>
+        </footer>
+      </main>
+    </div>
   </body>
 </html>

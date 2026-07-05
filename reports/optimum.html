@@ -1,25 +1,43 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <meta charset="UTF-8">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Optimum - HTB Report</title>
-    <link rel="stylesheet" href="../style.css">
+    <link rel="stylesheet" href="../style.css" />
   </head>
-
   <body>
-    <header>
-      <h1>Optimum</h1>
-      <p>Hack The Box Retired Machine Report</p>
+    <header class="site-header">
+      <nav class="nav">
+        <a class="brand" href="../index.html">HTB Reports</a>
+        <a class="nav-pill" href="../index.html">All reports</a>
+      </nav>
     </header>
 
-    <main class="report">
-      <h2>Machine Info</h2>
+    <section class="hero">
+      <div class="hero-card">
+        <p class="eyebrow">Hack The Box Walkthrough</p>
+        <h1 class="main-title">Optimum</h1>
+        <p class="subtitle">Hack The Box retired machine report</p>
+      </div>
+    </section>
+
+    <div class="layout">
+      <aside>
+        <h2>Contents</h2>
+        <div class="toc"><a href="#machine-info">Machine Info</a><a href="#summary">Summary</a><a href="#recon-enumeration">Recon / Enumeration</a><a href="#initial-foothold">Initial Foothold</a><a href="#privilege-escalation">Privilege Escalation</a><a href="#tools-used">Tools Used</a><a href="#important-commands">Important Commands</a><a href="#vulnerabilities-misconfiguration">Vulnerabilities / Misconfiguration</a><a href="#defensive-takeaways">Defensive Takeaways</a><a href="#lessons-learned">Lessons Learned</a></div>
+      </aside>
+
+      <main class="report-shell">
+        <div id="overview"></div>
+        
+      <h2 id="machine-info">Machine Info</h2>
       <p><strong>Difficulty:</strong> Easy</p>
       <p><strong>Operating System:</strong> Windows</p>
       <p><strong>Status:</strong> Retired</p>
       <p><strong>Date Completed:</strong> 4 June 2026</p>
 
-      <h2>Summary</h2>
+      <h2 id="summary">Summary</h2>
       <p>
         Optimum is a beginner-level Windows machine that focuses on identifying a vulnerable web service,
         using a known exploit to gain an initial foothold, and then performing local privilege escalation.
@@ -29,7 +47,7 @@
         Handle Privilege Escalation exploit.
       </p>
 
-      <h2>Recon / Enumeration</h2>
+      <h2 id="recon-enumeration">Recon / Enumeration</h2>
       <pre><code>nmap -sC -sV -oA optimum 10.129.9.194</code></pre>
 
       <p>This scan found a total of 1 TCP port open on the remote host.</p>
@@ -56,7 +74,7 @@
         </tbody>
       </table>
 
-      <h2>Initial Foothold</h2>
+      <h2 id="initial-foothold">Initial Foothold</h2>
       <p>
         The initial Nmap scan revealed that only port 80 was open. Visiting the website showed that the server
         was running HttpFileServer 2.3, also known as Rejetto HFS. Since the service version was exposed, I searched
@@ -96,7 +114,7 @@ getuid</code></pre>
 
       <pre><code>C:\Users\kostas\Desktop\user.txt</code></pre>
 
-      <h2>Privilege Escalation</h2>
+      <h2 id="privilege-escalation">Privilege Escalation</h2>
       <p>
         After gaining the initial Meterpreter session, I checked the current user and system information.
         The session was running as <code>OPTIMUM\kostas</code>, and the target was identified as Windows Server
@@ -148,7 +166,7 @@ cd C:\
 cd Users\Administrator\Desktop
 cat root.txt</code></pre>
 
-      <h2>Tools Used</h2>
+      <h2 id="tools-used">Tools Used</h2>
       <ul>
         <li>Nmap</li>
         <li>SearchSploit</li>
@@ -157,7 +175,7 @@ cat root.txt</code></pre>
         <li>Local Exploit Suggester</li>
       </ul>
 
-      <h2>Important Commands</h2>
+      <h2 id="important-commands">Important Commands</h2>
       <pre><code>nmap -sC -sV -oA optimum 10.129.9.194
 
 searchsploit httpd 2.3
@@ -189,7 +207,7 @@ getuid
 cd C:\Users\Administrator\Desktop
 cat root.txt</code></pre>
 
-      <h2>Vulnerabilities / Misconfiguration</h2>
+      <h2 id="vulnerabilities-misconfiguration">Vulnerabilities / Misconfiguration</h2>
       <p>
         The main vulnerability was Rejetto HTTP File Server 2.3 Remote Command Execution, commonly associated with
         CVE-2014-6287. The service was exposed on port 80 and clearly identified itself through the HTTP title and
@@ -201,7 +219,7 @@ cat root.txt</code></pre>
         escalation from the low-privileged kostas user to NT AUTHORITY\SYSTEM.
       </p>
 
-      <h2>Defensive Takeaways</h2>
+      <h2 id="defensive-takeaways">Defensive Takeaways</h2>
       <p>
         Outdated and vulnerable web services should not be exposed to the network, especially when known public
         exploits exist. Software like Rejetto HFS should be updated, removed, or placed behind strict access controls.
@@ -215,7 +233,7 @@ cat root.txt</code></pre>
         local vulnerabilities are not remediated.
       </p>
 
-      <h2>Lessons Learned</h2>
+      <h2 id="lessons-learned">Lessons Learned</h2>
       <p>
         This machine reinforced the importance of service enumeration and researching exposed versions. The foothold
         came from identifying HFS 2.3 and matching it to a known Metasploit module. 
@@ -228,6 +246,12 @@ cat root.txt</code></pre>
       </p>
 
       <p><a href="../index.html">Back to all reports</a></p>
-    </main>
+    
+        <footer class="report-footer">
+          <a class="back-link" href="../index.html">Back to all reports</a>
+          <p class="footer-note">HTB report • aligned with the Blocky layout</p>
+        </footer>
+      </main>
+    </div>
   </body>
 </html>

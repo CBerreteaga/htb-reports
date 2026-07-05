@@ -1,25 +1,43 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <meta charset="UTF-8">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Devel - HTB Report</title>
-    <link rel="stylesheet" href="../style.css">
+    <link rel="stylesheet" href="../style.css" />
   </head>
-
   <body>
-    <header>
-      <h1>Devel</h1>
-      <p>Hack The Box Retired Machine Report</p>
+    <header class="site-header">
+      <nav class="nav">
+        <a class="brand" href="../index.html">HTB Reports</a>
+        <a class="nav-pill" href="../index.html">All reports</a>
+      </nav>
     </header>
 
-    <main class="report">
-      <h2>Machine Info</h2>
+    <section class="hero">
+      <div class="hero-card">
+        <p class="eyebrow">Hack The Box Walkthrough</p>
+        <h1 class="main-title">Devel</h1>
+        <p class="subtitle">Hack The Box retired machine report</p>
+      </div>
+    </section>
+
+    <div class="layout">
+      <aside>
+        <h2>Contents</h2>
+        <div class="toc"><a href="#machine-info">Machine Info</a><a href="#summary">Summary</a><a href="#recon-enumeration">Recon / Enumeration</a><a href="#initial-foothold">Initial Foothold</a><a href="#privilege-escalation">Privilege Escalation</a><a href="#tools-used">Tools Used</a><a href="#important-commands">Important Commands</a><a href="#vulnerabilities-misconfiguration">Vulnerabilities / Misconfiguration</a><a href="#defensive-takeaways">Defensive Takeaways</a><a href="#lessons-learned">Lessons Learned</a></div>
+      </aside>
+
+      <main class="report-shell">
+        <div id="overview"></div>
+        
+      <h2 id="machine-info">Machine Info</h2>
       <p><strong>Difficulty:</strong> Easy</p>
       <p><strong>Operating System:</strong> Windows</p>
       <p><strong>Status:</strong> Retired</p>
       <p><strong>Date Completed:</strong> 30 May 2026</p>
 
-      <h2>Summary</h2>
+      <h2 id="summary">Summary</h2>
       <p>
         Devel is a beginner-friendly Windows machine that demonstrates the security risks of default or weak service configurations.
         The machine exposes FTP with anonymous login enabled, and the FTP directory appears to map directly to the web server directory.
@@ -27,7 +45,7 @@
         a local Windows kernel exploit.
       </p>
 
-      <h2>Recon / Enumeration</h2>
+      <h2 id="recon-enumeration">Recon / Enumeration</h2>
       <pre><code>nmap -sC -sV -oN Devel 10.129.6.121</code></pre>
 
       <table class="report-table">
@@ -60,7 +78,7 @@
         </tbody>
       </table>
 
-      <h2>Initial Foothold</h2>
+      <h2 id="initial-foothold">Initial Foothold</h2>
       <p>
         After initial enumeration, ports 21 and 80 were found open. Port 21 was running FTP and allowed anonymous login.
         Since the FTP directory appeared to be connected to the IIS web root, I tested whether uploaded files could be accessed
@@ -73,7 +91,7 @@
         by visiting the file in the browser. This provided an initial Meterpreter session on the target.
       </p>
 
-      <h2>Privilege Escalation</h2>
+      <h2 id="privilege-escalation">Privilege Escalation</h2>
       <p>
         After gaining an initial shell, I used Metasploit's local exploit suggester module to identify possible privilege escalation
         paths on the compromised system.
@@ -111,7 +129,7 @@
 
       <pre><code>NT AUTHORITY\SYSTEM</code></pre>
 
-      <h2>Tools Used</h2>
+      <h2 id="tools-used">Tools Used</h2>
       <ul>
         <li>Nmap</li>
         <li>FTP</li>
@@ -121,7 +139,7 @@
         <li>msfvenom</li>
       </ul>
 
-      <h2>Important Commands</h2>
+      <h2 id="important-commands">Important Commands</h2>
       <pre><code>nmap -sC -sV -oA Devel 10.129.6.121
 
 ftp 10.129.6.121
@@ -148,7 +166,7 @@ run
 
 getuid</code></pre>
 
-      <h2>Vulnerabilities / Misconfiguration</h2>
+      <h2 id="vulnerabilities-misconfiguration">Vulnerabilities / Misconfiguration</h2>
       <p>
         The main misconfiguration on this machine was anonymous FTP access. Even worse, the FTP directory appeared to be mapped
         to the IIS web root, allowing uploaded files to be accessed from the browser. Because IIS supports ASPX execution,
@@ -160,7 +178,7 @@ getuid</code></pre>
         to escalate privileges to NT AUTHORITY\SYSTEM.
       </p>
 
-      <h2>Defensive Takeaways</h2>
+      <h2 id="defensive-takeaways">Defensive Takeaways</h2>
       <p>
         Anonymous FTP access should be disabled unless absolutely required. If FTP must be used, uploaded files should not be placed
         inside a web-accessible directory. Web servers should also restrict executable file uploads such as ASPX, PHP, or other
@@ -172,7 +190,7 @@ getuid</code></pre>
         Proper file upload restrictions, least privilege, and regular vulnerability scanning would have reduced the risk on this machine.
       </p>
 
-      <h2>Lessons Learned</h2>
+      <h2 id="lessons-learned">Lessons Learned</h2>
       <p>
         This machine helped reinforce the importance of checking how services interact with each other. FTP by itself may not always
         lead to code execution, but when it is connected to a web server directory, it can become a serious vulnerability.
@@ -194,6 +212,12 @@ getuid</code></pre>
       </p>
 
       <p><a href="../index.html">Back to all reports</a></p>
-    </main>
+    
+        <footer class="report-footer">
+          <a class="back-link" href="../index.html">Back to all reports</a>
+          <p class="footer-note">HTB report • aligned with the Blocky layout</p>
+        </footer>
+      </main>
+    </div>
   </body>
 </html>

