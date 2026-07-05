@@ -7,12 +7,34 @@
   </head>
 
   <body>
-    <header>
-      <h1>Active</h1>
-      <p>Hack The Box Retired Machine Report</p>
+    <header class="site-header">
+      <nav class="nav">
+        <a class="brand" href="../index.html">HTB REPORTS</a>
+        <a class="nav-pill" href="../index.html">Back</a>
+      </nav>
     </header>
 
-    <main class="report">
+    <section class="hero">
+      <div class="hero-card">
+        <div class="eyebrow">Hack The Box Report</div>
+        <h1 class="main-title">Active</h1>
+        <p class="subtitle">Hands-on walkthrough covering reconnaissance, exploitation, and privilege escalation for this machine.</p>
+      </div>
+    </section>
+
+    <div class="layout">
+      <aside>
+        <h2>Contents</h2>
+        <div class="toc">
+          <a href="#machine-info">Machine Info</a>
+          <a href="#summary">Summary</a>
+          <a href="#recon">Recon / Enumeration</a>
+          <a href="#privilege-escalation">Privilege Escalation</a>
+          <a href="#flags">Flags</a>
+        </div>
+      </aside>
+      <main>
+        <div class="report-shell">
 
       <h2>Machine Info</h2>
       <p><strong>Difficulty:</strong> Easy to Medium</p>
@@ -202,8 +224,12 @@ root.txt: REDACTED</code></pre>
         security controls in AD environments.
       </p>
 
-      <p><a href="../index.html">Back to all reports</a></p>
-
-    </main>
+      <footer class="report-footer">
+        <p><a class="back-link" href="../index.html">Back to all reports</a></p>
+        <p class="footer-note">Authorized Hack The Box lab report. Flag values intentionally omitted for portfolio use.</p>
+      </footer>
+        </div>
+      </main>
+    </div>
   </body>
 </html>
