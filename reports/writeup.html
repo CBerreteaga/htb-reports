@@ -3,30 +3,24 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Writeup - Hack The Box Report</title>
+  <title>Writeup - HTB Report</title>
   <link rel="stylesheet" href="../style.css" />
 </head>
 <body>
   <header>
     <h1>Writeup</h1>
-    <p>Hack The Box machine report covering web enumeration, CMS Made Simple SQL injection, credential cracking, SSH access, and Linux privilege escalation through PATH hijacking.</p>
+    <p>Hack The Box Retired Machine Report</p>
   </header>
 
-  <main>
-    <section>
-      <h2>Machine Information</h2>
-      <table>
-        <tr><th>Machine</th><td>Writeup</td></tr>
-        <tr><th>Platform</th><td>Hack The Box</td></tr>
-        <tr><th>Operating System</th><td>Linux</td></tr>
-        <tr><th>Difficulty</th><td>Easy</td></tr>
-        <tr><th>Target IP</th><td>10.129.29.59</td></tr>
-        <tr><th>Initial Access</th><td>CMS Made Simple CVE-2019-9053 SQL injection and cracked credentials</td></tr>
-        <tr><th>Privilege Escalation</th><td>PATH hijacking through writable /usr/local/bin/run-parts</td></tr>
-      </table>
-    </section>
+  <main class="report">
+      <h2>Machine Info</h2>
+      <p><strong>Difficulty:</strong> Easy</p>
+      <p><strong>Operating System:</strong> Linux</p>
+      <p><strong>Status:</strong> Retired</p>
+      <p><strong>Target IP:</strong> 10.129.29.59</p>
+      <p><strong>Initial Access:</strong> CMS Made Simple CVE-2019-9053 SQL injection and cracked credentials</p>
+      <p><strong>Privilege Escalation:</strong> PATH hijacking through writable /usr/local/bin/run-parts</p>
 
-    <section>
       <h2>Summary</h2>
       <p>
         Writeup exposed a small web application on port <code>80</code> and SSH on port <code>22</code>.
@@ -46,9 +40,7 @@
         weakness by placing a malicious <code>run-parts</code> script there. When root executed
         <code>run-parts</code>, my script created a SUID-root Bash binary, allowing root access.
       </p>
-    </section>
 
-    <section>
       <h2>Reconnaissance</h2>
       <p>I started with a TCP scan to identify exposed services on the target.</p>
 
@@ -79,9 +71,7 @@
       <p>
         This was useful because <code>jkr</code> later turned out to be a valid system username.
       </p>
-    </section>
 
-    <section>
       <h2>Web Enumeration</h2>
       <p>
         The homepage warned about an Eeyore DoS protection script that could ban clients causing too many
@@ -112,9 +102,7 @@
       <p>
         Based on the page metadata and structure, the site was identified as CMS Made Simple.
       </p>
-    </section>
 
-    <section>
       <h2>Vulnerability Identification</h2>
       <p>
         CMS Made Simple was detected at <code>/writeup/</code>. The version was associated with
@@ -131,9 +119,7 @@ Unauthenticated SQL Injection</code></pre>
       </p>
 
       <pre><code>https://github.com/hf3cyber/CMS-Made-Simple-2.2.9-Unauthenticated-SQL-Injection-Exploit-CVE-2019-9053-</code></pre>
-    </section>
 
-    <section>
       <h2>Initial Access</h2>
       <p>
         The SQL injection was used to extract credential material from the CMS database.
@@ -168,9 +154,7 @@ Password: raykayjay9</code></pre>
 
       <pre><code>whoami
 jkr</code></pre>
-    </section>
 
-    <section>
       <h2>User Flag</h2>
       <p>
         After logging in as <code>jkr</code>, I read the user flag from the user's home directory.
@@ -179,9 +163,7 @@ jkr</code></pre>
       <pre><code>cat /home/jkr/user.txt</code></pre>
 
       <pre><code>user flag: [REDACTED]</code></pre>
-    </section>
 
-    <section>
       <h2>Privilege Escalation Enumeration</h2>
       <p>
         I started local enumeration by checking the current user, groups, writable paths, PATH order,
@@ -214,9 +196,7 @@ find / -perm -4000 -type f 2&gt;/dev/null</code></pre>
         opportunity. If a root-owned process executed a command by name instead of using an absolute path,
         Linux could run a malicious command from <code>/usr/local/bin</code> first.
       </p>
-    </section>
 
-    <section>
       <h2>Privilege Escalation with PATH Hijacking</h2>
       <p>
         The target eventually executed <code>run-parts</code> as root without specifying the full path.
@@ -255,9 +235,7 @@ EOF</code></pre>
 
       <pre><code>id
 uid=1000(jkr) euid=0(root)</code></pre>
-    </section>
 
-    <section>
       <h2>Root Flag</h2>
       <p>
         With effective root privileges, I was able to access the root flag.
@@ -266,9 +244,7 @@ uid=1000(jkr) euid=0(root)</code></pre>
       <pre><code>cat /root/root.txt</code></pre>
 
       <pre><code>root flag: [REDACTED]</code></pre>
-    </section>
 
-    <section>
       <h2>Cleanup</h2>
       <p>
         After completing the machine, cleanup would include removing the malicious files created during
@@ -277,9 +253,7 @@ uid=1000(jkr) euid=0(root)</code></pre>
 
       <pre><code>rm -f /usr/local/bin/run-parts
 rm -f /tmp/rootbash</code></pre>
-    </section>
 
-    <section>
       <h2>Attack Path</h2>
       <pre><code>1. Enumerated open ports and found SSH and HTTP.
 2. Checked the web service and found Apache on Debian.
@@ -294,9 +268,7 @@ rm -f /tmp/rootbash</code></pre>
 11. Waited for root to execute run-parts through PATH.
 12. Created /tmp/rootbash with SUID-root permissions.
 13. Ran /tmp/rootbash -p and gained effective root privileges.</code></pre>
-    </section>
 
-    <section>
       <h2>Lessons Learned</h2>
       <ul>
         <li><code>robots.txt</code> can reveal hidden application paths that are not linked from the main page.</li>
@@ -308,9 +280,7 @@ rm -f /tmp/rootbash</code></pre>
         <li>Linux group membership matters during privilege escalation.</li>
         <li>Writable directories early in PATH can be dangerous when privileged scripts call binaries by name.</li>
       </ul>
-    </section>
 
-    <section>
       <h2>Remediation</h2>
       <ul>
         <li>Upgrade CMS Made Simple to a patched version that is not vulnerable to CVE-2019-9053.</li>
@@ -324,9 +294,7 @@ rm -f /tmp/rootbash</code></pre>
         <li>Monitor for suspicious files created in <code>/usr/local/bin</code> and <code>/tmp</code>.</li>
         <li>Regularly audit SUID files for unexpected additions.</li>
       </ul>
-    </section>
 
-    <section>
       <h2>Conclusion</h2>
       <p>
         Writeup demonstrated how careful web enumeration can lead to a hidden application and how a known
@@ -338,7 +306,8 @@ rm -f /tmp/rootbash</code></pre>
         Because <code>jkr</code> could write to <code>/usr/local/bin</code>, and a root process executed
         <code>run-parts</code> by name, I was able to create a SUID-root Bash binary and gain root access.
       </p>
-    </section>
+
+      <p><a href="../index.html">Back to all reports</a></p>
   </main>
 </body>
 </html>
