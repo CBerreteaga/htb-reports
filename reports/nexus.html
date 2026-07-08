@@ -307,12 +307,12 @@ DB_USERNAME=krayin
 DB_PASSWORD=</code></pre>
 <p>Since the password was blank in the current version, the next step was to inspect repository history. A previous commit contained the same <code>.env</code> file with a populated database password:</p>
 <pre><code>DB_USERNAME=krayin
-DB_PASSWORD=N27xh!!2ucY04</code></pre>
+DB_PASSWORD=[REDACTED]</code></pre>
 <p>This was a significant finding because the password was stored in source control history even though it had been removed from the current version.</p>
 <h3>Credential Reuse Against Krayin CRM</h3>
 <p>Using the previously discovered email address and the password from the old commit, authentication to the billing portal succeeded:</p>
 <pre><code>Username: j.matthew@nexus.htb
-Password: N27xh!!2ucY04</code></pre>
+Password: [REDACTED]</code></pre>
 <p>After login, the application version was identified as Krayin CRM 2.2.0.</p>
 <h2>Phase 5: Initial Exploitation</h2>
 <h3>Krayin CRM Authenticated File Upload RCE</h3>
@@ -343,7 +343,7 @@ vendor/</code></pre>
 DB_HOST=127.0.0.1
 DB_DATABASE=krayin
 DB_USERNAME=krayin
-DB_PASSWORD=y27xb3ha!!74GbR</code></pre>
+DB_PASSWORD=[REDACTED]</code></pre>
 <h3>Local User Discovery</h3>
 <p>Reviewing <code>/etc/passwd</code> identified two interactive users:</p>
 <pre><code>cat /etc/passwd</code></pre>

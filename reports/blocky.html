@@ -555,7 +555,7 @@
 <p>The extracted class strings revealed hardcoded database connection values:</p>
 <div class="code-card"><div class="code-label">text</div><pre><code>sqlHost localhost
 sqlUser root
-sqlPass 8YsqfCTnvxAUeduzjNSXe22</code></pre></div>
+sqlPass [REDACTED]</code></pre></div>
 <p>This was the critical finding. The password was likely intended for local database access, but it was also worth testing for password reuse.</p>
 <hr class="section-rule">
 <h2 id="6-username-enumeration" class="">6. Username Enumeration</h2>
@@ -569,7 +569,7 @@ done</code></pre></div>
 <p>This revealed a valid username:</p>
 <div class="code-card"><div class="code-label">text</div><pre><code>notch</code></pre></div>
 <p>At this point, the known credential pair was:</p>
-<div class="code-card"><div class="code-label">text</div><pre><code>notch:8YsqfCTnvxAUeduzjNSXe22</code></pre></div>
+<div class="code-card"><div class="code-label">text</div><pre><code>notch:[REDACTED]</code></pre></div>
 <hr class="section-rule">
 <h2 id="7-initial-access" class="">7. Initial Access</h2>
 <p>SSH access was attempted as <code>notch</code>.</p>
@@ -659,7 +659,7 @@ Apache 2.4.18</code></pre></div>
 <p><strong>Evidence:</strong></p>
 <div class="code-card"><div class="code-label">text</div><pre><code>sqlHost localhost
 sqlUser root
-sqlPass 8YsqfCTnvxAUeduzjNSXe22</code></pre></div>
+sqlPass [REDACTED]</code></pre></div>
 <p>Hardcoded secrets are dangerous because anyone with access to the source code or compiled application can extract them.</p>
 <p><strong>Recommendation:</strong></p>
 <p>Remove hardcoded credentials from application code. Use environment variables, secrets managers, or protected configuration files with strict permissions. Rotate the exposed password immediately.</p>

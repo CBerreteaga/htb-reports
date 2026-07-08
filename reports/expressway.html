@@ -131,7 +131,7 @@ VID=(Dead Peer Detection v1.0)</code></pre>
         This revealed the clear-text password:
       </p>
 
-      <pre><code>freakingrockstarontheroad</code></pre>
+      <pre><code>[REDACTED]</code></pre>
 
       <h2>Initial Foothold</h2>
       <p>
@@ -144,7 +144,7 @@ VID=(Dead Peer Detection v1.0)</code></pre>
         Using the cracked password, I was able to log in successfully as <code>ike</code>.
       </p>
 
-      <pre><code>Password: freakingrockstarontheroad</code></pre>
+      <pre><code>Password: [REDACTED]</code></pre>
 
       <p>
         After logging in, I confirmed the current user and group membership.
@@ -246,7 +246,7 @@ sudo -h offramp.expressway.htb /bin/bash -p</code></pre>
       <p>
         The first major weakness was the exposed IKE/IPsec service using a weak pre-shared key. By capturing the IKE 
         aggressive mode handshake and cracking it offline, I was able to recover the password 
-        <code>freakingrockstarontheroad</code>. This password was then reused for SSH access as the <code>ike</code> user.
+        a clear-text password. This password was then reused for SSH access as the <code>ike</code> user.
       </p>
 
       <p>
@@ -293,4 +293,3 @@ sudo -h offramp.expressway.htb /bin/bash -p</code></pre>
     </main>
   </body>
 </html>
-

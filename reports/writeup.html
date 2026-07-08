@@ -3,25 +3,67 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Writeup - HTB Report</title>
+  <title>Hack The Box Report: Writeup</title>
   <link rel="stylesheet" href="../style.css" />
 </head>
 <body>
-  <header>
-    <h1>Writeup</h1>
-    <p>Hack The Box Retired Machine Report</p>
+  <header class="site-header">
+    <nav class="nav">
+      <a class="brand" href="../index.html">HTB Machine Reports</a>
+      <a class="nav-pill" href="../index.html">Back to Reports</a>
+    </nav>
   </header>
 
-  <main class="report">
-      <h2>Machine Info</h2>
-      <p><strong>Difficulty:</strong> Easy</p>
-      <p><strong>Operating System:</strong> Linux</p>
-      <p><strong>Status:</strong> Retired</p>
-      <p><strong>Target IP:</strong> 10.129.29.59</p>
-      <p><strong>Initial Access:</strong> CMS Made Simple CVE-2019-9053 SQL injection and cracked credentials</p>
-      <p><strong>Privilege Escalation:</strong> PATH hijacking through writable /usr/local/bin/run-parts</p>
+  <section class="hero">
+    <div class="hero-card">
+      <div class="eyebrow">Hack The Box Walkthrough Report</div>
+      <h1 class="main-title">Writeup</h1>
+      <p class="subtitle">A portfolio-style penetration testing report covering careful web enumeration, CMS Made Simple SQL injection, SSH access, and Linux privilege escalation through PATH hijacking.</p>
+    </div>
+  </section>
 
-      <h2>Summary</h2>
+  <div class="layout">
+    <aside>
+      <h2>Contents</h2>
+      <nav class="toc">
+        <a class="toc-main" href="#overview">Overview</a>
+        <a class="toc-main" href="#summary">Summary</a>
+        <a class="toc-main" href="#reconnaissance">Reconnaissance</a>
+        <a class="toc-main" href="#web-enumeration">Web Enumeration</a>
+        <a class="toc-main" href="#vulnerability-identification">Vulnerability Identification</a>
+        <a class="toc-main" href="#initial-access">Initial Access</a>
+        <a class="toc-main" href="#user-flag">User Flag</a>
+        <a class="toc-main" href="#privilege-escalation-enumeration">Privilege Escalation Enumeration</a>
+        <a class="toc-main" href="#privilege-escalation-with-path-hijacking">Privilege Escalation with PATH Hijacking</a>
+        <a class="toc-main" href="#root-flag">Root Flag</a>
+        <a class="toc-main" href="#cleanup">Cleanup</a>
+        <a class="toc-main" href="#attack-path">Attack Path</a>
+        <a class="toc-main" href="#lessons-learned">Lessons Learned</a>
+        <a class="toc-main" href="#remediation">Remediation</a>
+        <a class="toc-main" href="#conclusion">Conclusion</a>
+      </nav>
+    </aside>
+
+    <main class="report">
+      <h2 id="overview">Overview</h2>
+      <div class="table-wrap">
+        <table>
+          <tr><th>Field</th><th>Value</th></tr>
+          <tr><td>Machine</td><td>Writeup</td></tr>
+          <tr><td>Target IP</td><td><code>10.129.29.59</code></td></tr>
+          <tr><td>Operating System</td><td>Linux</td></tr>
+          <tr><td>Difficulty</td><td>Easy</td></tr>
+          <tr><td>Status</td><td>Retired</td></tr>
+          <tr><td>Initial Access</td><td>CMS Made Simple CVE-2019-9053 SQL injection and cracked credentials</td></tr>
+          <tr><td>Privilege Escalation</td><td>PATH hijacking through writable <code>/usr/local/bin/run-parts</code></td></tr>
+        </table>
+      </div>
+
+      <blockquote>
+        <p><strong>Note:</strong> Passwords and flag values are intentionally redacted for public portfolio use.</p>
+      </blockquote>
+
+      <h2 id="summary">Summary</h2>
       <p>
         Writeup exposed a small web application on port <code>80</code> and SSH on port <code>22</code>.
         The homepage included a warning about an Eeyore DoS protection script, so I avoided aggressive
@@ -41,7 +83,7 @@
         <code>run-parts</code>, my script created a SUID-root Bash binary, allowing root access.
       </p>
 
-      <h2>Reconnaissance</h2>
+      <h2 id="reconnaissance">Reconnaissance</h2>
       <p>I started with a TCP scan to identify exposed services on the target.</p>
 
       <pre><code>nmap -sC -sV -oN Files/nmap_initial 10.129.29.59</code></pre>
@@ -72,7 +114,7 @@
         This was useful because <code>jkr</code> later turned out to be a valid system username.
       </p>
 
-      <h2>Web Enumeration</h2>
+      <h2 id="web-enumeration">Web Enumeration</h2>
       <p>
         The homepage warned about an Eeyore DoS protection script that could ban clients causing too many
         Apache <code>40x</code> errors. Because of this, I avoided noisy directory brute forcing and checked
@@ -103,7 +145,7 @@
         Based on the page metadata and structure, the site was identified as CMS Made Simple.
       </p>
 
-      <h2>Vulnerability Identification</h2>
+      <h2 id="vulnerability-identification">Vulnerability Identification</h2>
       <p>
         CMS Made Simple was detected at <code>/writeup/</code>. The version was associated with
         CVE-2019-9053, an unauthenticated SQL injection vulnerability.
@@ -120,14 +162,14 @@ Unauthenticated SQL Injection</code></pre>
 
       <pre><code>https://github.com/hf3cyber/CMS-Made-Simple-2.2.9-Unauthenticated-SQL-Injection-Exploit-CVE-2019-9053-</code></pre>
 
-      <h2>Initial Access</h2>
+      <h2 id="initial-access">Initial Access</h2>
       <p>
         The SQL injection was used to extract credential material from the CMS database.
         An early result produced an unreliable salt value:
       </p>
 
-      <pre><code>Hash: 62def4866937f08cc13bab43bb14e6f7
-Salt: 1</code></pre>
+      <pre><code>Hash: [REDACTED]
+Salt: [REDACTED]</code></pre>
 
       <p>
         This appeared to be a false positive or bad result from the time-based SQL injection, because
@@ -136,15 +178,15 @@ Salt: 1</code></pre>
 
       <p>A reliable hash and salt were later extracted:</p>
 
-      <pre><code>Hash: 62def4866937f08cc13bab43bb14e6f7
-Salt: 5a599ef579066807</code></pre>
+      <pre><code>Hash: [REDACTED]
+Salt: [REDACTED]</code></pre>
 
       <p>
         Hashcat showed that the hash was already cracked in the potfile. The recovered credentials were:
       </p>
 
       <pre><code>Username: jkr
-Password: raykayjay9</code></pre>
+Password: [REDACTED]</code></pre>
 
       <p>I used the credentials to log in over SSH:</p>
 
@@ -155,7 +197,7 @@ Password: raykayjay9</code></pre>
       <pre><code>whoami
 jkr</code></pre>
 
-      <h2>User Flag</h2>
+      <h2 id="user-flag">User Flag</h2>
       <p>
         After logging in as <code>jkr</code>, I read the user flag from the user's home directory.
       </p>
@@ -164,7 +206,7 @@ jkr</code></pre>
 
       <pre><code>user flag: [REDACTED]</code></pre>
 
-      <h2>Privilege Escalation Enumeration</h2>
+      <h2 id="privilege-escalation-enumeration">Privilege Escalation Enumeration</h2>
       <p>
         I started local enumeration by checking the current user, groups, writable paths, PATH order,
         and SUID binaries.
@@ -197,7 +239,7 @@ find / -perm -4000 -type f 2&gt;/dev/null</code></pre>
         Linux could run a malicious command from <code>/usr/local/bin</code> first.
       </p>
 
-      <h2>Privilege Escalation with PATH Hijacking</h2>
+      <h2 id="privilege-escalation-with-path-hijacking">Privilege Escalation with PATH Hijacking</h2>
       <p>
         The target eventually executed <code>run-parts</code> as root without specifying the full path.
         Because I could write to <code>/usr/local/bin</code>, I created a malicious
@@ -236,7 +278,7 @@ EOF</code></pre>
       <pre><code>id
 uid=1000(jkr) euid=0(root)</code></pre>
 
-      <h2>Root Flag</h2>
+      <h2 id="root-flag">Root Flag</h2>
       <p>
         With effective root privileges, I was able to access the root flag.
       </p>
@@ -245,7 +287,7 @@ uid=1000(jkr) euid=0(root)</code></pre>
 
       <pre><code>root flag: [REDACTED]</code></pre>
 
-      <h2>Cleanup</h2>
+      <h2 id="cleanup">Cleanup</h2>
       <p>
         After completing the machine, cleanup would include removing the malicious files created during
         privilege escalation.
@@ -254,14 +296,14 @@ uid=1000(jkr) euid=0(root)</code></pre>
       <pre><code>rm -f /usr/local/bin/run-parts
 rm -f /tmp/rootbash</code></pre>
 
-      <h2>Attack Path</h2>
+      <h2 id="attack-path">Attack Path</h2>
       <pre><code>1. Enumerated open ports and found SSH and HTTP.
 2. Checked the web service and found Apache on Debian.
 3. Reviewed robots.txt and discovered /writeup/.
 4. Identified CMS Made Simple at /writeup/.
 5. Matched the CMS to CVE-2019-9053.
 6. Exploited unauthenticated SQL injection to extract credential material.
-7. Cracked the hash and recovered jkr:raykayjay9.
+7. Cracked the hash and recovered credentials for jkr.
 8. Logged in over SSH as jkr.
 9. Found that jkr could write to /usr/local/bin.
 10. Abused PATH hijacking by creating /usr/local/bin/run-parts.
@@ -269,7 +311,7 @@ rm -f /tmp/rootbash</code></pre>
 12. Created /tmp/rootbash with SUID-root permissions.
 13. Ran /tmp/rootbash -p and gained effective root privileges.</code></pre>
 
-      <h2>Lessons Learned</h2>
+      <h2 id="lessons-learned">Lessons Learned</h2>
       <ul>
         <li><code>robots.txt</code> can reveal hidden application paths that are not linked from the main page.</li>
         <li>Warnings about anti-bruteforce or DoS protection should change the enumeration approach.</li>
@@ -281,7 +323,7 @@ rm -f /tmp/rootbash</code></pre>
         <li>Writable directories early in PATH can be dangerous when privileged scripts call binaries by name.</li>
       </ul>
 
-      <h2>Remediation</h2>
+      <h2 id="remediation">Remediation</h2>
       <ul>
         <li>Upgrade CMS Made Simple to a patched version that is not vulnerable to CVE-2019-9053.</li>
         <li>Remove old or unused CMS installations from production systems.</li>
@@ -295,7 +337,7 @@ rm -f /tmp/rootbash</code></pre>
         <li>Regularly audit SUID files for unexpected additions.</li>
       </ul>
 
-      <h2>Conclusion</h2>
+      <h2 id="conclusion">Conclusion</h2>
       <p>
         Writeup demonstrated how careful web enumeration can lead to a hidden application and how a known
         CMS vulnerability can provide valid credentials. The exposed CMS Made Simple instance allowed
@@ -306,8 +348,12 @@ rm -f /tmp/rootbash</code></pre>
         Because <code>jkr</code> could write to <code>/usr/local/bin</code>, and a root process executed
         <code>run-parts</code> by name, I was able to create a SUID-root Bash binary and gain root access.
       </p>
+    </main>
+  </div>
 
-      <p><a href="../index.html">Back to all reports</a></p>
-  </main>
+  <footer class="footer">
+    <p><a class="back-link" href="../index.html">Back to all my reports</a></p>
+    Authorized Hack The Box lab report. Passwords and flag values intentionally redacted for portfolio use.
+  </footer>
 </body>
 </html>

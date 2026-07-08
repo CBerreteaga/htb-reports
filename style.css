@@ -233,6 +233,11 @@ aside h2 {
   text-decoration: none;
 }
 
+.toc-sub {
+  margin-left: 0.75rem;
+  font-size: 0.82rem !important;
+}
+
 main {
   min-width: 0;
   background: rgba(17, 24, 39, 0.72);
@@ -283,6 +288,10 @@ blockquote {
   color: var(--text);
 }
 
+blockquote p {
+  margin: 0;
+}
+
 pre {
   background: var(--code-bg);
   border: 1px solid var(--code-border);
@@ -297,6 +306,40 @@ pre code {
   color: #d2a8ff;
   font-size: 0.95rem;
   line-height: 1.5;
+}
+
+.table-wrap {
+  overflow-x: auto;
+  margin: 1.25rem 0;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: rgba(2, 6, 23, 0.28);
+}
+
+.table-wrap table {
+  width: 100%;
+  min-width: 560px;
+  border-collapse: collapse;
+}
+
+.table-wrap th,
+.table-wrap td {
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  vertical-align: top;
+}
+
+.table-wrap th {
+  background: rgba(56, 189, 248, 0.10);
+  color: #f8fafc;
+  font-size: 0.85rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.table-wrap tr:last-child td {
+  border-bottom: 0;
 }
 
 .report-table {
@@ -360,6 +403,18 @@ pre code {
 .footer-note {
   color: var(--muted);
   font-size: 0.92rem;
+}
+
+.footer {
+  color: var(--muted);
+  text-align: center;
+  padding: 2rem 1rem 3rem;
+  font-size: 0.9rem;
+}
+
+.footer p {
+  margin: 0 0 0.75rem;
+  text-align: center;
 }
 
 @media (max-width: 700px) {

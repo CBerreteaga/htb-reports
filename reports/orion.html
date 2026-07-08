@@ -222,7 +222,7 @@ CRAFT_DB_SERVER=127.0.0.1
 CRAFT_DB_PORT=3306
 CRAFT_DB_DATABASE=orion
 CRAFT_DB_USER=root
-CRAFT_DB_PASSWORD=SuperSecureCraft123Pass!</code></pre>
+CRAFT_DB_PASSWORD=[REDACTED]</code></pre>
 
       <h3>Database Access</h3>
       <p>
@@ -248,7 +248,7 @@ select * from users;</code></pre>
 
       <pre><code>username: admin
 email: adam@orion.htb
-hash: $2y$13$e9zuohgFZzGtbQalcn9Mz.5PJbjxobO0GMbXo8NHp3P/B42LUg0lS</code></pre>
+hash: [REDACTED]</code></pre>
 
       <h2>Password Cracking</h2>
 
@@ -257,10 +257,10 @@ hash: $2y$13$e9zuohgFZzGtbQalcn9Mz.5PJbjxobO0GMbXo8NHp3P/B42LUg0lS</code></pre>
         <code>rockyou.txt</code> wordlist.
       </p>
 
-      <pre><code>echo '$2y$13$e9zuohgFZzGtbQalcn9Mz.5PJbjxobO0GMbXo8NHp3P/B42LUg0lS' > adam_hash.txt
+      <pre><code>echo '[REDACTED]' > adam_hash.txt
 hashcat -m 3200 adam_hash.txt /usr/share/wordlists/rockyou.txt</code></pre>
 
-      <p><strong>Recovered Password:</strong> <code>darkangel</code></p>
+      <p><strong>Recovered Password:</strong> <code>[REDACTED]</code></p>
 
       <h2>User Access</h2>
 
