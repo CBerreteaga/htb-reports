@@ -9,9 +9,9 @@
 
   <body>
     <header class="site-header">
-      <nav class="nav">
+      <nav class="nav" aria-label="Primary navigation">
         <a class="brand" href="index.html">HTB REPORTS</a>
-        <a class="nav-pill" href="index.html">Home</a>
+        <a class="nav-pill" href="index.html" aria-current="page">Reports</a>
       </nav>
     </header>
 
@@ -20,10 +20,74 @@
         <div class="eyebrow">Hack The Box Report Collection</div>
         <h1 class="main-title">Machine write-ups and walkthroughs</h1>
         <p class="subtitle">A curated collection of retired and active HTB reports focused on reconnaissance, exploitation, privilege escalation, and the lessons learned from each box.</p>
+        <dl class="collection-stats" aria-label="Report collection summary">
+          <div>
+            <dt id="report-count">19</dt>
+            <dd>Reports</dd>
+          </div>
+          <div>
+            <dt id="platform-count">4</dt>
+            <dd>Platforms</dd>
+          </div>
+          <div>
+            <dt id="retired-count">12</dt>
+            <dd>Retired machines</dd>
+          </div>
+        </dl>
       </div>
     </section>
 
-    <main class="grid">
+    <main class="reports-page">
+      <section class="report-browser" aria-labelledby="browse-heading">
+        <div class="browser-heading">
+          <div>
+            <div class="eyebrow">Report library</div>
+            <h2 id="browse-heading">Find a machine report</h2>
+          </div>
+          <p id="results-count" class="results-count" aria-live="polite">Showing all 19 reports</p>
+        </div>
+
+        <form class="filters" id="report-filters" role="search">
+          <label class="search-field" for="report-search">
+            <span>Search reports</span>
+            <input id="report-search" type="search" placeholder="Search by machine, OS, or difficulty" autocomplete="off">
+          </label>
+
+          <label for="os-filter">
+            <span>Operating system</span>
+            <select id="os-filter">
+              <option value="">All operating systems</option>
+              <option value="Linux">Linux</option>
+              <option value="Linux / Kubernetes">Linux / Kubernetes</option>
+              <option value="Windows">Windows</option>
+              <option value="Windows / Active Directory">Windows / Active Directory</option>
+            </select>
+          </label>
+
+          <label for="difficulty-filter">
+            <span>Difficulty</span>
+            <select id="difficulty-filter">
+              <option value="">All difficulties</option>
+              <option value="Easy">Easy</option>
+              <option value="Easy to Medium">Easy to Medium</option>
+              <option value="Medium">Medium</option>
+            </select>
+          </label>
+
+          <label for="status-filter">
+            <span>Status</span>
+            <select id="status-filter">
+              <option value="">All statuses</option>
+              <option value="Active">Active</option>
+              <option value="Retired">Retired</option>
+            </select>
+          </label>
+
+          <button class="clear-filters" id="clear-filters" type="reset" hidden>Clear filters</button>
+        </form>
+      </section>
+
+      <section class="grid" id="report-grid" aria-label="Machine reports">
 
       <a class="card" href="reports/active.html">
         <h2>Active</h2>
@@ -158,7 +222,19 @@
         <p><strong>Status:</strong> Retired</p>
       </a>
 
+      </section>
+
+      <div class="empty-state" id="empty-state" hidden>
+        <h2>No reports found</h2>
+        <p>Try a different machine name or broaden the selected filters.</p>
+        <button class="nav-pill" id="empty-clear" type="button">Clear filters</button>
+      </div>
     </main>
+
+    <noscript>
+      <p class="noscript-note">Search and filters require JavaScript. All reports remain available above.</p>
+    </noscript>
+    <script src="reports.js"></script>
   </body>
 </html>
 
