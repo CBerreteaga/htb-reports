@@ -1,0 +1,21 @@
+[
+  {"slug":"active","name":"Active","os":"Windows / Active Directory","difficulty":"Easy to Medium","status":"Retired"},
+  {"slug":"bashed","name":"Bashed","os":"Linux","difficulty":"Easy","status":"Retired"},
+  {"slug":"blocky","name":"Blocky","os":"Linux","difficulty":"Easy","status":"Retired"},
+  {"slug":"blue","name":"Blue","os":"Windows","difficulty":"Easy","status":"Retired"},
+  {"slug":"blunder","name":"Blunder","os":"Linux","difficulty":"Easy","status":"Retired"},
+  {"slug":"broker","name":"Broker","os":"Linux","difficulty":"Easy","status":"Retired"},
+  {"slug":"connected","name":"Connected","os":"Linux","difficulty":"Easy to Medium","status":"Active"},
+  {"slug":"devel","name":"Devel","os":"Windows","difficulty":"Easy","status":"Retired"},
+  {"slug":"enigma","name":"Enigma","os":"Linux","difficulty":"Easy","status":"Active"},
+  {"slug":"expressway","name":"Expressway","os":"Linux","difficulty":"Easy","status":"Active"},
+  {"slug":"fireflow","name":"Fireflow","os":"Linux / Kubernetes","difficulty":"Medium","status":"Active"},
+  {"slug":"lame","name":"Lame","os":"Linux","difficulty":"Easy","status":"Retired"},
+  {"slug":"legacy","name":"Legacy","os":"Windows","difficulty":"Easy","status":"Retired"},
+  {"slug":"nexus","name":"Nexus","os":"Linux","difficulty":"Easy","status":"Active"},
+  {"slug":"nibbles","name":"Nibbles","os":"Linux","difficulty":"Easy","status":"Retired"},
+  {"slug":"optimum","name":"Optimum","os":"Windows","difficulty":"Easy","status":"Retired"},
+  {"slug":"orion","name":"Orion","os":"Linux","difficulty":"Easy","status":"Active"},
+  {"slug":"silentium","name":"Silentium","os":"Linux","difficulty":"Medium","status":"Active"},
+  {"slug":"writeup","name":"Writeup","os":"Linux","difficulty":"Easy","status":"Retired"}
+]

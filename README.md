@@ -1,4 +1,3 @@
-```markdown
 # Hack The Box Machine Reports
 
 Welcome to my Hack The Box machine report portfolio. This repository contains write-ups from my hands-on cybersecurity practice, focused on enumeration, exploitation methodology, privilege escalation, documentation, and lessons learned.
@@ -35,6 +34,17 @@ Most reports follow this structure:
 6. Proof of compromise
 7. Lessons learned
 8. Remediation recommendations
+
+## Site Architecture
+
+This is a dependency-free static site. Report narratives remain in individual HTML files so existing URLs, rich markup, and no-JavaScript access continue to work. Shared presentation and navigation are applied progressively by `report-page.js`, while `reports.json` is the canonical collection metadata used by the homepage and report headers. The homepage retains static cards as a fallback if JavaScript or JSON loading is unavailable.
+
+When adding a report:
+
+1. Add `reports/<slug>.html` with the complete report content, `../style.css`, and deferred `../report-page.js` references.
+2. Add the matching machine metadata to `reports.json`.
+3. Add a matching fallback card to `index.html`.
+4. Run `python3 -m unittest discover -s tests -p 'test_*.py'`.
 
 ## Live Portfolio
 
@@ -83,4 +93,3 @@ All reports in this repository are based on Hack The Box lab environments. These
 Connect with me on LinkedIn:
 
 https://www.linkedin.com/in/carlos-berreteaga/
-```
